@@ -220,8 +220,25 @@
     },
     {
       id: 'insane', name: 'Insane', n: 5,
-      blurb: 'A flood: three quarters more of them, the least money per threat in the game.',
-      hp: 1.02, speed: 1.18, armour: 2.10, gap: 0.70, lean: 0.90, payout: 2.8, mass: 1.75,
+      blurb: 'A flood of three-times-healthier threats. The map runs out before the money does.',
+      // Deliberately brutal, and set to the numbers the designer asked for:
+      // three times the health and five times the bodies of normal.
+      //
+      // Those two dials fight each other, which is why `mass` is 15 and not 5.
+      // The composer solves counts as (target / per-body power), so tripling the
+      // health alone would buy a THIRD as many bodies and the tier would get
+      // tankier without getting busier. Scaling the target by 3 x 5 cancels that
+      // and lands both: five times the bodies (from 15/3) at three times each.
+      //
+      // `lean` is what actually makes it hard, and it is low on purpose.
+      // Health and count alone do NOT create difficulty here, which is
+      // counter-intuitive enough to be worth the measurement that proved it: the
+      // generator hands out bandwidth in proportion to the threat, so multiplying
+      // both by 15 produced a ticket the harness bot cleared at 100% uptime with
+      // 77,429 of its 90,855 bandwidth unspent and the whole board maxed. Bigger
+      // is not harder. Difficulty is the ratio of the two, and 0.28 is roughly
+      // three times leaner than easy.
+      hp: 3.0, speed: 1.18, armour: 2.10, gap: 0.70, lean: 0.28, payout: 2.8, mass: 15,
     },
   ];
 
@@ -820,6 +837,26 @@
    * The thresholds are by threat size rather than by class, because what makes a
    * count absurd is how much health is behind it, not what it is called.
    */
+  /**
+   * The per-group ceiling for a wave, after the tier's mass is applied.
+   *
+   * The base caps exist for legibility and frame rate - "nine hundred Drones is
+   * not a wave, it is a frame-rate problem" - and scaling them by mass alone
+   * undoes that guarantee the moment mass gets large: at insane's mass a cheap
+   * group would be allowed eighteen hundred bodies. So the scaled cap is itself
+   * capped.
+   *
+   * A group that hits this ceiling does not silently lose its budget: the
+   * composer's overflow valve turns the remainder into health, which is why
+   * insane's late tickets end up as walls of very tough enemies rather than as
+   * slideshows. That is the intended failure mode, but it is worth knowing that
+   * past a point this tier escalates through health rather than numbers.
+   */
+  var MAX_GROUP_COUNT = 220;
+  function groupCap(per, mass) {
+    return Math.min(MAX_GROUP_COUNT, Math.round(countCap(per) * mass));
+  }
+
   function countCap(per) {
     if (per < 5) return 120;      // Drones and other one-shot swarm units
     if (per < 50) return 60;      // Code Smells, SQL Injection, XSS
@@ -913,7 +950,7 @@
       // mass exists to replace. Measured before this line, insane ended up with
       // FEWER bodies than easy - a bigger budget hitting a fixed ceiling spills
       // into hp, so the "flood" tier was the tankiest and the sparsest at once.
-      return { t: m.t, per: per, weight: m.w, cap: Math.round(countCap(per) * mass), n: 0, hp: 1 };
+      return { t: m.t, per: per, weight: m.w, cap: groupCap(per, mass), n: 0, hp: 1 };
     });
 
     var spent = waterfill(groups, power);

@@ -10,7 +10,7 @@ levels — it means the same level asked a different question.
 | **Normal** | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 |
 | Hard | ×1.20 | ×1.00 | ×1.03 | ×1.25 | ×0.95 | ×0.97 | ×1.45 |
 | Hell | ×1.45 | ×1.00 | ×1.11 | ×1.65 | ×0.80 | ×0.93 | ×2.0 |
-| Insane | ×1.75 | ×1.02 | ×1.18 | ×2.10 | ×0.70 | ×0.90 | ×2.8 |
+| Insane | ×15 | ×3.00 | ×1.18 | ×2.10 | ×0.70 | ×0.28 | ×2.8 |
 
 **`mass` is the dial that says how many of them there are**, and it is the one that
 was missing. Until it existed the tiers only made each enemy tougher, which is
@@ -66,15 +66,35 @@ Measured across all 240 tickets via `Levels.at(id, tier)`:
 | Normal | 2,671,805 | 29,594 | ×1.00 | ×1.00 |
 | Hard | 3,156,976 | 34,097 | ×1.18 | ×1.15 |
 | Hell | 3,705,205 | 37,954 | ×1.39 | ×1.28 |
-| Insane | 4,521,690 | 41,902 | ×1.69 | ×1.42 |
+| Insane | 34,177,994 | 116,708 | ×12.79 | ×3.94 |
 
-**Easy → insane: power ×2.66, threats ×1.73**, both monotonic. Per ticket it is
-plainer — ticket 1 is 13 threats / 249 power on easy against 24 threats / 564
-power on insane; ticket 240 is 160 threats / 13,362 power against 223 / 35,167.
+**Easy → insane: power ×20.1, threats ×4.81**, all monotonic. Ticket 1 is 13
+threats / 249 power on easy against **71 threats / 4,449 power** on insane; ticket
+240 is 160 / 13,362 against 499 / 246,083.
 
-The threat spread is 1.73× rather than the 2.69× that `mass` implies on its own,
-because the count caps still bind on the busiest tickets and the remainder becomes
-health by design. That is the honest measured number, not the dial's nominal value.
+### Insane's tuning is a designer decision, and it has a measured limit
+
+Insane runs at the numbers the designer asked for: **three times the health and
+five times the bodies** of normal, plus an economy roughly three times leaner.
+Two counter-intuitive things were measured while landing it, and both are worth
+keeping written down:
+
+1. **Multiplying health and count does not, on its own, create difficulty.** The
+generator hands out bandwidth *in proportion to the threat*, so scaling both by
+15 produced a ticket the harness bot cleared at 100% uptime with **77,429 of its
+90,855 bandwidth unspent** and the entire board maxed. Bigger is not harder.
+2. **The ceiling is the map, not the numbers.** There are about eighty buildable
+tiles. Once the bot has filled and fully upgraded them, extra threat only starts
+to matter when the budget falls *below* what a full board costs - which is what
+`lean` does, and why `lean` is 0.28 rather than 0.90.
+
+Even so, the reference bot still clears insane act 1 at 20/20 three-star, and
+ticket 240 with 52% of its budget unspent. **This is a lower bound on difficulty,
+not a measurement of it**: the bot maximises road coverage per tile, which is the
+skill the game is built around, and a human placing by eye will find this tier
+substantially harder than the bot does. If it still feels easy in the hand, the
+next lever is health again - the bot's failure point has not been found yet, and
+finding it deliberately is a parameter sweep rather than a guess.
 
 ### Clear rates
 
