@@ -290,6 +290,55 @@ function writeAdMobAppId() {
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * 5. Version numbers
+ *
+ * Google Play rejects an upload whose versionCode is not strictly higher than
+ * the live one, and the Capacitor template ships a literal `versionCode 1` in a
+ * directory that is generated and gitignored - so on a fresh clone there is
+ * nothing to remember to bump and the second release fails at upload time.
+ *
+ * Deriving both numbers from package.json means the release tag and the uploaded
+ * build cannot disagree.
+ *
+ *   versionCode = major * 10000 + minor * 100 + patch
+ *
+ * 1.0.0 -> 10000, 1.2.3 -> 10203. It rises for every semver bump, which is the
+ * only property Play actually requires. 100 minor or patch releases would
+ * overflow into the next major; if a project ever gets close, switch to a
+ * monotonically stored counter instead.
+ * ------------------------------------------------------------------ */
+function writeVersion() {
+  const pkg = JSON.parse(readIfExists(path.join(__dirname, '..', 'package.json')) || '{}');
+  const version = pkg.version;
+  if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
+    fail('package.json needs a semver version (major.minor.patch) to derive versionCode from.');
+  }
+
+  const [major, minor, patch] = version.split('.').map(Number);
+  const code = major * 10000 + minor * 100 + patch;
+
+  let gradle = readIfExists(BUILD_GRADLE);
+  if (gradle === null) fail('app/build.gradle not found - run "npx cap add android" first.');
+  const before = gradle;
+
+  if (/versionCode\s+\d+/.test(gradle)) {
+    gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode ' + code);
+  } else {
+    fail('no versionCode line in app/build.gradle to replace - Capacitor template changed.');
+  }
+
+  if (/versionName\s+"[^"]*"/.test(gradle)) {
+    gradle = gradle.replace(/versionName\s+"[^"]*"/, 'versionName "' + version + '"');
+  } else if (/versionName\s+'[^']*'/.test(gradle)) {
+    gradle = gradle.replace(/versionName\s+'[^']*'/, 'versionName "' + version + '"');
+  } else {
+    fail('no versionName line in app/build.gradle to replace - Capacitor template changed.');
+  }
+
+  if (gradle !== before) write(BUILD_GRADLE, gradle, 'app/build.gradle (version ' + version + ' / code ' + code + ')');
+}
+
 /* ------------------------------------------------------------------ */
 
 if (!fs.existsSync(ROOT)) {
@@ -300,6 +349,7 @@ hardenManifest();
 writeNetworkConfig();
 hardenMainActivity();
 writeAdMobAppId();
+writeVersion();
 maybeMinify();
 
 if (changed.length) {
