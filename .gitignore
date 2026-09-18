@@ -1,0 +1,8 @@
+# Repo-wide ignores (project-specific rules live in each project's .gitignore)
+
+# Local deploy state — holds the basic-auth HASH for the staging host.
+# Never commit this; regenerate with ./deploy/deploy.sh --reset-auth
+.deploy.local
+
+# Stray editor/OS noise at the repo root
+.DS_Store

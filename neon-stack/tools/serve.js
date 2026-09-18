@@ -9,6 +9,9 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..', 'www');
 const PORT = Number(process.env.PORT || 8080);
+// Bind interface. Defaults to all interfaces for local dev; the staging
+// deploy sets HOST=127.0.0.1 so only nginx can reach the app directly.
+const HOST = process.env.HOST || '0.0.0.0';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -49,4 +52,7 @@ http
       });
     });
   })
-  .listen(PORT, () => console.log(`Neon Stack running at http://localhost:${PORT}`));
+  .listen(PORT, HOST, () => {
+    const shown = HOST === '0.0.0.0' || HOST === '::' ? 'localhost' : HOST;
+    console.log(`Neon Stack running at http://${shown}:${PORT}`);
+  });
