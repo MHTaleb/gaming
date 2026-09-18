@@ -91,6 +91,32 @@
     bossShare: 0.38,
     /** ...and the mid-act mini-boss. */
     miniShare: 0.14,
+    /**
+     * How much of the boss's power is paid for out of the *budget*.
+     *
+     * Bandwidth deliberately tracks body power, not body + boss, so that a
+     * finale is genuinely harder than the ticket before it. The first version of
+     * that idea had no allowance at all, which does not make the finale harder,
+     * it makes it unwinnable: the balance report showed all twelve finales
+     * failing while two hundred and twenty-eight other tickets were cleared, and
+     * the bot is a lower bound, so a player was not clearing them either.
+     *
+     * This is the dial that separates "the boss is a threat" from "the boss is a
+     * wall". It is set by running the harness, not by taste.
+     */
+    bossBudgetShare: 0.92,
+    /**
+     * Ceiling on the monotonicity repair in build().
+     *
+     * The composer solves counts to hit a power target, but a wave of cheap
+     * threats runs out of count room before it runs out of budget, so a ticket
+     * can land under its target - and a ticket that lands under its target can
+     * land under the ticket before it. The repair scales the wave health up
+     * until the ticket measures above its predecessor. The cap exists so a
+     * pathological ticket is visibly broken in the report rather than silently
+     * given a thousand times the health.
+     */
+    hpFloorCap: 6,
 
     /* ---- the economy ------------------------------------------------- */
 
@@ -123,6 +149,67 @@
     armourCap: 6, armourOver: 95,     // flat armour added to armoured threats
     gapCap: 0.38, gapOver: 80,        // spawn spacing multiplier -> 1 - gapCap
   };
+
+  /* ------------------------------------------------------------------ *
+   * Difficulty tiers
+   *
+   * Five readings of the same two hundred and forty tickets.
+   *
+   * The campaign is generated from the ticket number alone, so a difficulty
+   * setting cannot mean different levels - it has to mean the same level asked a
+   * different question. Every tier therefore moves the same dials the curve
+   * already uses (health, speed, armour, spawn spacing) plus the budget, which
+   * is the one that decides whether the answer exists at all.
+   *
+   * NORMAL IS THE REFERENCE: every multiplier is exactly 1, so normal is
+   * bit-for-bit the campaign the generator has always produced and the balance
+   * report means what it always meant. If a tier's numbers look wrong, normal is
+   * the control.
+   *
+   * `budget` is inverted on purpose - a harder tier hands you *less* bandwidth
+   * against the same threat, which forces tighter placement rather than just a
+   * longer fight. `payout` scales the credits a clear is worth, so playing above
+   * normal is the fastest honest route to the shop.
+   * ------------------------------------------------------------------ */
+  var TIERS = [
+    {
+      id: 'easy', name: 'Easy', n: 1,
+      blurb: 'Forgiving. A tower in the wrong place can still hold the ticket.',
+      hp: 0.78, speed: 0.93, armour: 0.60, gap: 1.25, budget: 1.28, payout: 0.7,
+    },
+    {
+      id: 'normal', name: 'Normal', n: 2,
+      blurb: 'The campaign as designed. Every wave is the wave it says it is.',
+      hp: 1, speed: 1, armour: 1, gap: 1, budget: 1, payout: 1,
+    },
+    {
+      id: 'hard', name: 'Hard', n: 3,
+      blurb: 'Less bandwidth, faster arrivals. Placement has to earn its keep.',
+      // Health and spacing are deliberately gentler than they look: hard's
+      // identity is the tighter *economy* (budget 0.94), not bigger numbers. An
+      // earlier cut ran hp 1.20 / gap 0.90 and ticket 124 - a switchback with
+      // hardened, swift, regenerating and reviving all stacked - leaked thirteen
+      // threats through seventy-five towers. Difficulty that comes from less
+      // money asks a better question than difficulty that comes from more health.
+      hp: 1.14, speed: 1.03, armour: 1.25, gap: 0.95, budget: 0.94, payout: 1.45,
+    },
+    {
+      id: 'hell', name: 'Hell', n: 4,
+      blurb: 'Plated and quick. One tower in the wrong place is one tower wasted.',
+      hp: 1.46, speed: 1.11, armour: 1.65, gap: 0.80, budget: 0.86, payout: 2.0,
+    },
+    {
+      id: 'insane', name: 'Insane', n: 5,
+      blurb: 'Every dial at once. Clearing a whole act here is the whole game.',
+      hp: 1.80, speed: 1.18, armour: 2.10, gap: 0.70, budget: 0.79, payout: 2.8,
+    },
+  ];
+
+  /** Tier lookup that cannot fail: an unknown tier is normal, never nothing. */
+  function tierDef(tierId) {
+    for (var i = 0; i < TIERS.length; i++) if (TIERS[i].id === tierId) return TIERS[i];
+    return TIERS[1];
+  }
 
   /** Threats below this base health never take level armour - mirrors threats.js. */
   function armourFloor() {
@@ -457,9 +544,10 @@
    * at once. That is the same trick a good tutorial uses, stretched over twenty
    * tickets instead of three.
    */
-  function curve(id) {
+  function curve(id, tierId) {
     var a = act(id);
     var inAct = (id - 1) % PER_ACT;          // 0..19
+    var t = tierDef(tierId);
 
     // Traits unlock one per act, and the pool grows monotonically so a player
     // never sees a rule vanish and come back.
@@ -478,11 +566,15 @@
     if (a.n >= 9 && inAct >= 15) traits = pool.slice(0, Math.min(pool.length, ramp));
 
     return {
-      hp: 1 + approach(id, DIALS.hpCap, DIALS.hpOver),
-      speed: 1 + approach(id, DIALS.speedCap, DIALS.speedOver),
-      armour: Math.round(approach(id, DIALS.armourCap, DIALS.armourOver)),
-      gap: 1 - approach(id, DIALS.gapCap, DIALS.gapOver),
+      // Every dial is the curve value times the tier's multiplier. On normal
+      // those multipliers are all exactly 1, so this is the same object the
+      // campaign has always produced.
+      hp: (1 + approach(id, DIALS.hpCap, DIALS.hpOver)) * t.hp,
+      speed: (1 + approach(id, DIALS.speedCap, DIALS.speedOver)) * t.speed,
+      armour: Math.round(approach(id, DIALS.armourCap, DIALS.armourOver) * t.armour),
+      gap: (1 - approach(id, DIALS.gapCap, DIALS.gapOver)) * t.gap,
       traits: traits,
+      tier: t.id,
     };
   }
 
@@ -635,7 +727,16 @@
     var refLen = 42;
     var geom = clamp(Math.pow(refLen / Math.max(12, road ? road.length : refLen), 0.72), 0.6, 1.5);
 
-    return Math.round(power / DIALS.powerPerBandwidth * tighten * geom);
+    var budget = power / DIALS.powerPerBandwidth * tighten * geom;
+
+    // The finale's boss is paid for *outside* the body budget. Leaving it out
+    // entirely made every act finale unbeatable (see bossBudgetShare), and
+    // paying for all of it would make a finale an ordinary ticket with a big
+    // enemy in it. The share is the middle: harder than the ticket before it,
+    // still answerable.
+    budget += bossPowerFor(id) / DIALS.powerPerBandwidth * tighten * geom * DIALS.bossBudgetShare;
+
+    return Math.round(budget);
   }
 
   /**
@@ -1036,7 +1137,53 @@
    * Assembly
    * ------------------------------------------------------------------ */
 
-  function build(id) {
+  /**
+   * Raise a ticket's health until it measures above `minPower`.
+   *
+   * Why the composer cannot do this on its own: it solves *counts* to hit a
+   * power target, and counts are capped per threat (a wave of nine hundred
+   * Drones is a frame-rate problem, not a level). When the mix for a ticket is
+   * dominated by cheap threats, the cap binds before the budget runs out, the
+   * ticket lands under its target, and it can land under the ticket before it -
+   * which is the one promise the campaign makes. The report found ninety-one
+   * such steps.
+   *
+   * Health is the right dial to repair with because it is the one that is
+   * *guaranteed* to move the measurement: power() scales linearly with a group's
+   * hp multiplier, so the required factor is arithmetic rather than a search.
+   * The cost is that a repaired ticket is tankier than its brief implies, which
+   * is why the repair is capped and why the report is expected to stay at zero.
+   *
+   * On `normal` this must never fire. A non-zero repair count there means the
+   * composer and the measurement disagree, which is a generator bug.
+   */
+  function applyPowerFloor(level, minPower, tierId) {
+    if (!(minPower > 0)) return 0;
+    var measured = power(level, tierId);
+    if (measured > minPower) return 0;
+
+    // The target carries a margin rather than being exactly minPower + 1.
+    // power() rounds to an integer and the hp multipliers are stored rounded, so
+    // a one-unit margin sits *inside* the rounding noise: the first version of
+    // this aimed at minPower + 1 and landed one short on nearly every ticket it
+    // repaired. 0.2% is comfortably above the noise and invisible beside a curve
+    // that only moves 0.06% per ticket.
+    var target = minPower * 1.002 + 1;
+    var factor = Math.min(DIALS.hpFloorCap, target / Math.max(1, measured));
+    if (!(factor > 1)) return 0;
+
+    level.waves.forEach(function (w) {
+      w.forEach(function (g) {
+        // Round up, not to nearest: rounding down can land under the target,
+        // which is the precise failure this function exists to prevent.
+        g.hp = Math.ceil((g.hp || 1) * factor * 10000) / 10000;
+      });
+    });
+    level.repaired = Math.round((factor - 1) * 100) / 100;
+    return factor;
+  }
+
+  function build(id, minPower) {
     var a = act(id);
     var rand = rng(id * 104729 + 7);
     var road = roadFor(id, rand);
@@ -1076,6 +1223,9 @@
 
     level.waves = wavesFor(id);
     level.bandwidth = bandwidthFor(id, road);
+    // Before the brief and before the measurement, so both describe the ticket
+    // the player will actually face rather than the one the composer drafted.
+    applyPowerFloor(level, minPower);
     level.brief = briefFor(level);
     level.tip = tipFor(level);
 
@@ -1103,8 +1253,8 @@
    * make the curve non-monotonic - they ramp up across each act - which would
    * hide the thing this number exists to prove.
    */
-  function power(level) {
-    var tune = curve(level.id);
+  function power(level, tierId) {
+    var tune = curve(level.id, tierId);
     var D = (global.Threats && global.Threats.DEFS) || {};
     var total = 0;
 
@@ -1127,10 +1277,24 @@
 
   var CACHE = null;
 
+  /**
+   * The campaign, built once, in order.
+   *
+   * In order rather than independently, because each ticket has to know the
+   * measured power of the one before it: that is what turns "ticket N+1 is
+   * harder than ticket N" into a property of the data instead of a hope. The
+   * floor is passed down the loop rather than looked up, so this stays a single
+   * pass with no recursion and no second cache that could disagree with it.
+   */
   function all() {
     if (CACHE) return CACHE;
     CACHE = [];
-    for (var i = 1; i <= ACTS.length * PER_ACT; i++) CACHE.push(build(i));
+    var floor = 0;
+    for (var i = 1; i <= ACTS.length * PER_ACT; i++) {
+      var level = build(i, floor);
+      CACHE.push(level);
+      floor = level.power;
+    }
     return CACHE;
   }
 
@@ -1142,6 +1306,86 @@
   }
 
   function count() { return ACTS.length * PER_ACT; }
+
+  function tiers() { return TIERS.slice(); }
+
+  function tier(tierId) { return tierDef(tierId); }
+
+  /**
+   * A ticket read at a given difficulty.
+   *
+   * The single entry point the engine and the map screen use. Normal hands back
+   * the canonical cached object, so the reference reading allocates nothing and
+   * cannot drift from what the balance report measured; every other tier is
+   * built in order by readAt() and kept.
+   */
+  function variant(id, tierId) {
+    var t = tierDef(tierId);
+    if (!(id >= 1 && id <= ACTS.length * PER_ACT)) return null;
+    return readAt(t.id)[id - 1];
+  }
+
+  var TIER_CACHE = Object.create(null);
+
+  /** Deep-copy a wave table, so a tier can adjust health without touching normal. */
+  function cloneWaves(waves) {
+    return waves.map(function (w) {
+      return w.map(function (g) {
+        var c = {};
+        Object.keys(g).forEach(function (k) { c[k] = g[k]; });
+        return c;
+      });
+    });
+  }
+
+  /**
+   * One ticket read at one tier, repaired against the tier's own floor.
+   *
+   * The repair has to run *per tier* rather than once on normal. A finale's boss
+   * carries a large solved health multiplier, so a tier's hp multiplier scales
+   * the finale harder than it scales the body ticket after it: normal's repair
+   * is sized for normal's boss and is simply too small at hard and above. The
+   * report showed the drop in exactly that shape - 40 -> 41, 50 -> 51, 61 -> 62,
+   * sixty-one of them - every one of which is the ticket after a boss or a
+   * mini-boss.
+   */
+  function makeVariant(base, t, minPower) {
+    var copy = {};
+    Object.keys(base).forEach(function (k) { copy[k] = base[k]; });
+    copy.tier = t.id;
+    copy.waves = cloneWaves(base.waves);
+    copy.bandwidth = Math.max(1, Math.round(base.bandwidth * t.budget));
+    applyPowerFloor(copy, minPower, t.id);
+    copy.power = power(copy, t.id);
+    copy.difficulty = copy.power;
+    return copy;
+  }
+
+  /**
+   * A whole tier of the campaign, built in order and kept.
+   *
+   * Lazy and cached per tier: reading one ticket at hard costs one pass over the
+   * campaign the first time and nothing afterwards, and a player who never
+   * leaves normal never builds any of it. Normal hands back the canonical array
+   * rather than copies, so the reference reading cannot drift from what the
+   * balance report measured.
+   */
+  function readAt(tierId) {
+    var t = tierDef(tierId);
+    if (TIER_CACHE[t.id]) return TIER_CACHE[t.id];
+    if (t.id === 'normal') { TIER_CACHE[t.id] = all(); return TIER_CACHE[t.id]; }
+
+    var base = all();
+    var out = [];
+    var floor = 0;
+    for (var i = 0; i < base.length; i++) {
+      var v = makeVariant(base[i], t, floor);
+      out.push(v);
+      floor = v.power;
+    }
+    TIER_CACHE[t.id] = out;
+    return out;
+  }
 
   /** Every road registered as a path, in the shape map.js expects. */
   function paths() {
@@ -1157,7 +1401,11 @@
     ACTS: ACTS,
     PER_ACT: PER_ACT,
     DIALS: DIALS,
+    TIERS: TIERS,
     curve: curve,
+    tiers: tiers,
+    tier: tier,
+    variant: variant,
     /** The power model, exposed so the balance report measures what this built. */
     powerOf: powerOf,
     bodyPowerFor: bodyPowerFor,

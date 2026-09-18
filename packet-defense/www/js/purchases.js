@@ -436,11 +436,22 @@
             : (Cdv.ProductType && Cdv.ProductType.NON_CONSUMABLE);
         });
 
+        // One platform value for both registration and initialisation.
+        //
+        // The registration used to be hardcoded to GOOGLE_PLAY while
+        // store.initialize() picked APPLE_APPSTORE on iOS, so on an iPhone the
+        // products were registered against a store that would never be queried
+        // and the shop could not resolve a single price. Deriving both from the
+        // same value is what stops the two drifting apart again.
+        var storePlatform = Cdv.Platform
+          ? (platform() === 'ios' ? Cdv.Platform.APPLE_APPSTORE : Cdv.Platform.GOOGLE_PLAY)
+          : undefined;
+
         store.register(PRODUCTS.map(function (p) {
           return {
             id: p.id,
             type: types[p.id] || 'non consumable',
-            platform: Cdv.Platform && Cdv.Platform.GOOGLE_PLAY,
+            platform: storePlatform,
           };
         }));
 
@@ -463,9 +474,7 @@
           }
         });
 
-        var platforms = Cdv.Platform
-          ? (platform() === 'ios' ? [Cdv.Platform.APPLE_APPSTORE] : [Cdv.Platform.GOOGLE_PLAY])
-          : undefined;
+        var platforms = storePlatform ? [storePlatform] : undefined;
         await store.initialize(platforms);
 
         PRODUCTS.forEach(function (p) {

@@ -199,9 +199,13 @@
    * Level lifecycle
    * ------------------------------------------------------------------ */
 
-  function start(levelId) {
+  function start(levelId, tierId) {
     Map = global.PDMap;
-    var level = global.Levels.byId(levelId) || global.Levels.all()[0];
+    // at() is the only way to get a level object that carries a tier, and
+    // tuning() reads the tier back off the level - so this single line is the
+    // whole plumbing between the difficulty a player picked and the stats the
+    // spawner applies to every wave.
+    var level = global.Levels.at(levelId, tierId) || global.Levels.all()[0];
 
     var paths = global.Levels.paths();
     var waypoints = paths[level.path] || paths.switchback;
@@ -210,6 +214,7 @@
     state = {
       level: level,
       levelId: level.id,
+      tier: level.tier || 'normal',
       bandwidth: level.bandwidth,
       startingBandwidth: level.bandwidth,
       uptime: 100,
@@ -288,6 +293,7 @@
   function result() {
     return {
       levelId: state.levelId,
+      tier: state.tier,
       uptime: Math.round(state.uptime),
       leaks: state.leaks,
       kills: state.kills,
@@ -406,6 +412,26 @@
     // finished. Every number on the HUD is now a consequence of a decision.
     spawnDue();
     global.Threats.update(state, dt, Map);
+
+    /*
+     * The channel gets one line the first time the Zero-Day is visibly wounded.
+     *
+     * story.js has carried a `bossHurt` reaction since it was written and nothing
+     * ever called it, so the channel stayed silent for the entire boss fight -
+     * the one moment in a ticket where a player wants reassurance that the thing
+     * is actually taking damage. Threshold rather than first hit because "it is
+     * taking damage" is only news once it is a third of the way down.
+     */
+    if (!state.bossHurted && hooks.onBossHurt) {
+      for (var bi = 0; bi < state.threats.length; bi++) {
+        var bt = state.threats[bi];
+        if (bt.def && bt.def.boss && bt.hp < bt.maxHp * 0.6) {
+          state.bossHurted = true;
+          hooks.onBossHurt(bt);
+          break;
+        }
+      }
+    }
 
     if (global.Towers) global.Towers.update(state, dt, Map);
 
@@ -1100,13 +1126,27 @@
    * Locked types are left out entirely rather than shown greyed. A card you
    * cannot press is a card that teaches nothing; the BASE screen is where a
    * tower you do not own is advertised, and it can afford the space to say why.
-   * This also keeps the palette fitting: six cards in the palette's column at
-   * the narrowest world width does not go.
    */
   function paletteIds() {
     if (!global.Towers) return [];
-    return global.Towers.order().filter(towerAvailable);
+    return global.Towers.order().filter(towerAvailable).slice(0, PALETTE_MAX);
   }
+
+  /**
+   * How many build cards the HUD strip can hold at once.
+   *
+   * Seven, and the arithmetic is the reason: at the narrowest world width (620)
+   * seven cards at the 44-unit floor plus six 5-unit gaps is 338, the two side
+   * panels cannot go below 104 + 132, and the padding and gaps take 40 more.
+   * That is 614 of 620. An eighth card overflows the strip and pushes the
+   * wave/pause column off the right-hand edge, which is how a tower you cannot
+   * reach becomes a tower you can never build.
+   *
+   * Eight would need the palette to wrap onto a second row, which is a layout
+   * change rather than a data change - tools/../docs/TOWERS.md lists the types
+   * waiting on it.
+   */
+  var PALETTE_MAX = 7;
 
   /**
    * How much a splash shell is worth relative to its damage number.

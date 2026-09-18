@@ -247,6 +247,197 @@ kbd {
 .brief-name { margin: 0 0 8px; font-size: 22px; letter-spacing: 0.02em; }
 .brief-text { margin: 0 0 14px; line-height: 1.65; color: var(--dim); font-size: 12.5px; max-width: 62ch; }
 
+/* The act's own opening, which is longer-form than the chat because it is the
+   only place in the game that speaks in the campaign's voice rather than a
+   character's. */
+.brief-narration {
+  margin: 0 0 12px;
+  padding-left: 11px;
+  border-left: 2px solid rgba(34, 211, 238, 0.45);
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.7;
+  font-style: italic;
+  max-width: 62ch;
+}
+
+.act-closing {
+  margin: 0 0 10px;
+  padding-left: 11px;
+  border-left: 2px solid rgba(34, 211, 238, 0.45);
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.7;
+  font-style: italic;
+  max-width: 62ch;
+}
+
+/* ---------------- difficulty picker ---------------- */
+
+.tier-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  padding: 7px 0;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.tier-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  flex: 0 0 auto;
+}
+
+.tier-row { display: flex; gap: 5px; flex: 0 0 auto; }
+
+.tier-btn {
+  padding: 5px 11px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  background: rgba(20, 32, 50, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 5px;
+}
+
+.tier-btn.on {
+  color: var(--void);
+  background: var(--cyan);
+  border-color: var(--cyan);
+}
+
+.tier-blurb { font-size: 10.5px; color: var(--dim); line-height: 1.5; flex: 1 1 240px; }
+.tier-pill { border-color: rgba(34, 211, 238, 0.45); color: var(--cyan); }
+
+/* ---------------- track picker ---------------- */
+
+.track-group { flex: 0 0 auto; }
+
+.track-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px;
+}
+
+.track-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 10px;
+  text-align: left;
+  background: rgba(20, 32, 50, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 6px;
+}
+
+.track-btn.on { border-color: var(--cyan); background: rgba(34, 211, 238, 0.12); }
+.track-name { font-size: 11.5px; font-weight: 700; color: var(--ink); }
+.track-vibe { font-size: 10px; color: var(--dim); line-height: 1.45; }
+
+/* The rewarded offer reads as an offer, not as a primary action: the player
+   should never tap it by reflex on the way to RETRY. */
+.btn.rewarded {
+  align-self: center;
+  margin: 4px 0 8px;
+  border-color: rgba(245, 158, 11, 0.55);
+  color: var(--amber);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.payout.doubled { color: var(--amber); }
+
+/* ---------------- mock ad surface (web/dev only) ----------------
+   Native ads render in a platform view that sits above the WebView, so none of
+   this styling affects a real device build. It exists so the ad flow can be
+   exercised in a browser - which is the only place a rewarded ad can be tested
+   without a device and an AdMob account. */
+
+#ad-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 8, 15, 0.94);
+  padding: 24px;
+}
+
+#ad-layer.hidden { display: none; }
+
+#ad-layer .ad-label {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+#ad-layer .ad-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  background: rgba(20, 32, 50, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
+#ad-layer .ad-close:disabled { opacity: 0.35; }
+
+#ad-layer .ad-creative {
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  padding: 34px 26px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 12px;
+}
+
+#ad-layer .ad-pill {
+  font-size: 8.5px;
+  letter-spacing: 0.18em;
+  color: var(--dim);
+  margin-bottom: 12px;
+}
+
+#ad-layer .ad-title { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+#ad-layer .ad-body { font-size: 12px; line-height: 1.6; color: var(--dim); margin-bottom: 20px; }
+
+#ad-layer .ad-cta {
+  padding: 10px 22px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--void);
+  background: var(--cyan);
+  border: none;
+  border-radius: 6px;
+}
+
+#ad-layer .ad-timer {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--dim);
+}
+
 .tip {
   display: flex;
   flex-direction: column;

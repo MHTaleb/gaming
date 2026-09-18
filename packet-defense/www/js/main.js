@@ -77,6 +77,69 @@
 
   var SCREENS = ['menu', 'map', 'brief', 'battle', 'result', 'shop', 'base', 'settings'];
 
+  /*
+   * Music.
+   *
+   * packet-defense shipped with twenty-one generated tracks in tracks.js and
+   * played exactly one of them, for the whole game, forever: nothing ever called
+   * Music.playTrack, so the running piece was the hardcoded FALLBACK_TRACK object
+   * in music.js - a copy of 'signal-drift' that had silently drifted from the
+   * real one, carrying a single chord progression instead of three. Twenty tracks
+   * and the entire track registry were unreachable from the UI.
+   *
+   * The bed is keyed by act, not by ticket: a piece needs longer than ninety
+   * seconds to establish itself, and switching every ticket would make the
+   * campaign sound like a playlist on shuffle.
+   *
+   * Acts three and up deliberately use tracks with a tempo. The boss mood adds a
+   * sub-bass pulse on the beat grid (music.js schedule()), and over the ambient
+   * fallback that pulse landed arrhythmically - which is a large part of why the
+   * boss fights never sounded like boss fights.
+   */
+  var HUB_TRACK = 'signal-drift';
+
+  var ACT_MUSIC = [
+    'slow-ascent',          //  1  DEV         calm, with the lift gimmick
+    'maintenance-shuffle',  //  2  STAGING     playful, 92
+    'ascent-protocol',      //  3  PRODUCTION  driving, 100, march
+    'iron-staircase',       //  4  POSTMORTEM  driving, 84, march
+    'relay-sprint',         //  5  EDGE        driving, 124, arcade
+    'static-climb',         //  6  DATA        driving, 108, glitch
+    'wrong-deck',           //  7  CORE        odd, 76
+    'loose-bolt',           //  8  ORIGIN      playful, 104
+    'sneaky-servo',         //  9  DARK        playful, 88
+    'error-404',            // 10  RIVAL       odd, 116, glitch
+    'cartwheel',            // 11  SIEGE       playful, 112
+    'ascent-protocol',      // 12  NULL        the finale, back where it started
+  ];
+
+  /** Which piece an act plays. */
+  function trackForLevel(levelId) {
+    var L = global.Levels;
+    var a = L && L.actOf ? L.actOf(levelId) : null;
+    var n = a && a.n ? a.n : 1;
+    return ACT_MUSIC[n - 1] || HUB_TRACK;
+  }
+
+  /** The bed the player chose in settings, or the default hub piece. */
+  function hubTrack() {
+    return global.Store.get('musicTrack') || HUB_TRACK;
+  }
+
+  /**
+   * Switch the bed.
+   *
+   * Best-effort and self-healing: playTrack returns false for an id the registry
+   * does not know, and an unknown id must never leave the game silent, so it
+   * falls back to the hub piece rather than doing nothing.
+   */
+  function playMusic(id, crossfade) {
+    if (!global.Music || !global.Store.get('music')) return;
+    if (!global.Music.isRunning()) global.Music.start();
+    if (global.Music.playTrack(id, { crossfade: crossfade !== false })) return;
+    if (id !== HUB_TRACK) global.Music.playTrack(HUB_TRACK, { crossfade: false });
+  }
+
   function show(id, data) {
     if (current === 'battle' && id !== 'battle') {
       global.Engine.stop();
@@ -106,6 +169,11 @@
       if (id === 'menu' || id === 'map') global.Ads.showBanner();
       else global.Ads.hideBanner();
     }
+
+    // Everything outside a ticket shares the hub bed. Called on every screen
+    // change, but playTrack is a no-op when the piece is already playing, so
+    // walking the menus does not restart it.
+    if (id !== 'battle') playMusic(hubTrack(), id !== 'result');
   }
 
   function topbar(title, onBack, right) {
@@ -222,10 +290,64 @@
    * Briefing
    * ------------------------------------------------------------------ */
 
+  /** The difficulty the player is currently playing at, defaulting to normal. */
+  function currentTier() {
+    var want = global.Store.get('difficulty');
+    var ok = global.Levels.tiers().some(function (t) { return t.id === want; });
+    return ok ? want : 'normal';
+  }
+
+  function setTier(id) {
+    global.Store.set('difficulty', id);
+  }
+
+  function tierName(id) {
+    var t = global.Levels.tier(id);
+    return t ? t.name : 'Normal';
+  }
+
+  /**
+   * The difficulty picker.
+   *
+   * It lives on the briefing rather than the map because this is the screen where
+   * the numbers a tier changes are already on display: starting bandwidth is a
+   * tier dial, so switching tiers visibly moves the budget the player is about to
+   * spend. Choosing a difficulty on a screen that shows nothing about it would be
+   * asking the player to take the label's word for it.
+   */
+  function tierBar(current, onPick) {
+    var tiers = global.Levels.tiers();
+    var now = null;
+    tiers.forEach(function (t) { if (t.id === current) now = t; });
+
+    return h('div', { class: 'tier-bar' }, [
+      h('span', { class: 'tier-label', text: 'DIFFICULTY' }),
+      h('div', { class: 'tier-row' }, tiers.map(function (t) {
+        return h('button', {
+          class: 'tier-btn' + (t.id === current ? ' on' : ''),
+          text: t.name,
+          on: {
+            click: function () {
+              if (t.id === current) return;
+              tap();
+              setTier(t.id);
+              onPick(t.id);
+            },
+          },
+        });
+      })),
+      h('span', { class: 'tier-blurb', text: now ? now.blurb : '' }),
+    ]);
+  }
+
   function renderBrief(levelId) {
     var host = el('screen-brief');
     clear(host);
-    var l = global.Levels.byId(levelId);
+    var tierId = currentTier();
+    // at() rather than byId(): starting bandwidth is a tier dial, so a briefing
+    // that quoted normal's budget on an insane run would be lying to the player
+    // about the only number they can plan against.
+    var l = global.Levels.at(levelId, tierId);
     if (!l) { show('map'); return; }
     run.levelId = l.id;
 
@@ -241,7 +363,13 @@
 
     host.appendChild(topbar(l.code, function () { tap(); show('map'); }, [
       h('span', { class: 'pill', text: l.env }),
+      h('span', { class: 'pill tier-pill', text: tierName(tierId) }),
     ]));
+
+    host.appendChild(tierBar(tierId, function (id) {
+      setTier(id);
+      renderBrief(levelId);
+    }));
 
     var chat = h('div', { class: 'chat' }, global.Story.opening(l.id).map(function (m) {
       return h('div', { class: 'chat-line' }, [
@@ -260,16 +388,21 @@
       ]);
     }));
 
+    // The act narrates itself on the ticket that opens it. All twelve act
+    // openings were written when the generator landed and rendered nowhere at
+    // all, so the campaign read as a list of incidents with no arc.
+    var premise = global.Story.narration ? global.Story.narration(l.id, 'premise') : null;
+    var left = [h('h1', { class: 'brief-name', text: l.name })];
+    if (premise) left.push(h('p', { class: 'brief-narration', text: premise }));
+    left.push(h('p', { class: 'brief-text', text: l.brief }));
+    left.push(h('div', { class: 'tip' }, [
+      h('span', { class: 'tip-label', text: 'ON CALL TIP' }),
+      h('span', { class: 'tip-text', text: l.tip }),
+    ]));
+    left.push(chat);
+
     host.appendChild(h('div', { class: 'brief-body' }, [
-      h('div', { class: 'brief-left' }, [
-        h('h1', { class: 'brief-name', text: l.name }),
-        h('p', { class: 'brief-text', text: l.brief }),
-        h('div', { class: 'tip' }, [
-          h('span', { class: 'tip-label', text: 'ON CALL TIP' }),
-          h('span', { class: 'tip-text', text: l.tip }),
-        ]),
-        chat,
-      ]),
+      h('div', { class: 'brief-left' }, left),
       h('div', { class: 'brief-right' }, [
         h('div', { class: 'stat-row' }, [
           stat('STARTING B/W', String(l.bandwidth)),
@@ -299,8 +432,9 @@
 
   function startBattle(levelId) {
     applyAccessibility();
-    var level = global.Levels.byId(levelId);
-    global.Engine.start(levelId);
+    var tierId = currentTier();
+    var level = global.Levels.at(levelId, tierId);
+    global.Engine.start(levelId, tierId);
     global.Story.reset();
 
     var banner = el('battle-banner');
@@ -322,6 +456,9 @@
         showBanner(banner, 'ZERO-DAY');
         lines(global.Story.reaction('bossIncoming'));
       },
+      onBossHurt: function () {
+        lines(global.Story.reaction('bossHurt'));
+      },
       onWin: function (result) {
         haptic(60);
         if (global.Sfx) global.Sfx.victory();
@@ -338,8 +475,11 @@
 
     global.Engine.run();
 
-    if (global.Store.get('music') && global.Music) {
-      if (!global.Music.isRunning()) global.Music.start();
+    // The act's own piece, then hand the mood machine its starting values. Order
+    // matters: playTrack resets the arrangement, so setting the mood first would
+    // have it overwritten by the next scheduled bar.
+    playMusic(trackForLevel(levelId), false);
+    if (global.Music) {
       global.Music.setMood('calm');
       global.Music.setIntensity(0.15);
     }
@@ -383,22 +523,55 @@
     // player is most likely to quit, so that is the worst possible time to
     // interrupt them with an ad.
     var clears = global.Profile.load().clears;
-    if (won && clears > 1 && clears % 3 === 0 && global.Ads) global.Ads.showInterstitial();
-    show('result', {
-      result: result, won: won, record: record,
-      hasNext: result.levelId < global.Levels.count(),
+
+    var reveal = function () {
+      show('result', {
+        result: result, won: won, record: record,
+        hasNext: result.levelId < global.Levels.count(),
+      });
+    };
+
+    // The interstitial is awaited before the results are revealed. Showing both
+    // at once put the payout screen underneath an ad the player had not
+    // dismissed, so the stat line, the doubled-payout offer and the next-ticket
+    // button were all being tapped blind. A failure to show still reveals the
+    // result - an ad must never be able to strand a player on the battle screen.
+    if (won && clears > 1 && clears % 3 === 0 && global.Ads) {
+      global.Ads.showInterstitial().then(reveal, reveal);
+      return;
+    }
+    reveal();
+  }
+
+  /**
+   * Pay the player a second time for a win, in exchange for a rewarded ad.
+   *
+   * Granted through the same Profile.addCoins path as the first payout, so the
+   * doubled credits live inside the signed save and survive a reload. An ad
+   * payout a player can lose by closing the app is worse than no payout.
+   */
+  function doublePayout(data) {
+    if (!global.Ads || typeof global.Ads.showRewarded !== 'function') return;
+    tap();
+    global.Ads.showRewarded().then(function (ok) {
+      // Dismissed, no fill, or no ad available: nothing is granted and the
+      // offer stays on screen so the player can try again later.
+      if (!ok) return;
+      global.Profile.addCoins(data.record.credits);
+      data.record.doubled = true;
+      renderResult(data);
     });
   }
 
-  function renderResult(data) {
-    var host = el('screen-result');
+  function renderResult(data) {    var host = el('screen-result');
     clear(host);
     var r = data.result;
     var level = global.Levels.byId(r.levelId);
 
     host.appendChild(h('div', { class: 'result-body' }, [
       h('h1', { class: 'result-title ' + (data.won ? 'ok' : 'bad'), text: data.won ? 'TICKET CLOSED' : 'PROD IS DOWN' }),
-      h('p', { class: 'result-sub', text: level.code + ' · ' + level.name }),
+      h('p', { class: 'result-sub', text: level.code + ' · ' + level.name +
+        (r.tier && r.tier !== 'normal' ? '  ·  ' + tierName(r.tier) : '') }),
 
       data.won ? starsFor(data.record.stars) : h('div', { class: 'stars' }),
 
@@ -413,8 +586,34 @@
 
       h('p', { class: 'debrief', text: global.Story.debrief(r) }),
 
+      // The act's closing beat, on the ticket that ends it. Twelve of these were
+      // written and never shown anywhere; a win that closes an act should say so.
+      data.won && global.Story.narration && global.Story.narration(r.levelId, 'closing')
+        ? h('p', { class: 'act-closing', text: global.Story.narration(r.levelId, 'closing') })
+        : null,
+
       data.won && data.record.credits
         ? h('p', { class: 'payout', text: '+' + data.record.credits + ' credits  ·  ★' + data.record.stars })
+        : null,
+
+      // The one rewarded placement in the game.
+      //
+      // Watching an ad to double a payout is voluntary, it lands at the moment a
+      // player is happiest, and it is the only place a rewarded ad makes sense in
+      // a tower defence game - there is no revive to sell and interrupting a wave
+      // would be worse than the revenue. Owners of 'remove ads' never see it, and
+      // neither does anyone when the kill switch is off.
+      data.won && data.record.credits && !data.record.doubled &&
+      global.Ads && !global.Ads.adsRemoved() && global.Ads.adsEnabled()
+        ? h('button', {
+            class: 'btn rewarded',
+            text: '▶ WATCH TO DOUBLE  +' + data.record.credits,
+            on: { click: function () { doublePayout(data); } },
+          })
+        : null,
+
+      data.record.doubled
+        ? h('p', { class: 'payout doubled', text: 'payout doubled — thanks for watching' })
         : null,
       data.record.unlocked
         ? h('p', { class: 'unlock', text: 'NEW TICKET UNLOCKED — ' + global.Levels.byId(data.record.unlocked).code })
@@ -790,6 +989,31 @@
     body.appendChild(slider('sfxVolume', 'Effects volume'));
     body.appendChild(toggle('music', 'Music'));
     body.appendChild(slider('musicVolume', 'Music volume'));
+
+    // The track registry. Without this the twenty-one generated pieces in
+    // tracks.js are unreachable: the game picks an act's bed for you and there is
+    // otherwise no way to hear the rest. Each button auditions immediately,
+    // because a track name tells you nothing about what it sounds like.
+    body.appendChild(h('section', { class: 'track-group' }, [
+      h('h2', { class: 'env-title', text: 'TRACK' }),
+      h('div', { class: 'track-list' }, global.Music.tracks().map(function (t) {
+        var on = hubTrack() === t.id;
+        return h('button', {
+          class: 'track-btn' + (on ? ' on' : ''),
+          on: {
+            click: function () {
+              tap();
+              global.Store.set('musicTrack', t.id);
+              playMusic(t.id, false);
+              renderSettings();
+            },
+          },
+        }, [
+          h('span', { class: 'track-name', text: t.name }),
+          h('span', { class: 'track-vibe', text: t.vibe || '' }),
+        ]);
+      })),
+    ]));
 
     body.appendChild(h('h3', { class: 'section-title', text: 'ACCESSIBILITY' }));
     body.appendChild(toggle('reduceMotion', 'Reduce motion (no screen shake)'));

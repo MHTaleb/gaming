@@ -83,6 +83,70 @@
     ],
   };
 
+  /**
+   * The other nineteen tickets of an act.
+   *
+   * `OPENINGS` is one beat per act, and the opening used to be looked up by
+   * *ticket number* - so tickets 13 to 240 all replayed act one's dialogue,
+   * "put a Firewall on a corner and go get coffee", two hundred and twenty-eight
+   * times. Keying by act fixes the mismatch; this table is what stops the fix
+   * being "the same three lines, twenty times". One exchange, deliberately: a
+   * ticket is ninety seconds and the channel is not the game.
+   */
+  var MIDDLE = {
+    1: [
+      ['dave', 'is it supposed to be this many'],
+      ['priya', 'Corner tile. Two stretches of road. One tower. That is the trade.'],
+    ],
+    2: [
+      ['ops', 'Retry volume unchanged.'],
+      ['priya', 'Staging forgives a bad tower. Production will not. Learn it here.'],
+    ],
+    3: [
+      ['dave', 'the status page is going orange'],
+      ['priya', 'Then spend. Money in the bank is not defence.'],
+    ],
+    4: [
+      ['priya', 'Same three tickets, same road, same time of day. That is not a coincidence.'],
+      ['ops', 'Pattern detected in incident timestamps.'],
+    ],
+    5: [
+      ['priya', 'They are probing the edge. Cheap towers, wide coverage.'],
+      ['dave', 'wide is good though right'],
+      ['priya', 'Wide is fine until something armoured arrives.'],
+    ],
+    6: [
+      ['ops', 'Transaction latency climbing.'],
+      ['priya', 'Data does not come back. Whatever leaks here is gone.'],
+    ],
+    7: [
+      ['priya', 'This is the spine. Every wall you built defends the outside of it.'],
+      ['dave', 'so we defend the thing we already defended'],
+      ['priya', 'Welcome to infrastructure.'],
+    ],
+    8: [
+      ['ops', 'Build artifacts are being rewritten at source.'],
+      ['priya', 'You cannot out-build this. Slow it down and kill it in the last third.'],
+    ],
+    9: [
+      ['priya', 'Nothing on the dashboard. Everything on the wire. I hate this act.'],
+      ['dave', 'is that allowed'],
+    ],
+    10: [
+      ['ops', 'Inbound message on the incident channel. From outside.'],
+      ['priya', 'Do not answer it.'],
+    ],
+    11: [
+      ['priya', 'Everything at once, on purpose. You are meant to lose something.'],
+      ['dave', 'which one'],
+      ['priya', 'Choose. That is the ticket.'],
+    ],
+    12: [
+      ['ops', 'No signature. No pattern. No precedent.'],
+      ['priya', 'Last one. Whatever you have learned, use all of it.'],
+    ],
+  };
+
   var REACTIONS = {
     firstLeak: [
       ['ops', 'Uptime is falling.'],
@@ -126,21 +190,63 @@
     return REACTIONS[key] || null;
   }
 
-  function opening(levelId) {
-    var lines = OPENINGS[levelId] || OPENINGS[1];
+  /** Which act a ticket belongs to, with a fallback for a missing Levels. */
+  function actNumber(levelId) {
+    var a = actFor(levelId);
+    return a && a.n ? a.n : levelId;
+  }
+
+  /** The act object for a ticket, or null if Levels is not loaded. */
+  function actFor(levelId) {
+    var L = global.Levels;
+    if (!L || !L.actOf) return null;
+    return L.actOf(levelId);
+  }
+
+  /** Turn a table of [cast, text] pairs into channel lines. */
+  function say(lines) {
     return lines.map(function (l) {
       var c = CAST[l[0]] || CAST.ops;
       return { who: c.who, name: c.name, role: c.role, colour: c.colour, text: l[1] };
     });
   }
 
+  /**
+   * The channel when a ticket starts.
+   *
+   * The act's opening beat on its first ticket, and a shorter exchange for the
+   * rest of the act - so a player hears the act introduce itself once and then
+   * keep talking, instead of hearing the same three lines twenty times.
+   */
+  function opening(levelId) {
+    var act = actNumber(levelId);
+    var a = actFor(levelId);
+    var isFirst = a ? levelId === a.first : true;
+    var lines = isFirst
+      ? (OPENINGS[act] || OPENINGS[1])
+      : (MIDDLE[act] || OPENINGS[act] || OPENINGS[1]);
+    return say(lines);
+  }
+
+  /**
+   * The act's own narration - and the only place it is ever read.
+   *
+   * `premise` and `closing` have been on every act since the generator landed and
+   * were rendered nowhere at all; the offline balance report was their only
+   * reader. A campaign with twelve written act openings that the player never
+   * sees is a campaign with no story, whatever the file says.
+   */
+  function narration(levelId, which) {
+    var a = actFor(levelId);
+    if (!a) return null;
+    if (which === 'closing') return levelId === a.last ? a.closing : null;
+    return levelId === a.first ? a.premise : null;
+  }
+
   function reaction(key) {
     var lines = once(key);
     if (!lines) return null;
-    return lines.map(function (l) {
-      var c = CAST[l[0]] || CAST.ops;
-      return { who: c.who, name: c.name, role: c.role, colour: c.colour, text: l[1] };
-    });
+    return say(lines);
   }
 
   /** A post-mortem note for the results screen. */
@@ -157,6 +263,8 @@
     opening: opening,
     reaction: reaction,
     debrief: debrief,
+    narration: narration,
+    actNumber: actNumber,
     reset: reset,
     CAST: CAST,
   };

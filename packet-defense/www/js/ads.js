@@ -86,11 +86,36 @@
 
   /* ================= native backend ================= */
 
+  /**
+   * Ask for consent before initialising the ad SDK.
+   *
+   * AdMob will not serve personalised ads to users in the EEA or the UK without a
+   * Google-certified consent flow, so without this the revenue from an entire
+   * region is lost rather than reduced - and it is a Play policy requirement for
+   * apps that show ads to those users. Best-effort by design: a plugin build
+   * without the consent API, or a device outside the EEA, resolves without
+   * showing anything.
+   */
+  function requestConsent(AdMob) {
+    if (typeof AdMob.requestConsentInfo !== 'function') return Promise.resolve();
+    return AdMob.requestConsentInfo().then(function (info) {
+      var status = String((info && (info.status || info.consentStatus)) || '').toUpperCase();
+      // Only prompt when the SDK says a decision is still needed.
+      if (status && status.indexOf('REQUIRED') === -1 && status.indexOf('UNKNOWN') === -1) return null;
+      if (typeof AdMob.showConsentForm !== 'function') return null;
+      return AdMob.showConsentForm();
+    }).catch(function () {
+      /* no consent API on this build, or nothing to ask */
+    });
+  }
+
   var native = {
     init: function () {
       var AdMob = admobPlugin();
       if (!AdMob) return Promise.resolve(false);
-      return AdMob.initialize({ initializeForTesting: false }).then(function () {
+      return requestConsent(AdMob).then(function () {
+        return AdMob.initialize({ initializeForTesting: false });
+      }).then(function () {
         return true;
       });
     },
@@ -148,10 +173,22 @@
           }
         }
 
-        AdMob.addListener('onRewarded', function () {
-          finish(true);
-        }).then(function (h) {
-          earnedHandle = h;
+        // The reward event is 'onRewardedVideoAdReward' in @capacitor-community/admob
+        // v7. This used to listen for 'onRewarded', which is not an event the
+        // plugin ever emits, so the handler could never fire: a player could sit
+        // through an entire rewarded ad and the promise would resolve false from
+        // the dismiss listener instead. Every rewarded view earned nothing.
+        //
+        // Both names are registered because the wrong one is inert and costs
+        // nothing, and a plugin minor version is not worth breaking revenue over.
+        ['onRewardedVideoAdReward', 'onRewarded'].forEach(function (eventName) {
+          AdMob.addListener(eventName, function () {
+            finish(true);
+          }).then(function (h) {
+            if (!earnedHandle) earnedHandle = h;
+          }).catch(function () {
+            /* unknown event name on this plugin version */
+          });
         });
 
         AdMob.addListener('onRewardVideoAdDismissed', function () {
@@ -320,9 +357,23 @@
 
   var backend = isNative() && admobPlugin() ? native : mock;
 
+  /**
+   * The global ad kill switch.
+   *
+   * `config.ads.enabled` has existed since the monetisation landed and was read
+   * by nothing, so flipping it did nothing whatsoever - there was no way to run
+   * the game without ads short of shipping a different build. Absent means
+   * enabled, so an older config.json cannot silently switch revenue off.
+   */
+  function adsEnabled() {
+    var ads = (global.NeonConfig && global.NeonConfig.ads) || {};
+    return ads.enabled !== false;
+  }
+
   global.Ads = {
     isNative: isNative(),
     toast: toast,
+    adsEnabled: adsEnabled,
     init: function () {
       return backend.init().then(function (ok) {
         state.ready = ok;
@@ -330,14 +381,14 @@
       });
     },
     showBanner: function () {
-      if (adsRemoved()) return Promise.resolve();
+      if (!adsEnabled() || adsRemoved()) return Promise.resolve();
       return backend.showBanner();
     },
     hideBanner: function () {
       return backend.hideBanner();
     },
     showInterstitial: function () {
-      if (adsRemoved()) return Promise.resolve();
+      if (!adsEnabled() || adsRemoved()) return Promise.resolve();
       if (state.busy) return Promise.resolve();
       state.busy = true;
       return backend.showInterstitial().then(
@@ -350,6 +401,7 @@
       );
     },
     showRewarded: function () {
+      if (!adsEnabled()) return Promise.resolve(false);
       if (state.busy) return Promise.resolve(false);
       state.busy = true;
       return backend.showRewarded().then(

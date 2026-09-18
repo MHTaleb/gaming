@@ -89,13 +89,18 @@
   /**
    * Which types exist at all, in the order the palette shows them.
    *
-   * The starting four are listed here rather than read from Towers so that the
+   * The starting five are listed here rather than read from Towers so that the
    * save (unlocked or not) and the combat stats (damage, cost) stay in separate
    * files. A tower that is missing from here is treated as always available,
    * which fails open: a typo in this table cannot lock a player out of a tower
    * they can see in the shop.
+   *
+   * Five plus the two unlocks is exactly the seven the palette holds. Adding a
+   * sixth starting type pushes that total to eight, at which point engine.js's
+   * PALETTE_MAX starts trimming - so a new type needs a palette row before it
+   * needs a price. See docs/TOWERS.md.
    */
-  var FREE = ['firewall', 'waf', 'limiter', 'av'];
+  var FREE = ['firewall', 'waf', 'limiter', 'av', 'cdn'];
 
   function profile() { return global.Profile; }
 

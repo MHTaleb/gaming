@@ -78,14 +78,31 @@
       bonus: { code: 0.8, injection: 1.0, malware: 1.7 },
       upgrade: { cost: 110, damage: 1.5, range: 1.07 },
     },
+    cdn: {
+      id: 'cdn',
+      name: 'CDN Edge',
+      short: 'CDN',
+      blurb: 'Very fast, very short. Out-damages a Firewall on swarms only if the road comes back.',
+      cost: 75,
+      range: 76,
+      damage: 3,
+      rate: 0.16,
+      shot: 'tracer',
+      accent: '#38bdf8',
+      bonus: { code: 1.3, injection: 0.7, malware: 1.0 },
+      // Rate is deliberately not upgradable anywhere in this file: a tower whose
+      // fire rate can be bought eventually replaces every other damage tower, and
+      // the whole design is that each one has a wave it is wrong for.
+      upgrade: { cost: 60, damage: 1.35, range: 1.08 },
+    },
 
     /*
-     * The two researched types.
+     * The researched types.
      *
-     * Both are deliberately *not* damage dealers, because a new tower that just
-     * out-damages the old ones is not new content - it is a reason the old ones
-     * were a waste of credits. These answer two problems the starting four
-     * cannot touch: identifying what is coming, and getting integrity back.
+     * Both are deliberately *not* straight damage dealers, because a new tower
+     * that just out-damages the old ones is not new content - it is a reason the
+     * old ones were a waste of credits. They answer two problems the starting
+     * five cannot touch: identifying what is coming, and getting integrity back.
      */
     honeypot: {
       id: 'honeypot',
@@ -119,14 +136,40 @@
       bonus: {},
       upgrade: { cost: 90, damage: 1, range: 1, healMul: 1.35 },
     },
+    quarantine: {
+      id: 'quarantine',
+      name: 'Quarantine',
+      short: 'Quarantine',
+      blurb: 'Slow, enormous splash. Built for malware that arrives in a group.',
+      cost: 210,
+      range: 118,
+      damage: 38,
+      rate: 1.9,
+      splash: 34,
+      shot: 'shell',
+      accent: '#fb7185',
+      bonus: { code: 0.75, injection: 1.1, malware: 2.0 },
+      // Damage first: this is the answer to a pack of Ransomware, and its job is
+      // to delete that pack rather than to be efficient about the stragglers.
+      upgrade: { cost: 150, damage: 1.5, range: 1.06 },
+    },
   };
 
   /**
-   * Palette order. The researched types are last on purpose: a locked slot at
-   * the end of the row advertises the BASE screen without pushing the four
-   * towers a new player actually has off toward the middle.
+   * Palette order, and the reason it is exactly seven long.
+   *
+   * Starting types first, researched types last: a locked slot at the end of the
+   * row advertises the BASE screen without pushing the towers a new player
+   * actually has off toward the middle.
+   *
+   * PALETTE_MAX (engine.js) is seven, because that is what the HUD strip holds at
+   * the narrowest world width. `quarantine` is defined above but is NOT in this
+   * list and NOT purchasable: it is the next type in the queue and it needs the
+   * palette to wrap onto a second row before it can be reached. Shipping it as
+   * payable content today would sell a tower that engine.js then trims out of the
+   * palette, which is worse than not selling it. See docs/TOWERS.md.
    */
-  var ORDER = ['firewall', 'waf', 'limiter', 'av', 'honeypot', 'patch'];
+  var ORDER = ['firewall', 'waf', 'limiter', 'av', 'cdn', 'honeypot', 'patch'];
   var MAX_LEVEL = 3;
 
   function def(id) { return DEFS[id]; }

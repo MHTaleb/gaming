@@ -36,6 +36,10 @@
  *   node tools/balance.js --level 240    one ticket, wave by wave
  *   node tools/balance.js --json         machine-readable, for diffing a change
  *   node tools/balance.js --check        exit non-zero if an invariant fails
+ *   node tools/balance.js --tier insane  play a difficulty tier (default normal)
+ *
+ * Every tier must clear with the bot, or it is not a difficulty, it is a wall.
+ * Run each of the five before shipping a change to the curve.
  */
 'use strict';
 
@@ -180,10 +184,17 @@ function chooseTower(W, level, waveIndex, affordable) {
   const D = W.Threats.DEFS;
   const T = W.Towers.DEFS;
 
-  // The boss is announced on the briefing, so a player can plan for it from wave
-  // one. Three waves of warning is roughly what it takes to afford and place two
-  // more towers, which is why it is three.
-  if (level.boss && waveIndex >= level.waves.length - 4) {
+  // The boss is announced on the briefing, so a player who reads it starts
+  // paying the Antivirus bill on wave one.
+  //
+  // This used to wait until the last four waves, on the theory that three waves
+  // is enough warning to afford two more towers. It is not, because by then the
+  // budget has already gone on Firewalls for the trash waves: the report showed
+  // every one of the twelve finales lost with 108 of 109 kills, the whole
+  // integrity bar gone to a single Zero-Day, and ten to forty bandwidth left
+  // unspent. The bot now buys its answer first and fills in the cheap towers
+  // afterwards, which is what the briefing screen tells the player to do.
+  if (level.boss) {
     const avCount = W.Engine.state().towers.filter((t) => t.type === 'av').length;
     if (avCount < 4) return 'av';
   }
@@ -235,10 +246,13 @@ function playTicket(W, id, opts = {}) {
   const Engine = W.Engine;
   const Towers = W.Towers;
   const Map = W.PDMap;
-  const level = W.Levels.byId(id);
+  const tier = opts.tier || 'normal';
+  // at() rather than byId(): that is what attaches the difficulty to the level
+  // object, which is what the engine's per-wave tuning reads.
+  const level = W.Levels.at(id, tier);
   if (!level) return { id, error: 'no such ticket' };
 
-  Engine.start(id);
+  Engine.start(id, tier);
   const state = Engine.state();
   const samples = roadSamples(level.waypoints || W.Levels.paths()[level.path], Map);
   const REACH = W.Towers.DEFS.firewall.range;
@@ -382,18 +396,28 @@ function main() {
   const total = W.Levels.count();
   const all = W.Levels.all();
 
+  const TIER = val('--tier') || 'normal';
+
   /* --- invariants ------------------------------------------------- */
 
   const problems = [];
+
+  /*
+   * Which reading of the campaign to assert the curve against. Invariants 2 and
+   * 3 are properties of the generated data and are tier-independent; the curve
+   * (1) is not, because a tier multiplies health, speed and armour, and power()
+   * is not linear in those - so a tier can be flat where normal is rising.
+   */
+  const read = TIER === 'normal' ? all : all.map((l) => W.Levels.at(l.id, TIER));
 
   // 1. Difficulty must rise. A campaign where ticket 200 is easier than ticket
   //    150 is not a curve, and it is the single easiest thing to break by
   //    changing one dial.
   let flat = 0;
-  for (let i = 1; i < all.length; i++) {
-    if (all[i].power <= all[i - 1].power) {
+  for (let i = 1; i < read.length; i++) {
+    if (read[i].power <= read[i - 1].power) {
       flat++;
-      if (flat <= 6) problems.push(`power does not rise: ${all[i - 1].id} -> ${all[i].id} (${all[i - 1].power} -> ${all[i].power})`);
+      if (flat <= 6) problems.push(`power does not rise: ${read[i - 1].id} -> ${read[i].id} (${read[i - 1].power} -> ${read[i].power})`);
     }
   }
   if (flat > 6) problems.push(`...and ${flat - 6} more flat or falling steps`);
@@ -402,7 +426,7 @@ function main() {
   //    reference a threat that does not exist, or a budget of zero.
   const paths = W.Levels.paths();
   const D = W.Threats.DEFS;
-  for (const lv of all) {
+  for (const lv of read) {
     if (!lv.waves.length) problems.push(`ticket ${lv.id} has no waves`);
     if (!lv.waypoints && !paths[lv.path]) problems.push(`ticket ${lv.id} road "${lv.path}" is missing`);
     if (!(lv.bandwidth > 0)) problems.push(`ticket ${lv.id} has no bandwidth`);
@@ -434,7 +458,7 @@ function main() {
   const results = [];
   const t0 = Date.now();
   for (const id of ids) {
-    results.push(playTicket(W, id, { trace: !!single, maxSeconds: 1500 }));
+    results.push(playTicket(W, id, { trace: !!single, maxSeconds: 1500, tier: TIER }));
   }
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
 
@@ -442,7 +466,7 @@ function main() {
 
   if (single) {
     const r = results[0];
-    const lv = W.Levels.byId(r.id);
+    const lv = W.Levels.at(r.id, TIER);
     console.log(`\nTicket ${r.id}  ${lv.code}  ${lv.name}   [act ${lv.act} ${lv.actName}]`);
     console.log(`road ${lv.path} (${lv.roadFamily}, ${lv.roadLength} tiles, ${lv.roadTwin} twin, ${lv.roadSpots} spots)`);
     console.log(`bandwidth ${lv.bandwidth}  waves ${lv.waves.length}  power ${lv.power}`);
@@ -469,7 +493,8 @@ function main() {
   /* --- per-act table ---------------------------------------------- */
 
   const acts = W.Levels.acts();
-  console.log(`\npacket defense - campaign balance   ${results.length} tickets in ${elapsed}s\n`);
+  const tierTag = TIER === 'normal' ? '' : `   [tier ${TIER}]`;
+  console.log(`\npacket defense - campaign balance   ${results.length} tickets in ${elapsed}s${tierTag}\n`);
   console.log('act  name                 tickets  clear   avg uptime  avg leftover  med power  hardest');
   console.log('-'.repeat(94));
 

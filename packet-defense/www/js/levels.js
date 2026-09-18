@@ -61,7 +61,11 @@
   function tuning(level) {
     var c = campaign();
     if (!c || !level) return { hp: 1, speed: 1, armour: 0, gap: 1, traits: [] };
-    var t = c.curve(level.id);
+    // The tier rides on the level object itself rather than being a second
+    // argument, so every existing call site keeps working and no caller has to
+    // remember to thread it through. A level with no tier is normal, which is
+    // the campaign as it has always been.
+    var t = c.curve(level.id, level.tier);
     var traits = (t.traits || []).slice();
     // `hardened` is the trait the player can see, but the armour number is what
     // actually applies, and it arrives through a different field. Deriving the
@@ -124,6 +128,34 @@
     return acts()[c.act(id).n - 1] || null;
   }
 
+  /* ------------------------------------------------------------------ *
+   * Difficulty tiers
+   * ------------------------------------------------------------------ */
+
+  /** The five difficulty readings, easiest first. */
+  function tiers() {
+    var c = campaign();
+    return c ? c.tiers() : [];
+  }
+
+  /** One tier's definition, so a screen can label and describe it. */
+  function tier(tierId) {
+    var c = campaign();
+    return c ? c.tier(tierId) : null;
+  }
+
+  /**
+   * The ticket as it should be played at a difficulty.
+   *
+   * The only way to get a level object carrying a tier, which is what makes
+   * `tuning(level)` above do the right thing without a second parameter
+   * anywhere in the engine.
+   */
+  function at(id, tierId) {
+    var c = campaign();
+    return c ? c.variant(id, tierId) : byId(id);
+  }
+
   global.Levels = {
     all: all,
     byId: byId,
@@ -135,6 +167,9 @@
     tuning: tuning,
     acts: acts,
     actOf: actOf,
+    tiers: tiers,
+    tier: tier,
+    at: at,
     /** Alias, because callers ask for "power" when they mean this number. */
     power: difficulty,
     PER_ACT: (global.Campaign && global.Campaign.PER_ACT) || 20,

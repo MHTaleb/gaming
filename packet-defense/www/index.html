@@ -77,6 +77,16 @@
     <main id="results" class="results"></main>
   </section>
 
+  <!--
+    Mock ad surface. The web/dev backend in ads.js renders a placeholder
+    full-screen ad into this element so the whole ad flow is testable in a
+    browser. The element was missing, so mock.overlay() short-circuited: an
+    interstitial resolved instantly and a rewarded ad *always* returned false,
+    which also meant the rewarded path could not be tested anywhere except on a
+    real device.
+  -->
+  <div id="ad-layer" class="hidden" aria-hidden="true"></div>
+
 </div>
 
 <script src="js/config.js"></script>
