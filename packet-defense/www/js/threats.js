@@ -266,7 +266,11 @@
         var child = spawn(game, d.splits.into, {
           dist: t.dist - i * 9,
           scale: 0.75,
-          seed: Math.random(),
+          // Seeded, not Math.random(). This only feeds a visual wobble phase,
+          // but a replay has to draw the same frames as the original run and an
+          // unseeded call here was the one thing standing between this game and
+          // bit-exact replays. See makeRand in engine.js.
+          seed: game.rand(),
           hpScale: 1,
           bountyMul: d.splits.bountyMul === undefined ? 1 : d.splits.bountyMul,
         });
@@ -370,7 +374,9 @@
         } else if (th.hurtAt !== null && game.time - th.hurtAt > REGEN_DELAY && th.hp < th.maxHp) {
           th.hp = Math.min(th.maxHp, th.hp + th.maxHp * REGEN_RATE * dt);
           // A visible tick, or the player reads a healing enemy as a bug.
-          if (Math.random() < dt * 6) {
+          // Seeded for the same reason as the split above: cosmetic, but a
+          // replay must reproduce it frame for frame.
+          if (game.rand() < dt * 6) {
             game.effects.push({
               kind: 'heal', x: th.x, y: th.y, r: th.radius + 6,
               life: 0.35, max: 0.35, accent: '#4ade80',

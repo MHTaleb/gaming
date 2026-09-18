@@ -40,6 +40,9 @@
  *   node tools/balance.js --minimal --levels 1-40 --tier insane
  *                                        smallest winning tower count per ticket,
  *                                        and what that set cost against the budget
+ *   node tools/balance.js --replay-check --levels 1-5
+ *                                        record a run and replay it, asserting the
+ *                                        outcome is bit-identical
  *
  * Every tier must clear with the bot, or it is not a difficulty, it is a wall.
  * Run each of the five before shipping a change to the curve.
@@ -462,6 +465,50 @@ function minimalTowers(W, id, tier, ceiling) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Replay
+ * ------------------------------------------------------------------ */
+
+/**
+ * Does replaying a recorded run reproduce it exactly?
+ *
+ * This is the property everything else rests on. Replays, ghost racing, daily
+ * seeds and any future co-op all assume that a battle is a pure function of
+ * (ticket, tier, actions), and "the simulation is deterministic" is the kind of
+ * claim that is true right up until somebody adds one Math.random() call in a
+ * hot loop. Two such calls had already crept into threats.js.
+ *
+ * So it is asserted rather than believed: play a ticket with the bot and keep
+ * its action log, then rebuild the same battle and apply only the recorded
+ * input, with no bot, and compare the outcomes exactly.
+ */
+function replayCheck(W, id, tier) {
+  const Engine = W.Engine;
+
+  const first = playTicket(W, id, { tier, maxSeconds: 1500 });
+  const log = Engine.actions();
+
+  Engine.replayOf(id, tier, log);
+  const state = Engine.state();
+  const dt = 1 / 60;
+  let t = 0;
+  while (state.status !== 'won' && state.status !== 'lost' && t < 1500) {
+    Engine.step(dt);
+    t += dt;
+  }
+  const second = Engine.result();
+
+  const fields = ['uptime', 'leaks', 'kills', 'towers'];
+  const diffs = fields.filter((f) => first[f] !== second[f]);
+  const won = state.status === 'won';
+  if (won !== first.won) diffs.push('won');
+
+  return {
+    id, actions: log.length, same: diffs.length === 0, diffs,
+    first, second, won,
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Report
  * ------------------------------------------------------------------ */
 
@@ -576,6 +623,30 @@ function main() {
       `mean slack ${Math.round(meanSlack * 100)}%\n`
     );
     return finish(problems, has('--check'));
+  }
+
+  /* --- replay check ----------------------------------------------- */
+  if (has('--replay-check')) {
+    console.log(`\nreplay determinism   tier ${TIER}\n`);
+    console.log('ticket  actions  outcome        kills  leaks  uptime  result');
+    console.log('-'.repeat(70));
+    let bad = 0;
+    for (const id of ids) {
+      const r = replayCheck(W, id, TIER);
+      if (!r.same) bad++;
+      console.log(
+        String(r.id).padStart(5) + '  ' + String(r.actions).padStart(7) + '  ' +
+        (r.first.won ? 'won ' : 'lost') + ' -> ' + (r.won ? 'won ' : 'lost') + '  ' +
+        String(r.second.kills).padStart(5) + '  ' + String(r.second.leaks).padStart(5) + '  ' +
+        (r.second.uptime + '%').padStart(6) + '  ' +
+        (r.same ? 'identical' : 'DIVERGED: ' + r.diffs.join(','))
+      );
+    }
+    console.log('-'.repeat(70));
+    console.log(bad === 0
+      ? `${ids.length}/${ids.length} replays reproduced exactly. A run is a pure function of (ticket, tier, actions).\n`
+      : `${bad}/${ids.length} DIVERGED - determinism is broken, see the diffs above.\n`);
+    return bad === 0 ? finish(problems, has('--check')) : 1;
   }
 
   const results = [];

@@ -299,6 +299,18 @@
     return global.Base.towerUnlocked(type);
   }
 
+  /**
+   * Log a player action for the replay log.
+   *
+   * Recording lives on the state rather than in the UI on purpose: the harness
+   * bot and a human both go through place/upgrade/sell, so one hook captures
+   * both, and a replay can never drift from what the rules actually allowed.
+   * A no-op when the run is not being recorded, or is itself a replay.
+   */
+  function log(game, entry) {
+    if (game && game.record) game.record(entry);
+  }
+
   function place(game, c, r, type, map) {
     var check = canPlace(game, c, r, type, map);
     if (!check.ok) return check;
@@ -315,6 +327,7 @@
       disabledUntil: 0, shots: 0, damageDone: 0, invested: price,
     };
     game.towers.push(tower);
+    log(game, { t: 'build', c: c, r: r, type: type });
     return { ok: true, tower: tower };
   }
 
@@ -325,6 +338,7 @@
     game.bandwidth -= price;
     tower.level += 1;
     tower.invested += price;
+    log(game, { t: 'upgrade', c: tower.c, r: tower.r });
     return { ok: true, cost: price };
   }
 
@@ -333,6 +347,7 @@
     game.bandwidth += refund;
     var i = game.towers.indexOf(tower);
     if (i >= 0) game.towers.splice(i, 1);
+    log(game, { t: 'sell', c: tower.c, r: tower.r });
     return { ok: true, refund: refund };
   }
 

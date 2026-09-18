@@ -196,6 +196,86 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Determinism, the action log, and replay
+   *
+   * A run is a pure function of (ticket, tier, actions). That is the basis of
+   * replay, ghost racing, daily seeds and any future co-op, and it very nearly
+   * held already: the campaign is a pure function of the ticket number and the
+   * spawner is seeded, but two Math.random() calls had crept into threats.js.
+   * Both were cosmetic - a wobble phase and a healing spark - so outcomes were
+   * stable, but a replay would not draw the same frames, and the next person to
+   * add a random call would have had no way to notice they had just broken the
+   * property the whole feature depends on.
+   * ------------------------------------------------------------------ */
+
+  /** A seeded stream, so the simulation has no unseeded randomness left. */
+  function makeRand(seed) {
+    var a = (seed >>> 0) || 1;
+    return function () {
+      a = (a + 0x6d2b79f5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /** Stable seed for a ticket at a tier: same battle, same stream, always. */
+  function seedFor(levelId, tierId) {
+    var s = String(levelId) + ':' + String(tierId || 'normal');
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  /**
+   * Log a player action, if this run is being recorded.
+   *
+   * Every entry carries the simulation time it happened at, because a replay
+   * must apply it at the same instant, not merely in the same order: placing a
+   * tower one tick after a wave spawns is a different outcome from placing it
+   * one tick before. Nothing is recorded while replaying, or a replay would
+   * append to the very log it is reading.
+   */
+  function record(entry) {
+    if (!state || state.replay) return;
+    entry.at = state.time;
+    state.actions.push(entry);
+  }
+
+  /**
+   * Apply a recorded action.
+   *
+   * Towers are addressed by tile, not by object identity: a replay rebuilds the
+   * board from scratch, so the only stable handle on a tower is where it stands.
+   */
+  function applyAction(a) {
+    if (a.t === 'build') {
+      global.Towers.place(state, a.c, a.r, a.type, Map);
+    } else if (a.t === 'upgrade') {
+      var up = global.Towers.at(state, a.c, a.r);
+      if (up) global.Towers.upgrade(state, up);
+    } else if (a.t === 'sell') {
+      var tw = global.Towers.at(state, a.c, a.r);
+      if (tw) global.Towers.sell(state, tw);
+    } else if (a.t === 'wave') {
+      startNextWave();
+    }
+  }
+
+  /** Drain the actions that are due, at the top of the tick that is due them. */
+  function applyDueActions() {
+    if (!state || !state.replay) return;
+    while (state.replayIndex < state.replay.length &&
+           state.replay[state.replayIndex].at <= state.time) {
+      applyAction(state.replay[state.replayIndex++]);
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
    * Level lifecycle
    * ------------------------------------------------------------------ */
 
@@ -215,6 +295,14 @@
       level: level,
       levelId: level.id,
       tier: level.tier || 'normal',
+      // Determinism plumbing. `rand` replaces the last unseeded randomness in
+      // the simulation; `actions` is the replay log; `replay` is a log being
+      // played back, which is also what switches recording off.
+      rand: makeRand(seedFor(level.id, level.tier || tierId)),
+      actions: [],
+      replay: null,
+      replayIndex: 0,
+      record: record,
       bandwidth: level.bandwidth,
       startingBandwidth: level.bandwidth,
       uptime: 100,
@@ -313,6 +401,9 @@
     if (!state || state.status === 'won' || state.status === 'lost') return null;
     if (state.waveIndex >= state.totalWaves) return null;
 
+    // Recorded after the guards, so a refused wave is not logged as an action.
+    record({ t: 'wave' });
+
     var wave = state.level.waves[state.waveIndex];
 
     // Calling a wave while the previous one is still on the field pays a
@@ -396,6 +487,10 @@
     if (state.status === 'won' || state.status === 'lost') return;
 
     state.time += dt;
+
+    // Replayed input lands at the same instant it originally did, before the
+    // world moves, so a replay cannot be a tick out.
+    applyDueActions();
 
     if (state.flash > 0) state.flash -= dt;
     if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 2.2);
@@ -1604,6 +1699,22 @@
     resize: resize,
     start: start,
     run: run,
+    /** The log of what the player did this run, ready to be replayed. */
+    actions: function () { return state ? state.actions.slice() : []; },
+    /**
+     * Re-run a recorded battle.
+     *
+     * start() + this + run() reproduces the original exactly, which is what
+     * tools/balance.js --replay-check asserts, so the property is tested rather
+     * than assumed.
+     */
+    replayOf: function (levelId, tierId, log) {
+      start(levelId, tierId);
+      state.replay = (log || []).slice().sort(function (a, b) { return a.at - b.at; });
+      state.replayIndex = 0;
+      state.actions = [];
+      return true;
+    },
     stop: stop,
     step: step,
     draw: draw,
