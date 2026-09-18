@@ -5,7 +5,7 @@
  * COORDINATE MODEL
  *   World height is fixed at 360 units so gameplay is identical on every
  *   device. World width is derived from the device aspect and clamped to
- *   560..800. The playfield itself is always 560x360 (14 x 9 tiles of 40), and
+ *   620..1000. The playfield itself is always 560x360 (14 x 9 tiles of 40), and
  *   whatever width is left over becomes HUD space on the left and right. That
  *   is the whole reason for the letterbox: landscape phones are wide and short,
  *   and rather than stretch the map we spend the extra width on interface.
@@ -23,8 +23,20 @@
   var ROWS = 9;
   var MAP_W = COLS * TILE;   // 560
   var MAP_H = ROWS * TILE;   // 360
-  var HUD_H = 80;            // bottom strip: stats, build palette, controls
-  var VH = MAP_H + HUD_H;    // 440
+  /**
+   * Bottom strip: stats on the left, build palette in the middle, wave and
+   * playback controls on the right.
+   *
+   * 108 is not a taste decision, it is the height of the tallest column plus
+   * its padding. The right column is three stacked rows - the wave button, the
+   * wave counter and status line, then speed/pause (upgrading to upgrade/sell
+   * when a tower is selected). At rows of 26 + 26 + 24 with 6-unit gaps and 10
+   * units of padding top and bottom that is exactly 108. It used to be 80,
+   * which is what the *left* column needs and left the right column 28 units
+   * short, so its rows were drawn on top of each other.
+   */
+  var HUD_H = 108;
+  var VH = MAP_H + HUD_H;    // 468
 
   var VW = 620;
   var scale = 1;
@@ -46,7 +58,7 @@
   /**
    * Fit the world to a canvas.
    *
-   * The world is 440 units tall; width follows the device aspect and is
+   * The world is 468 units tall; width follows the device aspect and is
    * clamped, so a very wide screen gets more HUD room rather than a stretched
    * map. The scale fits BOTH axes, which matters more than it looks: on a
    * narrow viewport the clamped world width can exceed the available space, and

@@ -91,24 +91,62 @@
     });
 
     var rx = VW - pad - rightW;
-    var btnH = 24;
-    var btnY = hudTop + hudH - pad - btnH;
+    var halfW = Math.round((rightW - 8) / 2);
+
+    /**
+     * The right column is three stacked rows, and their heights are derived
+     * from the content rather than hand-placed.
+     *
+     * This used to be fixed offsets (hudTop + 10 / + 42 / + hudH - pad - btnH)
+     * and they collided twice, both visible on screen: the wave counter and its
+     * status line were drawn *inside* the wave button's rect, and the
+     * speed/pause pair landed on top of upgrade/sell. Deriving each row from the
+     * one above it is what stops that returning when HUD_H changes - the whole
+     * stack is 26 + 6 + 26 + 6 + 24 = 88, and HUD_H must stay >= 88 + 2 * pad.
+     *
+     * The stack hangs from the top, not the bottom, so a strip that is ever too
+     * short overflows downward into the padding instead of pushing the wave
+     * button up off the strip.
+     */
+    var rowNext = 26;   // the wave button
+    var rowInfo = 26;   // two text lines: "WAVE n/m" over the status line
+    var rowBtn = 24;    // speed/pause, and upgrade/sell when a tower is selected
+    var rowGap = 6;
+
+    var nextY = hudTop + pad;
+    var infoY = nextY + rowNext + rowGap;
+    var pauseY = infoY + rowInfo + rowGap;
+
+    /**
+     * The left column's content is a fixed block - BANDWIDTH label, the number,
+     * then UPTIME and its bar - about 65 units tall, so it is centred in the
+     * strip rather than pinned to the top. Without this it would hug the top
+     * edge with dead space beneath it, next to a right column that fills the
+     * strip.
+     */
+    var leftBodyH = 65;
+    var leftY = hudTop + pad + Math.max(0, Math.round((hudH - pad * 2 - leftBodyH) / 2));
 
     layout = {
       pad: pad,
       hudTop: hudTop,
       hudH: hudH,
       left: { x: pad, y: hudTop + pad, w: leftW, h: hudH - pad * 2 },
+      leftY: leftY,
       cards: cards,
       cardH: cardH,
       right: { x: rx, y: hudTop + pad, w: rightW, h: hudH - pad * 2 },
-      btnY: btnY,
-      btnH: btnH,
-      btnNext: { x: rx, y: hudTop + pad, w: rightW, h: 26 },
-      btnSpeed: { x: rx, y: btnY, w: Math.round((rightW - 8) / 2), h: btnH },
-      btnPause: { x: rx + Math.round((rightW - 8) / 2) + 8, y: btnY, w: Math.round((rightW - 8) / 2), h: btnH },
-      btnUpgrade: { x: rx, y: hudTop + 42, w: Math.round((rightW - 8) / 2), h: 24 },
-      btnSell: { x: rx + Math.round((rightW - 8) / 2) + 8, y: hudTop + 42, w: Math.round((rightW - 8) / 2), h: 24 },
+      infoY: infoY,
+      rowNext: rowNext,
+      rowInfo: rowInfo,
+      rowBtn: rowBtn,
+      btnY: pauseY,
+      btnH: rowBtn,
+      btnNext: { x: rx, y: nextY, w: rightW, h: rowNext },
+      btnSpeed: { x: rx, y: pauseY, w: halfW, h: rowBtn },
+      btnPause: { x: rx + halfW + 8, y: pauseY, w: halfW, h: rowBtn },
+      btnUpgrade: { x: rx, y: infoY, w: halfW, h: rowBtn },
+      btnSell: { x: rx + halfW + 8, y: infoY, w: halfW, h: rowBtn },
       VW: VW, VH: VH,
     };
     return layout;
@@ -913,11 +951,14 @@
     /* ---- left: bandwidth + uptime ---- */
 
     var lx = L.left.x;
-    label(c, 'BANDWIDTH', lx, top + 18, 'rgba(111, 137, 168, 0.9)', 9);
-    label(c, String(Math.floor(st.bandwidth)), lx, top + 42, accent, 20);
-    label(c, 'B/W', lx + (String(Math.floor(st.bandwidth)).length * 12) + 4, top + 42, 'rgba(111, 137, 168, 0.9)', 10);
+    // y is the top of the left block, not the top of the strip: the block is
+    // centred in the strip by computeLayout.
+    var loy = L.leftY;
+    label(c, 'BANDWIDTH', lx, loy + 18, 'rgba(111, 137, 168, 0.9)', 9);
+    label(c, String(Math.floor(st.bandwidth)), lx, loy + 42, accent, 20);
+    label(c, 'B/W', lx + (String(Math.floor(st.bandwidth)).length * 12) + 4, loy + 42, 'rgba(111, 137, 168, 0.9)', 10);
 
-    var barY = top + 52;
+    var barY = loy + 52;
     var barW = L.left.w;
     var dead = st.uptime <= 0;
     label(c, 'UPTIME ' + Math.round(st.uptime) + '%', lx, barY + 10, dead ? '#f87171' : 'rgba(111, 137, 168, 0.9)', 9);
@@ -1002,13 +1043,15 @@
       c.restore();
       label(c, 'SELL ' + global.Towers.sellValue(tw), L.btnSell.x + L.btnSell.w / 2, L.btnSell.y + 16, '#f87171', 9, 'center');
     } else {
+      // Its own row between the wave button and the playback pair - it used to
+      // be drawn at the same y as the wave button and collided with its label.
       label(c, 'WAVE ' + Math.min(st.waveIndex + (st.status === 'building' ? 0 : 1), st.totalWaves) + '/' + st.totalWaves,
-        R.x, top + 16, '#d7e6f5', 12);
+        R.x, L.infoY + 13, '#d7e6f5', 12);
       var sub = st.status === 'building'
         ? (st.waveIndex === 0 ? st.level.env + ' · build first' : st.level.env + ' · next wave ready')
         : st.pending.length > 0 ? (st.pending.length + ' inbound')
           : st.threats.length + ' on the road';
-      label(c, sub, R.x, top + 30, 'rgba(111, 137, 168, 0.9)', 9);
+      label(c, sub, R.x, L.infoY + 24, 'rgba(111, 137, 168, 0.9)', 9);
     }
 
     var canStart = st.waveIndex < st.totalWaves && st.status !== 'won' && st.status !== 'lost';
