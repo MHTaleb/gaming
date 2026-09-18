@@ -170,38 +170,58 @@
    * against the same threat, which forces tighter placement rather than just a
    * longer fight. `payout` scales the credits a clear is worth, so playing above
    * normal is the fastest honest route to the shop.
+   *
+   * ---------------------------------------------------------------------------
+   * `mass` and `lean`: how many, and what each one costs you
+   *
+   * `mass` multiplies the NUMBER of threats on a ticket - easy sends 65% of
+   * normal's bodies, insane sends 175%. Before it existed the tiers only made
+   * each enemy tougher, which is the exact mistake this file's header calls out:
+   * "scaling hit points and calling it difficulty; that just makes the same fight
+   * take longer". Measured before the change, easy and insane sent an identical
+   * 29,594 threats across the campaign, so a single-target tower could not tell
+   * the two tiers apart at all.
+   *
+   * `lean` is the money handed out per unit of threat. Harder tiers get less per
+   * enemy, which is the dial that forces better placement rather than a longer
+   * fight.
+   *
+   * Together they set the bandwidth (`mass x lean`), and that is forced rather
+   * than chosen: the wave composer spends its entire budget, so total threat
+   * power IS the budget. Raising the count while holding the budget flat would
+   * have to come out of per-enemy health, and (budget / health) x health = budget
+   * - the ticket would get no harder, only flatter. So the count rises and the
+   * money rises with it, and the difficulty lives in `lean`, in `gap` (they
+   * arrive closer together) and in `armour` (only some towers can answer them).
+   *
+   * `hp` therefore stays near 1.0 on every tier: a body on insane is about as
+   * tough as a body on normal, there are simply far more of them.
    * ------------------------------------------------------------------ */
   var TIERS = [
     {
       id: 'easy', name: 'Easy', n: 1,
-      blurb: 'Forgiving. A tower in the wrong place can still hold the ticket.',
-      hp: 0.78, speed: 0.93, armour: 0.60, gap: 1.25, budget: 1.28, payout: 0.7,
+      blurb: 'Fewer of them, each one soft, and money to spare.',
+      hp: 0.85, speed: 0.93, armour: 0.60, gap: 1.25, lean: 1.15, payout: 0.7, mass: 0.65,
     },
     {
       id: 'normal', name: 'Normal', n: 2,
       blurb: 'The campaign as designed. Every wave is the wave it says it is.',
-      hp: 1, speed: 1, armour: 1, gap: 1, budget: 1, payout: 1,
+      hp: 1, speed: 1, armour: 1, gap: 1, lean: 1, payout: 1, mass: 1,
     },
     {
       id: 'hard', name: 'Hard', n: 3,
-      blurb: 'Less bandwidth, faster arrivals. Placement has to earn its keep.',
-      // Health and spacing are deliberately gentler than they look: hard's
-      // identity is the tighter *economy* (budget 0.94), not bigger numbers. An
-      // earlier cut ran hp 1.20 / gap 0.90 and ticket 124 - a switchback with
-      // hardened, swift, regenerating and reviving all stacked - leaked thirteen
-      // threats through seventy-five towers. Difficulty that comes from less
-      // money asks a better question than difficulty that comes from more health.
-      hp: 1.14, speed: 1.03, armour: 1.25, gap: 0.95, budget: 0.94, payout: 1.45,
+      blurb: 'A fifth more of them, and less money for each one.',
+      hp: 1.00, speed: 1.03, armour: 1.25, gap: 0.95, lean: 0.97, payout: 1.45, mass: 1.2,
     },
     {
       id: 'hell', name: 'Hell', n: 4,
-      blurb: 'Plated and quick. One tower in the wrong place is one tower wasted.',
-      hp: 1.46, speed: 1.11, armour: 1.65, gap: 0.80, budget: 0.86, payout: 2.0,
+      blurb: 'Half again as many, arriving closer together, on a leaner budget.',
+      hp: 1.00, speed: 1.11, armour: 1.65, gap: 0.80, lean: 0.93, payout: 2.0, mass: 1.45,
     },
     {
       id: 'insane', name: 'Insane', n: 5,
-      blurb: 'Every dial at once. Clearing a whole act here is the whole game.',
-      hp: 1.80, speed: 1.18, armour: 2.10, gap: 0.70, budget: 0.79, payout: 2.8,
+      blurb: 'A flood: three quarters more of them, the least money per threat in the game.',
+      hp: 1.02, speed: 1.18, armour: 2.10, gap: 0.70, lean: 0.90, payout: 2.8, mass: 1.75,
     },
   ];
 
@@ -701,9 +721,17 @@
   }
 
   /** Extra power the act finale's boss adds on top of its wave's share. */
-  function bossPowerFor(id) { return isBoss(id) ? bodyPowerFor(id) * DIALS.bossShare : 0; }
+  function bossPowerFor(id, tierId) {
+    // Scaled by mass, unlike the body budget. The boss is a single body, so
+    // reducing per-body health to raise the count (what mass does) would quietly
+    // weaken it by the same factor; scaling its solved health by mass cancels
+    // that out and leaves the boss the same share of the ticket it always was.
+    return isBoss(id) ? bodyPowerFor(id) * tierDef(tierId).mass * DIALS.bossShare : 0;
+  }
   /** ...and the mid-act mini-boss. */
-  function miniPowerFor(id) { return isMini(id) ? bodyPowerFor(id) * DIALS.miniShare : 0; }
+  function miniPowerFor(id, tierId) {
+    return isMini(id) ? bodyPowerFor(id) * tierDef(tierId).mass * DIALS.miniShare : 0;
+  }
 
   /**
    * Bandwidth for a ticket.
@@ -862,8 +890,14 @@
    * valve left - and the bound exists because a swarm that suddenly takes four
    * shots has stopped being a swarm, and the briefing would be lying about it.
    */
-  function composeWave(power, id, rand) {
-    var tune = curve(id);
+  function composeWave(power, id, rand, tierId) {
+    // The tier's curve, not normal's. This single line is what turns the mass
+    // dial into actual bodies: a lower per-body health means each unit of budget
+    // buys more of them, so the solver returns a bigger count for the same
+    // money. Without it the composer bought normal's counts and the tiers only
+    // changed how long each enemy took to die.
+    var tune = curve(id, tierId);
+    var mass = tierDef(tierId).mass;
     var a = act(id);
     var inAct = (id - 1) % PER_ACT;
 
@@ -872,7 +906,14 @@
 
     var groups = mix.map(function (m) {
       var per = powerOf(m.t, tune);
-      return { t: m.t, per: per, weight: m.w, cap: countCap(per), n: 0, hp: 1 };
+      // The cap scales with mass, and without this the mass dial does nothing.
+      // The caps are the real ceiling on how many bodies a wave can hold: a tier
+      // that raises the budget without raising the cap just saturates every group
+      // and dumps the surplus into health, which is the tankier-enemies behaviour
+      // mass exists to replace. Measured before this line, insane ended up with
+      // FEWER bodies than easy - a bigger budget hitting a fixed ceiling spills
+      // into hp, so the "flood" tier was the tankiest and the sparsest at once.
+      return { t: m.t, per: per, weight: m.w, cap: Math.round(countCap(per) * mass), n: 0, hp: 1 };
     });
 
     var spent = waterfill(groups, power);
@@ -932,10 +973,11 @@
     });
   }
 
-  function wavesFor(id) {
+  function wavesFor(id, tierId) {
     var rand = rng(id * 7919 + 13);
     var a = act(id);
     var inAct = (id - 1) % PER_ACT;
+    var mass = tierDef(tierId).mass;
 
     // Wave count is the ticket's *shape*, so it is the main thing that makes an
     // act opener feel different from its finale at the same power: openers are
@@ -947,7 +989,18 @@
     // on top. Adding them on top was the first version, and it made each finale
     // score about ten times its act - which is not a spike, it is a different
     // game, and it flattened everything around it in the report.
-    var body = bodyPowerFor(id) - bossPowerFor(id) - miniPowerFor(id);
+    // The composer's target is what actually decides how many bodies a ticket
+    // holds, and it scales with mass.
+    //
+    // `lean` cannot do this job, and that is the part that is easy to get
+    // backwards: the bandwidth is derived FROM this target, not the other way
+    // round, so raising the budget never raises the count. Setting a tier's
+    // bandwidth while leaving this alone is what made the first two attempts at
+    // this dial do nothing at all.
+    var target = bodyPowerFor(id) * mass;
+    var body = target
+      - (isBoss(id) ? target * DIALS.bossShare : 0)
+      - (isMini(id) ? target * DIALS.miniShare : 0);
 
     // Ramp the waves inside the ticket: the opener is a warm-up, the closer is
     // the hardest thing in the ticket. The exponent is under 1 so the last wave
@@ -961,13 +1014,13 @@
     }
 
     var waves = [];
-    for (i = 0; i < count; i++) waves.push(composeWave(body * weights[i] / sum, id, rand));
+    for (i = 0; i < count; i++) waves.push(composeWave(body * weights[i] / sum, id, rand, tierId));
 
     // Mini-boss: extra power dropped into the middle wave, led by the biggest
     // thing the act has. Telegraphed on the briefing so it reads as a set piece
     // rather than a spike nobody saw coming.
     if (isMini(id)) {
-      var mtune = curve(id);
+      var mtune = curve(id, tierId);
       // Never the act's boss. In act twelve the only threat listed is the
       // Zero-Day, and picking it here put a *second* boss in the middle of the
       // ticket at ten times the power its slice allowed - a 57% overshoot that
@@ -979,7 +1032,7 @@
       });
       var heavy = heavies[0] || 'ransom';
       var perHeavy = powerOf(heavy, mtune);
-      var miniBudget = miniPowerFor(id);
+      var miniBudget = miniPowerFor(id, tierId);
       var miniN = clamp(Math.round(miniBudget / perHeavy), 1, 8);
       var mini = { t: heavy, n: miniN, gap: 1.6, delay: 2 };
 
@@ -999,13 +1052,13 @@
     // is what makes it a recurring nemesis instead of a difficulty cliff that
     // happens to be shaped like one.
     if (isBoss(id)) {
-      var tune = curve(id);
+      var tune = curve(id, tierId);
       var perBoss = powerOf('zeroday', tune);
-      var screen = bossScreen(tune, bossPowerFor(id));
+      var screen = bossScreen(tune, bossPowerFor(id, tierId));
       var screenPower = screen.reduce(function (s, g) { return s + g.n * powerOf(g.t, tune); }, 0);
 
       // Whatever the screen did not eat, the boss itself carries.
-      var bossHpMul = clamp((bossPowerFor(id) - screenPower) / perBoss, 0.01, 3);
+      var bossHpMul = clamp((bossPowerFor(id, tierId) - screenPower) / perBoss, 0.01, 3);
       screen.push({ t: 'zeroday', n: 1, gap: 1, delay: 8, hp: Math.round(bossHpMul * 1000) / 1000 });
 
       // Merge into the wave rather than appending. The screen's Drones are the
@@ -1327,17 +1380,6 @@
 
   var TIER_CACHE = Object.create(null);
 
-  /** Deep-copy a wave table, so a tier can adjust health without touching normal. */
-  function cloneWaves(waves) {
-    return waves.map(function (w) {
-      return w.map(function (g) {
-        var c = {};
-        Object.keys(g).forEach(function (k) { c[k] = g[k]; });
-        return c;
-      });
-    });
-  }
-
   /**
    * One ticket read at one tier, repaired against the tier's own floor.
    *
@@ -1353,8 +1395,18 @@
     var copy = {};
     Object.keys(base).forEach(function (k) { copy[k] = base[k]; });
     copy.tier = t.id;
-    copy.waves = cloneWaves(base.waves);
-    copy.bandwidth = Math.max(1, Math.round(base.bandwidth * t.budget));
+    // Re-composed, not copied. A tier changes the threat COUNT, so it needs its
+    // own wave table; cloning normal's would give every tier normal's bodies and
+    // the mass dial would do nothing at all.
+    copy.waves = wavesFor(base.id, t.id);
+    // Bandwidth scales with the mass, because the threat count does: the same
+    // money per threat, spread over more threats. `lean` is what tightens that
+    // ratio on the harder tiers. The alternative - leaving the budget flat while
+    // the count rose - is arithmetically impossible: the composer spends its
+    // whole budget, so `power` is a function of the budget, and a fixed budget
+    // means a fixed total threat and therefore a fixed difficulty. Making the
+    // count rise without the budget would have meant making the ticket *easier*.
+    copy.bandwidth = Math.max(1, Math.round(base.bandwidth * t.mass * t.lean));
     applyPowerFloor(copy, minPower, t.id);
     copy.power = power(copy, t.id);
     copy.difficulty = copy.power;

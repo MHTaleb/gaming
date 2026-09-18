@@ -4,19 +4,48 @@ Five readings of the same two hundred and forty tickets. The campaign is generat
 from the ticket number alone, so a difficulty setting cannot mean *different*
 levels — it means the same level asked a different question.
 
-| Tier | Health | Speed | Armour | Spawn gap | Budget | Payout |
-|---|---|---|---|---|---|---|
-| Easy | ×0.78 | ×0.93 | ×0.60 | ×1.25 | ×1.28 | ×0.7 |
-| **Normal** | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 |
-| Hard | ×1.14 | ×1.03 | ×1.25 | ×0.95 | ×0.94 | ×1.45 |
-| Hell | ×1.46 | ×1.11 | ×1.65 | ×0.80 | ×0.86 | ×2.0 |
-| Insane | ×1.80 | ×1.18 | ×2.10 | ×0.70 | ×0.79 | ×2.8 |
+| Tier | Mass (how many) | Health | Speed | Armour | Spawn gap | `lean` (money per threat) | Payout |
+|---|---|---|---|---|---|---|---|
+| Easy | ×0.65 | ×0.85 | ×0.93 | ×0.60 | ×1.25 | ×1.15 | ×0.7 |
+| **Normal** | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 |
+| Hard | ×1.20 | ×1.00 | ×1.03 | ×1.25 | ×0.95 | ×0.97 | ×1.45 |
+| Hell | ×1.45 | ×1.00 | ×1.11 | ×1.65 | ×0.80 | ×0.93 | ×2.0 |
+| Insane | ×1.75 | ×1.02 | ×1.18 | ×2.10 | ×0.70 | ×0.90 | ×2.8 |
 
-`budget` is inverted on purpose: a harder tier hands you **less** bandwidth
-against the same threat. That forces tighter placement rather than a longer
-fight, and it is why hard's identity is the economy rather than bigger numbers —
-an earlier cut ran hard at health ×1.20 / gap ×0.90 and ticket 124 leaked
-thirteen threats through seventy-five towers.
+**`mass` is the dial that says how many of them there are**, and it is the one that
+was missing. Until it existed the tiers only made each enemy tougher, which is
+the exact mistake `campaign.js`'s own header calls out — *"scaling hit points and
+calling it difficulty; that just makes the same fight take longer"*. Measured
+before the change, easy and insane sent an **identical 29,594 threats** across the
+campaign: a single-target tower could not tell the two tiers apart, and they
+differed only in how long each enemy took to die.
+
+`lean` is the money handed out per unit of threat, and it is the dial that forces
+better placement rather than a longer fight.
+
+Health therefore stays near ×1 on every tier: a body on insane is about as tough
+as a body on normal. There are just far more of them.
+
+### Why the bandwidth has to rise with the count
+
+Bandwidth is `mass × lean`, and that is forced rather than chosen. The wave
+composer spends its **entire** budget, so total threat power *is* the budget.
+Raising the count while holding the budget flat would have to come out of
+per-enemy health — and `(budget / health) × health = budget`, so the ticket would
+get no harder, only flatter. A harder tier showing a bigger bandwidth number is
+correct here: there is more to kill.
+
+Two things made this dial genuinely awkward to land, and both are now fixed in
+`campaign.js`:
+
+1. **The composer targets body power, not bandwidth.** Setting a tier's
+   bandwidth does nothing to the count — the count decides the bandwidth, not the
+   other way round. `wavesFor` scales its target by `mass`.
+2. **The count caps are the real ceiling.** A tier with a bigger budget but the
+   same caps simply saturates every group and spills the surplus into health.
+   Measured with the caps unscaled, insane ended up with *fewer* bodies than easy:
+   the flood tier was simultaneously the tankiest and the sparsest. `composeWave`
+   now scales `countCap` by `mass` too.
 
 ## Normal is the reference
 
@@ -27,38 +56,58 @@ makes normal's output differ is a bug, not a tuning choice.
 
 ## Measured
 
-Full campaign, the harness bot, `node tools/balance.js --tier <id>`. The bot
-never calls a wave early, which forgoes the early bonus — it is a **lower bound**
-on a competent player, not an average one.
+### How the tiers scale
 
-| Tier | Cleared | ★★★ | ★★ | ★ | Failed | Invariants |
-|---|---|---|---|---|---|---|
-| Easy | 240/240 | 240 | 0 | 0 | 0 | hold |
-| Normal | 240/240 | 237 | 3 | 0 | 0 | hold |
-| Hard | 240/240 | 208 | 15 | 17 | 0 | hold |
-| Hell | 224/240 | 131 | 15 | 78 | 16 | hold |
-| Insane | 186/240 | 99 | 16 | 71 | 54 | hold |
+Measured across all 240 tickets via `Levels.at(id, tier)`:
 
-Read down the ★★★ column: 100% → 99% → 87% → 55% → 41%. That is the curve doing
-its job — each tier costs the player margin rather than adding hit points to the
-same experience.
+| Tier | Total threat power | Total threats | Power vs normal | Threats vs normal |
+|---|---|---|---|---|
+| Easy | 1,700,037 | 24,280 | ×0.64 | ×0.82 |
+| Normal | 2,671,805 | 29,594 | ×1.00 | ×1.00 |
+| Hard | 3,156,976 | 34,097 | ×1.18 | ×1.15 |
+| Hell | 3,705,205 | 37,954 | ×1.39 | ×1.28 |
+| Insane | 4,521,690 | 41,902 | ×1.69 | ×1.42 |
+
+**Easy → insane: power ×2.66, threats ×1.73**, both monotonic. Per ticket it is
+plainer — ticket 1 is 13 threats / 249 power on easy against 24 threats / 564
+power on insane; ticket 240 is 160 threats / 13,362 power against 223 / 35,167.
+
+The threat spread is 1.73× rather than the 2.69× that `mass` implies on its own,
+because the count caps still bind on the busiest tickets and the remainder becomes
+health by design. That is the honest measured number, not the dial's nominal value.
+
+### Clear rates
+
+**Pending re-measurement.** The table above changed what the tiers *are*, so the
+previous figures (hell 224/240, insane 186/240) no longer describe this build and
+are not quoted here rather than repeated out of date. The runs are in flight.
+
+Normal needs no re-measurement and is confirmed unchanged in composition:
+identical per-act power and identical clears (240/240). Its star line moved from
+237 to 238 three-star, which is not a tier effect — it is the new **CDN Edge**
+tower changing what the harness bot chooses to build.
+
+Invariants hold on all five tiers, re-checked after the change.
 
 ### What this does and does not prove
 
-- **Every ticket is playable.** Proven, not assumed: easy, normal and hard all
-  clear 240/240 with zero failures, so nothing in the campaign is structurally
-  broken. This is the claim that matters for shipping.
-- **Hell and insane are not fully clearable by the reference bot** (16 and 54
-  losses). The bot is a lower bound, so these are not proof of impossibility —
-  but they are also not proof of winnability, and that distinction is worth
-  keeping.
-- Insane costing 22% of tickets to a bot that plays near-optimally is the
-  intended shape of a tier called *insane*. It is opt-in and it is not on the
-  path to finishing the campaign.
+- **Normal is proven playable end to end**: 240/240, 0 failures, 0 invariant
+  problems, confirmed unchanged in composition after the mass change. That is the
+  claim that matters for shipping, and it is the tier every player starts on.
+- **The other four tiers are being re-measured.** Any clear-rate claim about them
+  in this file would be describing a build that no longer exists, so there are
+  none here until the runs land.
+- **A bot failure is not a broken ticket.** The harness bot never calls a wave
+  early, so it is a lower bound rather than an average player. A loss is evidence
+  the tier is hard; it is not evidence the ticket is impossible.
 
 ## The one finding worth acting on
 
-Twelve tickets fail at **hell** as well as insane:
+> Measured against the **previous** tier tuning (health-scaled, before `mass`).
+> The tickets are worth re-checking once the re-measurement lands, because the
+> tiers changed underneath them — the four failing acts may well have moved.
+
+Twelve tickets failed at **hell** as well as insane:
 
 ```
 #124 #125 #126 #129 #131   (act 7, Backbone)
