@@ -10,7 +10,7 @@ levels — it means the same level asked a different question.
 | **Normal** | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 | ×1 |
 | Hard | ×1.20 | ×1.00 | ×1.03 | ×1.25 | ×0.95 | ×0.97 | ×1.45 |
 | Hell | ×1.45 | ×1.00 | ×1.11 | ×1.65 | ×0.80 | ×0.93 | ×2.0 |
-| Insane | ×15 | ×3.00 | ×1.18 | ×2.10 | ×0.70 | ×0.28 | ×2.8 |
+| Insane | ×15 | ×3.00 | ×1.18 | ×2.10 | ×0.70 | ×0.06 | ×2.8 |
 
 **`mass` is the dial that says how many of them there are**, and it is the one that
 was missing. Until it existed the tiers only made each enemy tougher, which is
@@ -72,29 +72,73 @@ Measured across all 240 tickets via `Levels.at(id, tier)`:
 threats / 249 power on easy against **71 threats / 4,449 power** on insane; ticket
 240 is 160 / 13,362 against 499 / 246,083.
 
-### Insane's tuning is a designer decision, and it has a measured limit
+### The measurement that was wrong, and what replaced it
 
-Insane runs at the numbers the designer asked for: **three times the health and
-five times the bodies** of normal, plus an economy roughly three times leaner.
-Two counter-intuitive things were measured while landing it, and both are worth
-keeping written down:
+**"A full board clears it" is not a measure of difficulty.** The harness used to
+spend the entire budget, fill the board and report the result, which reported
+100% uptime on tickets a player walks through with a *single Firewall* — and it
+reported the same thing no matter how far the threat numbers were multiplied,
+because a metric that assumes unlimited money cannot see money being the answer.
 
-1. **Multiplying health and count does not, on its own, create difficulty.** The
-generator hands out bandwidth *in proportion to the threat*, so scaling both by
-15 produced a ticket the harness bot cleared at 100% uptime with **77,429 of its
-90,855 bandwidth unspent** and the entire board maxed. Bigger is not harder.
-2. **The ceiling is the map, not the numbers.** There are about eighty buildable
-tiles. Once the bot has filled and fully upgraded them, extra threat only starts
-to matter when the budget falls *below* what a full board costs - which is what
-`lean` does, and why `lean` is 0.28 rather than 0.90.
+It was replaced with two questions, both answered by `--minimal`:
 
-Even so, the reference bot still clears insane act 1 at 20/20 three-star, and
-ticket 240 with 52% of its budget unspent. **This is a lower bound on difficulty,
-not a measurement of it**: the bot maximises road coverage per tile, which is the
-skill the game is built around, and a human placing by eye will find this tier
-substantially harder than the bot does. If it still feels easy in the hand, the
-next lever is health again - the bot's failure point has not been found yet, and
-finding it deliberately is a parameter sweep rather than a guess.
+- **How many towers does this ticket actually need?** Found by binary search on
+the tower count, holding upgrades allowed. One tower is trivial however large the
+threat numbers get.
+- **What did that winning set cost, against what the ticket hands you?** The gap
+is the *slack*. Slack is what makes a level feel easy: if the answer costs a
+third of the money, the player never has to choose anything.
+
+```
+node tools/balance.js --minimal --levels 1-40 --tier insane
+```
+
+### What that measurement found
+
+Measured on the previous tuning, the harness's own bot needed **one tower** for
+tickets 1-10 on *every* tier:
+
+| Tier | Mean towers (1-10) | Mean slack |
+|---|---|---|
+| Easy | 1.0 | 24% |
+| Normal | 1.0 | 65% |
+| Hard | 1.0 | 66% |
+| Hell | 1.0 | 92% |
+| Insane | 1.0 | 279% |
+
+So the complaint was correct and the earlier tier work had not addressed it.
+Multiplying insane's health by 3 and its count by 5 moved the *numbers* a great
+deal — power ×20 over easy — and left the *answer* the same: one tower, with more
+money to spare than before. Only `lean` moved the answer, because only `lean`
+changes money-per-threat.
+
+Insane now measures as follows (sampled across the campaign):
+
+| Ticket | Towers needed | Slack | Uptime | |
+|---|---|---|---|---|
+| 1 | 1 | 6% | 44% | tight, but still one tower |
+| 20 | 6 | 8% | 29% | |
+| 40 | 10 | 9% | 54% | |
+| 80 | 9 | 51% | 78% | |
+| 120 | 7 | 153% | 100% | over-funded |
+| 200 | 35 | 1% | 6% | |
+| 240 | 25 | 23% | 10% | |
+| 140, 160, 239 | — | — | — | **unwinnable at 48 towers** |
+
+Mean slack on tickets 1-10 fell from **279% to 13%**, and some insane tickets are
+now genuinely unwinnable. **That is intended, not a bug**: the design intent for
+the hardest tier is that the player farms credits, buys tower upgrades and base
+research, and comes back. An unwinnable ticket is a progression gate, and the
+gate has to be real to mean anything.
+
+### Still open: the opening is trivial on every tier
+
+Tickets 1-10 need one tower on easy, normal, hard and hell alike, and normal
+averages 65% slack. That is not a tier problem — it is the base campaign's
+opening being small in absolute terms (`basePower` 300 at ticket 1 against
+~20,000 at ticket 240). Fixing it means raising the early spine in
+`campaign.js`, which shifts every tier at once and invalidates the measurements
+above. It is a deliberate change, not a side effect of a difficulty setting.
 
 ### Clear rates
 

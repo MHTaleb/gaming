@@ -238,7 +238,7 @@
       // 77,429 of its 90,855 bandwidth unspent and the whole board maxed. Bigger
       // is not harder. Difficulty is the ratio of the two, and 0.28 is roughly
       // three times leaner than easy.
-      hp: 3.0, speed: 1.18, armour: 2.10, gap: 0.70, lean: 0.28, payout: 2.8, mass: 15,
+      hp: 3.0, speed: 1.18, armour: 2.10, gap: 0.70, lean: 0.06, payout: 2.8, mass: 15,
     },
   ];
 

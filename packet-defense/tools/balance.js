@@ -37,6 +37,9 @@
  *   node tools/balance.js --json         machine-readable, for diffing a change
  *   node tools/balance.js --check        exit non-zero if an invariant fails
  *   node tools/balance.js --tier insane  play a difficulty tier (default normal)
+ *   node tools/balance.js --minimal --levels 1-40 --tier insane
+ *                                        smallest winning tower count per ticket,
+ *                                        and what that set cost against the budget
  *
  * Every tier must clear with the bot, or it is not a difficulty, it is a wall.
  * Run each of the five before shipping a change to the curve.
@@ -259,6 +262,11 @@ function playTicket(W, id, opts = {}) {
 
   const dt = 1 / 60;
   const maxSeconds = opts.maxSeconds || 1200;
+  // Caps how many towers may stand at once. Upgrades stay allowed: the question
+  // a minimal run answers is "how many towers does this ticket need", and a
+  // tower you are forbidden to upgrade is a different, easier question.
+  const maxTowers = opts.maxTowers || Infinity;
+  const atTowerCap = () => state.towers.length >= maxTowers;
   let placed = 0;
   let upgraded = 0;
   const trace = [];
@@ -287,7 +295,7 @@ function playTicket(W, id, opts = {}) {
     // One action per call, not twelve: this runs every frame now, and a player
     // trickles towers onto the map while a wave is walking rather than emptying
     // their pockets in the first sixtieth of a second.
-    const spot = bestSpot(type);
+    const spot = atTowerCap() ? null : bestSpot(type);
     if (spot && W.Towers.canPlace(state, spot.c, spot.r, type, Map).ok) {
       const r = Towers.place(state, spot.c, spot.r, type, Map);
       if (r.ok) { placed++; trace.push('build ' + type + ' ' + spot.c + ',' + spot.r); return 'build'; }
@@ -311,6 +319,15 @@ function playTicket(W, id, opts = {}) {
 
   /** Is there anything left this bot would actually spend money on? */
   function canSpendMore() {
+    // With a tower cap in force the only purchase left is an upgrade, so a free
+    // tile does not mean there is anything worth doing.
+    if (atTowerCap()) {
+      for (const tw of state.towers) {
+        const cost = Towers.upgradeCost(tw);
+        if (cost !== null && state.bandwidth >= cost) return true;
+      }
+      return false;
+    }
     const type = chooseTower(W, level, state.waveIndex, null);
     if (state.bandwidth < Towers.DEFS[type].cost) {
       // Even a discounted upgrade may be affordable when a new tower is not.
@@ -378,8 +395,69 @@ function playTicket(W, id, opts = {}) {
     traits: level.traits,
     boss: !!level.boss,
     road: level.path,
+    // What the standing defence actually cost, including upgrades. This is the
+    // number the economy has to be calibrated against: money the player cannot
+    // usefully spend is not difficulty, it is decoration.
+    cost: Math.round(state.towers.reduce((s, t) => s + (t.invested || 0), 0)),
     timeout: simSeconds >= maxSeconds,
     trace: opts.trace ? trace : undefined,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * The real difficulty question
+ * ------------------------------------------------------------------ */
+
+/**
+ * The smallest number of towers that clears a ticket, and what that set cost.
+ *
+ * This exists because "the bot cleared it with a full board" is not a measure of
+ * difficulty. A ticket one tower can hold is trivial however large its threat
+ * numbers are, and the first version of this harness could not tell the
+ * difference: it spent the whole budget, filled the board, and reported 100%
+ * uptime on tickets a player walks through with a single Firewall. Multiplying
+ * threat health and counts does not show up in that metric at all, which is
+ * exactly why it looked like the tuning was not working while it was.
+ *
+ * The win condition is monotonic in the tower count - if n towers win, n + 1 win
+ * - so the minimum is a binary search rather than a walk. About seven cached
+ * simulations per ticket.
+ *
+ * `budget` is everything the ticket hands you (starting bandwidth plus what the
+ * kills pay) and `cost` is what the winning set actually cost. The gap between
+ * them is the slack, and slack is what makes a level feel easy: if the answer
+ * costs a third of the money, the player never has to choose.
+ */
+function minimalTowers(W, id, tier, ceiling) {
+  const cache = new Map();
+  const probe = (n) => {
+    if (!cache.has(n)) cache.set(n, playTicket(W, id, { tier, maxTowers: n, maxSeconds: 1500 }));
+    return cache.get(n);
+  };
+
+  const top = probe(ceiling);
+  if (!top.won) {
+    return {
+      id, n: null, unwinnable: true, ceiling, probes: cache.size,
+      uptime: top.uptime, leftover: top.leftover,
+      starting: top.starting, earned: top.earned,
+      budget: top.starting + top.earned, cost: 0, leaks: top.leaks,
+    };
+  }
+
+  let lo = 1;
+  let hi = ceiling;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (probe(mid).won) hi = mid;
+    else lo = mid + 1;
+  }
+  const win = probe(lo);
+  return {
+    id, n: lo, unwinnable: false, ceiling, probes: cache.size,
+    cost: win.cost, uptime: win.uptime, leaks: win.leaks,
+    starting: win.starting, earned: win.earned, leftover: win.leftover,
+    budget: win.starting + win.earned,
   };
 }
 
@@ -454,6 +532,51 @@ function main() {
   }
   const single = val('--level');
   if (single) ids = [Number(single)];
+
+  /* --- minimal towers --------------------------------------------- *
+   *
+   * The measurement that actually answers "is this level hard". Defaults to the
+   * selected tickets; a full 240-ticket sweep costs about half an hour, so it is
+   * usually worth narrowing with --levels 1-40 first.
+   */
+  if (has('--minimal')) {
+    const ceiling = Number(val('--ceiling') || 48);
+    console.log(`\nminimum towers needed   tier ${TIER}   ceiling ${ceiling}\n`);
+    console.log('ticket  act  towers    cost  budget  slack  uptime  verdict');
+    console.log('-'.repeat(78));
+
+    const rows = [];
+    for (const id of ids) {
+      const m = minimalTowers(W, id, TIER, ceiling);
+      const lv = W.Levels.at(id, TIER);
+      rows.push(m);
+      const slack = m.cost > 0 ? (m.budget - m.cost) / m.cost : 0;
+      const verdict = m.unwinnable
+        ? 'UNWINNABLE at ' + ceiling
+        : m.n <= 2 ? 'TRIVIAL' : m.n <= 6 ? 'fine' : m.n <= 14 ? 'demanding' : 'brutal';
+      console.log(
+        String(id).padStart(5) + '  ' + String(lv.act).padStart(3) + '  ' +
+        (m.unwinnable ? '   --' : String(m.n).padStart(6)) + '  ' +
+        String(m.cost).padStart(6) + '  ' + String(m.budget).padStart(6) + '  ' +
+        (m.unwinnable ? '    -' : (Math.round(slack * 100) + '%').padStart(5)) + '  ' +
+        (m.uptime + '%').padStart(6) + '  ' + verdict
+      );
+    }
+
+    const winnable = rows.filter((r) => !r.unwinnable);
+    const trivialCount = winnable.filter((r) => r.n <= 2).length;
+    const mean = winnable.length ? winnable.reduce((s, r) => s + r.n, 0) / winnable.length : 0;
+    const meanSlack = winnable.length
+      ? winnable.reduce((s, r) => s + (r.budget - r.cost) / Math.max(1, r.cost), 0) / winnable.length
+      : 0;
+    console.log('-'.repeat(78));
+    console.log(
+      `${winnable.length}/${rows.length} winnable   ${trivialCount} trivial (<=2 towers)   ` +
+      `${rows.length - winnable.length} unwinnable   mean towers ${mean.toFixed(1)}   ` +
+      `mean slack ${Math.round(meanSlack * 100)}%\n`
+    );
+    return finish(problems, has('--check'));
+  }
 
   const results = [];
   const t0 = Date.now();
