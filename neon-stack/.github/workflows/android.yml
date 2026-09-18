@@ -1,0 +1,85 @@
+name: Android release build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    env:
+      # Add these as repository secrets (Settings -> Secrets and variables -> Actions):
+      #   ANDROID_KEYSTORE_BASE64  base64 -w0 release.keystore
+      #   KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Add and sync the Android platform
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Harden the Android project
+        # Backup rules, cleartext denial, network security config, no WebView
+        # debugging in release. Idempotent, so it is safe to run every build.
+        run: node tools/harden-android.js
+
+      - name: Check the purchase validator starts
+        # A validator that does not boot is a game that cannot take money.
+        run: |
+          node --check server/validator/index.js
+          node --check server/validator/google.js
+          node --check server/validator/sign.js
+          node server/validator/index.js & sleep 1
+          curl -sf http://localhost:8787/health || (echo "validator health check failed" && exit 1)
+          kill %1
+
+      - name: Decode the upload keystore
+        if: env.KEYSTORE_B64 != ''
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > android/app/release.keystore
+          echo "KEYSTORE_PATH=release.keystore" >> "$GITHUB_ENV"
+
+      - name: Configure release signing
+        if: env.KEYSTORE_B64 != ''
+        run: node tools/configure-signing.js
+
+      - name: Build the release bundle
+        run: |
+          cd android
+          ./gradlew bundleRelease --no-daemon
+
+      - name: Build a debug APK for quick device testing
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-stack-android
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn

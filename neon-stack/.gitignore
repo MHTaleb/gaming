@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# Capacitor / Android build output
+android/
+ios/
+*.apk
+*.aab
+*.keystore
+*.jks
+!debug.keystore
+
+# CI / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.json.key
+service-account*.json
+google-services.json
+
+# misc
+.DS_Store
+*.log

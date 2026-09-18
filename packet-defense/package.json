@@ -1,0 +1,27 @@
+{
+  "name": "packet-defense",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Packet Defense - a tower defence game about holding a production server against everything the internet throws at it.",
+  "scripts": {
+    "serve": "node tools/serve.js",
+    "android:prepare": "npx cap sync android && node tools/harden-android.js",
+    "android:add": "cap add android",
+    "android:harden": "node tools/harden-android.js",
+    "android:open": "cap open android",
+    "android:bundle": "cd android && ./gradlew bundleRelease",
+    "android:apk": "cd android && ./gradlew assembleDebug",
+    "validator": "node server/validator/index.js",
+    "validator:keys": "node server/validator/sign.js --generate",
+    "validator:mock": "node tools/mock-validator.js"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor-community/admob": "^7.0.0",
+    "cordova-plugin-purchase": "^13.18.0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Packet Defense",
+  "short_name": "Packet Defense",
+  "description": "Hold the production server against everything the internet throws at it.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#05080f",
+  "theme_color": "#05080f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

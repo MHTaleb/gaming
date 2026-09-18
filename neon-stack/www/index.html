@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0f1a" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="description" content="Climb the Neon Spire. One tap, thirty decks, and a signal to restore." />
+<!--
+  Strict CSP. Everything is a local file and every script is external, so the
+  policy can forbid inline script entirely - which is what actually stops an
+  injected script from doing anything useful.
+
+  If you deploy the purchase validator, add its origin to connect-src:
+    connect-src 'self' https://your-validator.example.com
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; manifest-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'" />
+<title>Neon Stack</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="Neon Stack play area"></canvas>
+  <div id="vignette"></div>
+
+  <!-- ==================== in-game HUD ==================== -->
+  <div id="hud" class="hidden">
+    <div class="hud-row">
+      <button id="hudPause" class="hud-btn" aria-label="Pause">❚❚</button>
+      <div id="score">0</div>
+      <div id="perfectChip" class="hud-chip hidden">★ <span id="perfectCount">0</span></div>
+    </div>
+    <div id="cellRow" class="cell-row hidden"></div>
+    <div id="goalWrap" class="hidden">
+      <div class="goal-bar"><div id="goalFill"></div></div>
+      <div class="goal-meta">
+        <span id="goalLevel">DECK 1</span>
+        <span id="goalCount">0 / 7</span>
+      </div>
+    </div>
+    <div id="bossWrap" class="hidden">
+      <div class="boss-row">
+        <span id="bossName" class="boss-name">WARDEN</span>
+        <span id="bossHp">8</span>
+      </div>
+      <div class="goal-bar boss-bar"><div id="bossFill"></div></div>
+    </div>
+    <div id="combo" class="hidden">PERFECT x2</div>
+  </div>
+
+  <div id="quip" class="hidden"><span id="quipText"></span></div>
+
+  <!-- ==================== home ==================== -->
+  <section id="scr-home" class="screen">
+    <div class="screen-inner">
+      <h1 class="logo">NEON<span>STACK</span></h1>
+      <div class="stat-row">
+        <div class="stat"><span class="stat-label">STARS</span><span id="homeStars">0/90</span></div>
+        <div class="stat"><span class="stat-label">COINS</span><span id="homeCoins">0</span></div>
+        <div class="stat"><span class="stat-label">STREAK</span><span id="homeStreak">0</span></div>
+      </div>
+      <button id="btnStory" class="btn btn-primary">
+        <span id="storyLabel">CONTINUE STORY</span>
+        <small id="storyNext">DECK 1 · GROUND FLOOR</small>
+      </button>
+      <button id="btnEndless" class="btn btn-secondary">
+        ENDLESS
+        <small>BEST <span id="homeBest">0</span></small>
+      </button>
+      <div class="icon-row">
+        <button id="btnDecks" class="btn-icon" aria-label="Decks">🗼</button>
+        <button id="btnMissions" class="btn-icon" aria-label="Missions">
+          🎯<span id="missionBadge" class="badge-dot hidden">1</span>
+        </button>
+        <button id="btnLogs" class="btn-icon" aria-label="Transmissions">📡</button>
+        <button id="btnSkins" class="btn-icon" aria-label="Themes">🎨</button>
+        <button id="btnShop" class="btn-icon" aria-label="Store">🛒</button>
+        <button id="btnMusic" class="btn-icon" aria-label="Music">🎵</button>
+        <button id="btnSound" class="btn-icon" aria-label="Sound effects">🔊</button>
+      </div>
+      <p id="homeHint" class="fineprint">Tap anywhere to drop the block.</p>
+    </div>
+  </section>
+
+  <!-- ==================== level select ==================== -->
+  <section id="scr-levels" class="screen hidden">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="btn-back" data-back aria-label="Back">←</button>
+        <h2>THE SPIRE</h2>
+        <span id="levelsStars" class="sheet-meta">0/90 ★</span>
+      </header>
+      <div id="levelGrid" class="level-grid"></div>
+    </div>
+  </section>
+
+  <!-- ==================== chapter intro card ==================== -->
+  <section id="scr-intro" class="screen hidden">
+    <div class="screen-inner">
+      <div class="intro-card">
+        <div class="intro-chapter">CHAPTER <span id="introNum">1</span></div>
+        <h2 id="introTitle">Ground Floor</h2>
+        <p id="introSub" class="intro-sub">Eleven years dark</p>
+        <div id="introLines" class="intro-lines"></div>
+      </div>
+      <button id="btnIntroStart" class="btn btn-primary">CLIMB</button>
+      <button id="btnIntroSkip" class="btn btn-ghost">SKIP</button>
+    </div>
+  </section>
+
+  <!-- ==================== level cleared ==================== -->
+  <section id="scr-complete" class="screen hidden">
+    <div class="screen-inner">
+      <span id="completeBadge" class="badge hidden">CHAPTER CLEAR</span>
+      <h2 class="over-title" id="completeTitle">DECK CLEARED</h2>
+      <div id="starRow" class="stars">
+        <span class="star">★</span><span class="star">★</span><span class="star">★</span>
+      </div>
+      <p id="starHint" class="fineprint"></p>
+      <div class="mini-stats">
+        <div class="mini-stat"><span id="completeBlocks">0</span><small>BLOCKS</small></div>
+        <div class="mini-stat"><span id="completePerfects">0</span><small>PERFECTS</small></div>
+        <div class="mini-stat"><span id="completeCoins">+0</span><small>COINS</small></div>
+      </div>
+      <div id="logUnlock" class="log-unlock hidden">
+        <div class="log-unlock-head">📡 NEW TRANSMISSION</div>
+        <div id="logUnlockTitle" class="log-unlock-title"></div>
+      </div>
+      <button id="btnNextLevel" class="btn btn-primary">NEXT DECK</button>
+      <button id="btnCompleteReplay" class="btn btn-ghost">REPLAY</button>
+      <button id="btnCompleteHome" class="btn btn-ghost">HOME</button>
+    </div>
+  </section>
+
+  <!-- ==================== level failed / game over ==================== -->
+  <section id="scr-over" class="screen hidden">
+    <div class="screen-inner">
+      <h2 class="over-title" id="overTitle">DECK FAILED</h2>
+      <p id="overRemaining" class="over-remaining"></p>
+      <div class="score-big" id="overScore">0</div>
+      <div class="over-sub" id="overSub">BEST 0</div>
+      <button id="btnRevive" class="btn btn-reward">
+        <span class="ad-tag">AD</span> CONTINUE
+      </button>
+      <button id="btnReviveCoins" class="btn btn-coins">CONTINUE · 50 ⛃</button>
+      <button id="btnRetry" class="btn btn-primary">TRY AGAIN</button>
+      <button id="btnOverHome" class="btn btn-ghost">HOME</button>
+    </div>
+  </section>
+
+  <!-- ==================== missions ==================== -->
+  <section id="scr-missions" class="screen hidden">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="btn-back" data-back aria-label="Back">←</button>
+        <h2>DAILY MISSIONS</h2>
+        <span id="missionsCoins" class="sheet-meta">0 ⛃</span>
+      </header>
+      <p class="sheet-note">Three new missions every day. Stack coins, buy themes.</p>
+      <div id="missionList" class="mission-list"></div>
+      <button id="btnClaimAll" class="btn btn-primary hidden">CLAIM ALL</button>
+    </div>
+  </section>
+
+  <!-- ==================== transmissions (story log) ==================== -->
+  <section id="scr-logs" class="screen hidden">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="btn-back" data-back aria-label="Back">←</button>
+        <h2>TRANSMISSIONS</h2>
+        <span id="logsCount" class="sheet-meta">0/5</span>
+      </header>
+      <p class="sheet-note">Recovered audio and notes from the Spire. Clear a chapter finale to unlock one.</p>
+      <div id="logList" class="log-list"></div>
+    </div>
+  </section>
+
+  <!-- ==================== themes shop ==================== -->
+  <section id="scr-skins" class="screen hidden">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="btn-back" data-back aria-label="Back">←</button>
+        <h2>THEMES</h2>
+        <span id="skinsCoins" class="sheet-meta">0 ⛃</span>
+      </header>
+      <div id="skinList" class="skin-list"></div>
+    </div>
+  </section>
+
+  <!-- ==================== store ==================== -->
+  <section id="scr-shop" class="screen hidden">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="btn-back" data-back aria-label="Back">←</button>
+        <h2>STORE</h2>
+        <span id="shopCoins" class="sheet-meta">0 ⛃</span>
+      </header>
+      <div id="shopNotice" class="shop-notice hidden"></div>
+      <div id="shopList" class="shop-list"></div>
+      <button id="btnRestore" class="btn btn-ghost">RESTORE PURCHASES</button>
+      <p class="sheet-note" id="shopFineprint"></p>
+    </div>
+  </section>
+
+  <!-- ==================== music ==================== -->
+  <section id="scr-music" class="screen hidden">
+    <div class="sheet">
+      <header class="sheet-head">
+        <button class="btn-back" data-back aria-label="Back">←</button>
+        <h2>MUSIC</h2>
+        <span id="musicCount" class="sheet-meta">0 tracks</span>
+      </header>
+      <div class="music-controls">
+        <button id="btnMusicToggle" class="btn-mini">ON</button>
+        <button id="btnMusicAuto" class="btn-mini">AUTO</button>
+        <label class="music-vol">
+          <span>VOL</span>
+          <input id="musicVolume" type="range" min="0" max="100" step="5" value="70" aria-label="Music volume" />
+        </label>
+      </div>
+      <div id="musicNow" class="music-now"></div>
+      <div id="musicList" class="music-list"></div>
+      <p class="sheet-note">Every track is generated while it plays, not recorded - which is why none of them repeat and why it is all licence-free.</p>
+    </div>
+  </section>
+
+  <!-- ==================== pause ==================== -->
+  <div id="scr-pause" class="screen hidden">
+    <div class="screen-inner">
+      <h2 class="over-title">PAUSED</h2>
+      <button id="btnResume" class="btn btn-primary">RESUME</button>
+      <button id="btnPauseHome" class="btn btn-ghost">QUIT TO MENU</button>
+    </div>
+  </div>
+
+  <div id="ad-layer" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/config.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/tracks.js"></script>
+<script src="js/music.js"></script>
+<script src="js/ads.js"></script>
+<script src="js/story.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/skins.js"></script>
+<script src="js/progress.js"></script>
+<script src="js/purchases.js"></script>
+<script src="js/missions.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
