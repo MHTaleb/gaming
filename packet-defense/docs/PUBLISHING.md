@@ -30,7 +30,7 @@ read only one section of this file, read this one.
 ```
 
 Then `npm run android:prepare`. **`tools/harden-android.js` is what makes this
-take effect**: `@capacitor-community/admob` v7 does not read the Capacitor config
+take effect**: `@capacitor-community/admob` does not read the Capacitor config
 block at all — it reads the Android meta-data
 `com.google.android.gms.ads.APPLICATION_ID`, which has to resolve from a string
 resource. The harden script writes `res/values/admob.xml` and injects the
@@ -115,7 +115,7 @@ correct — it cannot be done from a terminal.
 | **Ads declaration** | the app contains ads | App content → Ads |
 | **Data safety form** | must declare what is collected and shared | App content → Data safety. Use `docs/PRIVACY.md` §"Data safety answers" |
 | **Content rating** | questionnaire; this game is fantasy violence against software, no user content | App content → Content rating |
-| **Target API level** | **BLOCKING, and the deadline has passed.** Since 31 August 2026 new apps and updates must target **Android 16 (API level 36)**. Capacitor 7 targets API 35, so an upload today is rejected. Capacitor 8 sets `compileSdk`/`targetSdk` 36 (`minSdk` 24) and requires Node 22+. An extension to 1 November 2026 can be requested in Play Console. See **PD-101**, and **R-01** in `docs/RESEARCH.md`. | build config — `npx cap sync` after upgrading |
+| **Target API level** | **Met — enforced, not remembered.** Play has required **Android 16 (API level 36)** for new apps and updates since 31 August 2026. This project is on Capacitor **8.5.2**, which generates `compileSdk`/`targetSdk` 36 and `minSdk` 24. `tools/harden-android.js` reads `android/variables.gradle` on every `npm run android:prepare` and **refuses to prepare a project that targets less**, so the failure happens in a terminal with the numbers in it rather than as an upload rejection. An extension to 1 November 2026 remains available in Play Console if it is ever needed. See **PD-101**, and **R-01** in `docs/RESEARCH.md`. | done — nothing to do |
 | **App access** | all content is reachable without login, so "all functionality available without restrictions" | App content → App access |
 
 > **Why this row says what it says.** It previously read "Capacitor 7 defaults to
@@ -233,12 +233,20 @@ proves the set is complete and not blank without needing a browser.
 ## 8. What is still missing, in priority order
 
 1. **Real AdMob app id and ad unit ids** — §1. Without these, revenue is exactly zero.
-2. **Validator deployed and enabled** — §1c. Without it, purchase grants are client-trusted.
-3. **Privacy policy hosted at a public URL** — §3. Text is in `docs/PRIVACY.md`.
-4. **Data safety + ads declaration submitted** — §3.
-5. **`versionCode`/`versionName` set and incremented** — §5.
-6. **Store listing assets** — §6.
-7. **iOS purchases are untested.** The platform is now derived in one place
+2. **A release AAB built and installed on an API 36 device** — the Capacitor 8
+   upgrade is done and `android/variables.gradle` is verified at 36, but nothing
+   has been compiled or run. That needs the Android SDK and a device or emulator,
+   neither of which is on the development machine. See **PD-114**.
+3. **Validator deployed and enabled** — §1c. Without it, purchase grants are client-trusted.
+4. **Privacy policy hosted at a public URL** — §3. The text in `docs/PRIVACY.md`
+   still describes the game as making no network calls, which co-op made false.
+   See **PD-106**.
+5. **Data safety + ads declaration submitted** — §3.
+6. **`versionCode`/`versionName` set and incremented** — §5.
+7. **Store listing copy** — §6. The screenshots exist; the words do not, and the
+   capitalised phrase "Tower Defense" is a registered COM2uS trademark. See
+   **PD-109**.
+8. **iOS purchases are untested.** The platform is now derived in one place
    (`purchases.js`), so products register against `APPLE_APPSTORE`, but the
    validator is Android-only (`server/validator/README.md`) — an iOS release needs
    App Store receipt verification added server-side.

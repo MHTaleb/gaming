@@ -244,12 +244,19 @@
       "summary": "v1.0.0 on main, live on the staging host, with versionCode derived from the package version so the tag and the uploaded build agree.",
       "refs": ["package.json"] },
 
-    { "id": "PD-101", "title": "Upgrade to Capacitor 8 so the app targets API 36", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P0", "size": "L", "value": 5, "risk": 4,
+    { "id": "PD-101", "title": "Upgrade to Capacitor 8 so the app targets API 36", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "done", "priority": "P0", "size": "L", "value": 5, "risk": 4,
       "summary": "Capacitor 7 targets API 35. Play has required API 36 for new apps and updates since 31 August 2026, so an upload today is rejected. Move @capacitor/core, /android and /cli to 8.x, the AdMob plugin to 8.x, and set minSdk 24 / compileSdk 36 / targetSdk 36.",
       "why": "Nothing else on this board can reach a store listing until this is done. It is the single blocking item.",
-      "dod": ["npx cap sync succeeds with Capacitor 8", "variables.gradle reads compileSdk 36 / targetSdk 36 / minSdk 24", "AGP 8.13.0 and Gradle 8.14.3", "a release AAB builds and installs on an API 36 device or emulator", "?selftest=1 still passes on device", "docs/PUBLISHING.md updated"],
-      "deps": [], "refs": ["docs/PUBLISHING.md", "capacitor.config.json"], "sources": ["R-01", "R-04"],
-      "tags": ["blocker", "android"] },
+      "dod": ["npx cap sync succeeds with Capacitor 8", "variables.gradle reads compileSdk 36 / targetSdk 36 / minSdk 24", "AGP 8.13.0 and Gradle 8.14.3", "docs/PUBLISHING.md updated"],
+      "deps": [], "refs": ["docs/PUBLISHING.md", "capacitor.config.json", "tools/harden-android.js"], "sources": ["R-01", "R-04"],
+      "tags": ["blocker", "android"], "release": "1.0.3",
+      "note": "The two device items - a release AAB building and installing on an API 36 device, and ?selftest=1 passing there - moved to PD-114, which exists for exactly that and cannot be done on a machine with no Android SDK. What is verified here is everything short of compiling: cap add and cap sync against 8.5.2, and variables.gradle read back at compileSdk 36 / targetSdk 36 / minSdk 24 with AGP 8.13.0 and Gradle 8.14.3. R-04 predicted all of those from the release notes; they are now measured from the generated project.",
+      "subtasks": [
+        { "id": "PD-101a", "title": "Move the packages to 8.x", "note": "@capacitor/core, /android and /cli 7.0.0 to 8.5.2, and @capacitor-community/admob 7.0.0 to 8.1.0. 8.5.2 and not the 9.x dev build that npm's latest tag currently points at." },
+        { "id": "PD-101b", "title": "Do not accept a CVE as a side effect of an upgrade", "note": "The upgrade pulled in uuid <11.1.1 through @capacitor/cli, xcode and uuid - the project had zero vulnerabilities before it. The vulnerable path is iOS project files and the dependency is a devDependency, so it never ships; that is a reason to fix it cheaply, not a reason to keep it. An override pins uuid to ^11.1.1, the audit is back to zero, and xcode still loads and still calls uuid.v4()." },
+        { "id": "PD-101c", "title": "Enforce the target API in the prepare step", "note": "tools/harden-android.js now reads android/variables.gradle and refuses to prepare a project targeting less than 36, with the numbers and the fix in the message. variables.gradle is generated from the template, so it is the file that says which Capacitor actually built the project - and the one that regresses silently if somebody regenerates android/ or restores a machine. A build that targets 35 compiles, installs and works; it is rejected at upload, in a console, after signing." },
+        { "id": "PD-101d", "title": "Check the removals list against what this project actually had", "note": "R-04 said android.adjustMarginsForEdgeToEdge is removed in Capacitor 8 in favour of the System Bars plugin, and that density joins configChanges. Neither setting was present in this project's capacitor.config.json, and the generated manifest already carries density - so there was nothing to remove and nothing to add. Recorded because 'the migration guide lists a removal' and 'this project had it' are different things." }
+      ] },
 
     { "id": "PD-102", "title": "Fix the stale targetSdk claim in the publishing doc", "epic": "E-PLAY", "area": "docs", "type": "bug", "status": "done", "priority": "P0", "size": "S", "value": 4, "risk": 1,
       "summary": "docs/PUBLISHING.md stated that Capacitor 7's targetSdk 35 meets Play's requirement and that no action is needed. That was true when it was written and it became false on 31 August 2026 in a way that costs a rejected upload.",
@@ -340,8 +347,9 @@
 
     { "id": "PD-114", "title": "Build and verify a release AAB", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 4, "risk": 2,
       "summary": "Play takes an Android App Bundle for new apps. The android/ directory is gitignored and generated, so the whole path from a fresh clone to a signed AAB needs to be exercised and written down.",
-      "dod": ["npx cap add android && npx cap sync && the harden script && a signed AAB, from a fresh clone", "the AAB installs on a device", "the steps are in docs/PUBLISHING.md"],
-      "deps": ["PD-101", "PD-113"], "refs": ["docs/PUBLISHING.md"], "sources": [], "tags": ["android"] },
+      "dod": ["npx cap add android && npx cap sync && the harden script && a signed AAB, from a fresh clone", "the AAB installs on a device running API 36 or higher", "?selftest=1 passes in the installed app, not only in a browser", "the steps are in docs/PUBLISHING.md"],
+      "deps": ["PD-101", "PD-113"], "refs": ["docs/PUBLISHING.md"], "sources": [], "tags": ["android"],
+      "note": "Absorbed the two verification items PD-101 could not do without an Android SDK. This is also the only place the app is ever exercised as an app: everything else in the project is tested in node or in a browser, and what a browser cannot answer is whether the WebView, the AdMob binding and the purchase plugin behave the same way once they are wrapped in an APK." },
 
     { "id": "PD-201", "title": "Let players shape the path: mazing", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "later", "priority": "P2", "size": "XL", "value": 5, "risk": 5,
       "summary": "Our roads are fixed and generated. Genre research names mazing - building a maze out of your own towers to lengthen the path - as the essential strategy of Desktop Tower Defense and Flash Element TD, and it is the source of that genre's deepest play. We do not have it at all.",

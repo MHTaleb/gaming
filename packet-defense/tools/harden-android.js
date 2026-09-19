@@ -30,6 +30,20 @@ const XML_DIR = path.join(ROOT, 'app', 'src', 'main', 'res', 'xml');
 const NET_CONFIG = path.join(XML_DIR, 'network_security_config.xml');
 const MAIN_ACTIVITY = path.join(ROOT, 'app', 'src', 'main', 'java');
 const BUILD_GRADLE = path.join(ROOT, 'app', 'build.gradle');
+const VARIABLES_GRADLE = path.join(ROOT, 'variables.gradle');
+
+/**
+ * The target API level Play requires, and the deadline that makes it blocking.
+ *
+ * Since 31 August 2026 a new app or an update must target Android 16 (API 36).
+ * An earlier build of this project targeted 35 and would have been rejected at
+ * upload, which is a bad way to find out: everything builds, everything installs,
+ * everything works, and the rejection happens in a web console after the AAB is
+ * already signed.
+ */
+const REQUIRED_TARGET_SDK = 36;
+/** Capacitor 8's floor. Below this the template is not the one that was tested. */
+const REQUIRED_MIN_SDK = 24;
 
 const MINIFY = process.argv.includes('--minify');
 const changed = [];
@@ -54,6 +68,55 @@ function write(p, content, label) {
 
 function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
+}
+
+/* ------------------------------------------------------------------ *
+ * 0. The target API level
+ * ------------------------------------------------------------------ */
+
+/**
+ * Refuse to prepare a project that Play would reject.
+ *
+ * variables.gradle is generated from the Capacitor template, so it is the file
+ * that says which Capacitor this project actually was built by - and the one
+ * that silently regresses if somebody restores a machine, regenerates android/,
+ * or resolves an older @capacitor/android. Checking it here means the failure
+ * arrives at `npm run android:prepare` with the numbers in the message, rather
+ * than as an upload rejection nobody can explain.
+ */
+function checkTargetApi() {
+  const text = readIfExists(VARIABLES_GRADLE);
+  if (text === null) {
+    fail('android/variables.gradle not found - run "npx cap add android" first.');
+  }
+
+  const read = (name) => {
+    const m = new RegExp(name + '\\s*=\\s*(\\d+)').exec(text);
+    return m ? Number(m[1]) : null;
+  };
+
+  const compileSdk = read('compileSdkVersion');
+  const targetSdk = read('targetSdkVersion');
+  const minSdk = read('minSdkVersion');
+
+  if (compileSdk === null || targetSdk === null || minSdk === null) {
+    fail('android/variables.gradle does not look like a Capacitor template any more ' +
+      '(compileSdk ' + compileSdk + ', targetSdk ' + targetSdk + ', minSdk ' + minSdk + ').');
+  }
+  if (targetSdk < REQUIRED_TARGET_SDK || compileSdk < REQUIRED_TARGET_SDK) {
+    fail('this project targets API ' + targetSdk + ' (compileSdk ' + compileSdk + '), and ' +
+      'Play has required API ' + REQUIRED_TARGET_SDK + ' for new apps and updates since 31 August 2026.\n' +
+      '  An upload would be rejected. Upgrade @capacitor/android to 8.x and run:\n' +
+      '      npx cap add android && npm run android:prepare');
+  }
+  if (minSdk !== REQUIRED_MIN_SDK) {
+    // A warning rather than a failure: minSdk is a choice, and the only one
+    // that matters for the store is that it is what was tested.
+    console.warn('harden-android: WARNING - minSdk is ' + minSdk + ', expected ' +
+      REQUIRED_MIN_SDK + ' from the Capacitor 8 template. Devices below it will not install.');
+  }
+
+  return { compileSdk: compileSdk, targetSdk: targetSdk, minSdk: minSdk };
 }
 
 /* ------------------------------------------------------------------ *
@@ -345,12 +408,16 @@ if (!fs.existsSync(ROOT)) {
   fail('no android/ directory. Run "npm install && npx cap add android" first.');
 }
 
+const api = checkTargetApi();
 hardenManifest();
 writeNetworkConfig();
 hardenMainActivity();
 writeAdMobAppId();
 writeVersion();
 maybeMinify();
+
+console.log('harden-android: API ' + api.targetSdk + ' (compileSdk ' + api.compileSdk +
+  ', minSdk ' + api.minSdk + ') - meets Play\'s requirement.');
 
 if (changed.length) {
   console.log('harden-android: patched -> ' + changed.join(', '));
