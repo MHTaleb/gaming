@@ -46,7 +46,9 @@ RELAY=http://127.0.0.1:8081 node tools/serve.js
 # host in one window, share the four-character code, join in the other
 
 # Verify
-node tools/balance.js --levels 1-40              # is the campaign still sound?
+node tools/verify.js                           # 9 seconds, six gates
+node tools/verify.js --full                    # adds the 240-ticket campaign
+node tools/balance.js --levels 1-40            # is the campaign still sound?
 node tools/balance.js --minimal --levels 1-10    # is it still hard enough?
 node tools/balance.js --replay-check --levels 1-5
 node server/relay/index.js --test
@@ -160,10 +162,15 @@ Rules that are load-bearing. Breaking one of these has cost real time.
 
 ## Verification
 
-Four gates, each one command. All of them run by hand today (**PD-303** adds CI).
+One command runs everything: **`npm run verify`** (9 seconds, six gates).
+`npm run verify:full` adds the 240-ticket campaign sweep and the difficulty
+measurement. CI runs the first on every push that touches the game and the second
+on main and on tags, so there is one definition of "verified" for both a machine
+and a person.
 
 | Gate | Command | What it proves |
 |---|---|---|
+| Everything fast | `npm run verify` | syntax, backlog, assets, relay, invariants, replay |
 | Campaign soundness | `node tools/balance.js` | Difficulty rises monotonically; every ticket is playable; no ticket is a single-threat wall |
 | Real difficulty | `node tools/balance.js --minimal --levels 1-40` | The *cost* of the winning defence against the budget |
 | Determinism | `node tools/balance.js --replay-check` | A battle reproduces exactly from its action log |

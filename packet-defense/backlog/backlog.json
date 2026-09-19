@@ -428,11 +428,18 @@
       "deps": [], "refs": ["www/js/engine.js", "www/js/main.js"], "sources": [], "tags": ["robustness", "lesson"],
       "release": "1.0.1" },
 
-    { "id": "PD-303", "title": "Continuous integration that runs the verification we already have", "epic": "E-QA", "area": "qa", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 5, "risk": 2,
-      "summary": "Every check in this project is run by hand, by whoever remembers to run it. The campaign invariant sweep, the replay check, the relay self-test and the backlog validator are all one command each and none of them run on a push.",
+    { "id": "PD-303", "title": "Continuous integration that runs the verification we already have", "epic": "E-QA", "area": "qa", "type": "task", "status": "done", "priority": "P1", "size": "M", "value": 5, "risk": 2,
+      "summary": "Every check in this project is run by hand, by whoever remembers to run it. The campaign invariant sweep, the replay check, the relay self-test and the backlog validator are all one command each and none of them ran on a push.",
       "why": "The single most likely way this project regresses is somebody changing one dial and not noticing that 240 measured tickets moved. That is a machine's job.",
       "dod": ["a workflow runs the relay self-test, the backlog validator and the campaign invariants on push", "a regression in any of them fails the build", "the balance sweep is either fast enough for CI or explicitly excluded with a reason"],
-      "deps": [], "refs": ["tools/balance.js"], "sources": [], "tags": ["ci", "cheap-win"] },
+      "deps": [], "refs": ["tools/verify.js", ".github/workflows/verify.yml"], "sources": [], "tags": ["ci", "cheap-win"],
+      "note": "Measured at 9 seconds for the fast gates, which is why they run on every push. The full 240-ticket sweep runs on main and on tags instead." },
+
+    { "id": "PD-307", "title": "Run the in-page self-test in CI", "epic": "E-QA", "area": "qa", "type": "task", "status": "later", "priority": "P2", "size": "M", "value": 4, "risk": 2,
+      "summary": "The 54 in-page checks cover what the node harness cannot see: the DOM, the ad and purchase flows, and the diagnostics plumbing added in PD-302. They are run by hand in a browser and by nothing else.",
+      "why": "Deliberately left out of PD-303 rather than forgotten: it needs a headless browser, which is a ~150MB download on every CI run, and PD-303 was worth landing without that cost. It is the one gate that can regress without anyone noticing until release.",
+      "dod": ["a headless browser drives ?selftest=1 and reads __kit.summary()", "a non-zero failure count fails the build", "it runs on main rather than on every push"],
+      "deps": ["PD-303"], "refs": ["www/js/selftest.js"], "sources": [], "tags": ["ci", "qa"] },
 
     { "id": "PD-304", "title": "Automate the two-client co-op test", "epic": "E-QA", "area": "qa", "type": "task", "status": "next", "priority": "P1", "size": "L", "value": 5, "risk": 3,
       "summary": "Co-op was verified by driving two browser pages through a real relay, by hand, with a script. It found three bugs that no single-client test could have found - a stale-snapshot interpolation error, the silent startup failure, and an infinite reconnect loop on a dead room - and none of them are covered by anything that runs now.",
