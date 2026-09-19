@@ -91,8 +91,8 @@ function proxy(req, res) {
   req.pipe(upstream);
 }
 
-http
-  .createServer((req, res) => {
+function createServer() {
+  return http.createServer((req, res) => {
     if (req.url === '/coop' || req.url.startsWith('/coop/')) {
       proxy(req, res);
       return;
@@ -153,9 +153,45 @@ http
         res.end(data);
       });
     });
-  })
-  .listen(PORT, HOST, () => {
-    const shown = HOST === '0.0.0.0' || HOST === '::' ? 'localhost' : HOST;
-    console.log(`Packet Defense running at http://${shown}:${PORT}`);
-    console.log(RELAY ? `co-op relay proxied at /coop -> ${RELAY}` : 'co-op relay not configured (set RELAY=...)');
   });
+}
+
+function listen(server) {
+  server.on('error', (err) => {
+    /*
+     * A taken port, said plainly.
+     *
+     * 8080 is the default and it is also the most likely port on the machine to
+     * already be in use, so this is the first thing a lot of people hit. What
+     * they used to get was a raw EADDRINUSE stack, which is indistinguishable
+     * from the tool being broken - and this server also serves the backlog
+     * board, so a confusing failure here is the difference between somebody
+     * reading the plan and somebody giving up on it.
+     */
+    if (err.code === 'EADDRINUSE') {
+      const next = PORT + 1;
+      console.error('\nPort ' + PORT + ' is already in use.');
+      console.error('  Something else is on it - on this machine that is often another project\'s dev server.');
+      console.error('\n  Try a different port:\n');
+      console.error('      PORT=' + next + ' node tools/serve.js');
+      console.error('      PORT=' + next + ' RELAY=http://127.0.0.1:8081 node tools/serve.js\n');
+      process.exit(1);
+    }
+    if (err.code === 'EACCES') {
+      console.error('\nPort ' + PORT + ' needs privileges this process does not have.');
+      console.error('  Ports below 1024 are reserved; use one above it.\n');
+      process.exit(1);
+    }
+    console.error('\nThe server could not start: ' + err.message + '\n');
+    process.exit(1);
+  });
+
+  return server.listen(PORT, HOST, () => {
+    const shown = HOST === '0.0.0.0' || HOST === '::' ? 'localhost' : HOST;
+    console.log('Packet Defense running at http://' + shown + ':' + PORT);
+    console.log('backlog board at        http://' + shown + ':' + PORT + '/backlog/');
+    console.log(RELAY ? 'co-op relay proxied at /coop -> ' + RELAY : 'co-op relay not configured (set RELAY=...)');
+  });
+}
+
+listen(createServer());

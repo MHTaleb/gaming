@@ -93,10 +93,18 @@
   -->
   <div id="ad-layer" class="hidden" aria-hidden="true"></div>
 
+  <!-- Shown when something threw and the game survived, and when it did not.
+       Both are filled in by main.js. See PD-302. -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="fatal" class="fatal" role="alertdialog" aria-live="assertive"></div>
+
 </div>
 
 <script src="js/config.js"></script>
 <script src="js/storage.js"></script>
+<!-- Loaded before anything that can throw, so a failure during startup is
+     reported rather than lost. See PD-302. -->
+<script src="js/diag.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/tracks.js"></script>
 <script src="js/music.js"></script>

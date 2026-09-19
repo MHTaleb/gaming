@@ -78,7 +78,7 @@ function loadGame() {
   vm.createContext(sandbox);
 
   const order = [
-    'config.js', 'storage.js', 'audio.js', 'tracks.js', 'music.js', 'ads.js',
+    'config.js', 'storage.js', 'diag.js', 'audio.js', 'tracks.js', 'music.js', 'ads.js',
     'purchases.js', 'progress.js', 'base.js', 'map.js', 'threats.js', 'towers.js',
     'roads.js', 'campaign.js', 'levels.js', 'engine.js',
   ];

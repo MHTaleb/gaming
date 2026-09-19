@@ -91,6 +91,55 @@
   function structuralChecks() {
     check('config.js loaded', !!global.NeonConfig, global.NeonConfig && global.NeonConfig.appId);
     check('storage.js loaded', !!global.Store);
+
+    /*
+     * The failure plumbing (PD-302).
+     *
+     * Asserted rather than trusted, because the failure mode of this feature is
+     * that it is not there - and the symptom of it not being there is silence,
+     * which is indistinguishable from everything working.
+     */
+    var D = global.Diag;
+    check('diag.js loaded', !!D, D ? 'ring buffer of ' + D.MAX : 'missing');
+    if (D) {
+      check('diag installed its global handlers', D.isInstalled() === true,
+        'error + unhandledrejection');
+      check('diag reports a real Error', D.quiet(function () {
+        var before = D.count();
+        var entry = D.report(new Error('selftest probe'), 'selftest');
+        // The report must carry the message through, must be recorded, and must
+        // not invent a different context.
+        return D.count() === before + 1 &&
+          entry.message === 'selftest probe' && entry.context === 'selftest';
+      }), 'captured with context');
+      check('diag survives being handed rubbish', D.quiet(function () {
+        // report() is on the path of something that is already failing, so it is
+        // the one function in this codebase that must never throw.
+        try {
+          D.report(undefined, null);
+          D.report('a string', 'selftest');
+          D.report({}, 'selftest');
+          D.report(null, undefined);
+          return true;
+        } catch (err) { return false; }
+      }), 'no throw for undefined, string, plain object or null');
+      check('diag keeps only the recent past', D.quiet(function () {
+        for (var i = 0; i < D.MAX + 2; i++) D.report(new Error('flood ' + i), 'selftest');
+        return D.recent().length === D.MAX;
+      }), 'capped at ' + D.MAX + ' entries');
+      check('quiet mode is restored even if the body throws', (function () {
+        try { D.quiet(function () { throw new Error('deliberate'); }); } catch (e) { /* expected */ }
+        return D.isQuiet() === false;
+      })(), 'a muted reporter is worse than a noisy one');
+      D.clear();
+    }
+
+    var fatalHost = doc.getElementById('fatal');
+    var toastHost = doc.getElementById('toast');
+    check('the fatal overlay and the toast both exist in the page',
+      !!fatalHost && !!toastHost,
+      (fatalHost ? 'fatal ok' : 'no #fatal') + ', ' + (toastHost ? 'toast ok' : 'no #toast'));
+
     check('audio.js loaded', !!global.Sfx);
     check('tracks.js loaded', !!(global.Tracks && global.Tracks.all),
       global.Tracks ? global.Tracks.count + ' tracks' : 'missing');

@@ -157,7 +157,7 @@
     if (id === 'menu') renderMenu();
     if (id === 'map') renderMap();
     if (id === 'brief') renderBrief(data.levelId);
-    if (id === 'battle') startBattle(data.levelId, data);
+    if (id === 'battle') guarded('startBattle', function () { startBattle(data.levelId, data); });
     if (id === 'result') renderResult(data);
     if (id === 'shop') renderShop();
     if (id === 'base') renderBase();
@@ -192,6 +192,172 @@
   function tap(weight) {
     if (global.Sfx) global.Sfx.ui();
     haptic(weight || 10);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Failures the player can see (PD-302)
+   *
+   * Two different failures, two different responses, and conflating them is
+   * worse than doing nothing:
+   *
+   *   * something threw and the game is still running. The player needs to know
+   *     it happened, quietly, and then get on with it. A modal here would
+   *     interrupt a battle over a cosmetic bug.
+   *   * something threw and the screen is broken - a battle that will not start,
+   *     a frame loop that has stopped. The player cannot play, and the honest
+   *     thing is to say so and offer the one action that helps.
+   *
+   * Both quote a message a human can act on. "Something went wrong" is not a
+   * bug report, and neither is a stack trace.
+   * ------------------------------------------------------------------ */
+
+  var fatalShown = false;
+  var expectFatal = false;
+  var toastShown = 0;
+
+  function prettyMessage(text) {
+    // Exception messages are written for the person who wrote the throw. This
+    // does a small amount of tidying so the visible line is not a raw TypeError.
+    var m = String(text || 'unknown error');
+    m = m.replace(/^Uncaught\s+/, '');
+    m = m.replace(/^TypeError:\s*/, '');
+    m = m.replace(/^ReferenceError:\s*/, '');
+    if (m.length > 140) m = m.slice(0, 137) + '…';
+    return m;
+  }
+
+  /**
+   * The screen is broken. Say so, offer a reload, and offer the details.
+   *
+   * Shown at most once: a broken loop can report repeatedly and a wall of
+   * identical overlays is its own kind of unhelpful.
+   */
+  function showFatal(entry) {
+    if (fatalShown) return;
+    fatalShown = true;
+
+    var node = el('fatal');
+    if (!node) return;
+    clear(node);
+
+    node.appendChild(h('div', { class: 'fatal-card' }, [
+      h('h2', { text: 'The game stopped.' }),
+      h('p', { class: 'fatal-msg', text: prettyMessage(entry && entry.message) }),
+      h('p', { class: 'fatal-note', text:
+        'Reloading fixes most of these. If it keeps happening, the details below ' +
+        'are what a bug report needs.' }),
+
+      h('div', { class: 'fatal-actions' }, [
+        h('button', {
+          class: 'btn primary',
+          text: 'RELOAD',
+          on: { click: function () { global.location.reload(); } },
+        }),
+        h('button', {
+          class: 'btn',
+          text: 'DETAILS',
+          on: {
+            click: function () {
+              var box = el('fatal-detail');
+              if (!box) return;
+              box.classList.toggle('open');
+            },
+          },
+        }),
+      ]),
+
+      h('pre', { class: 'fatal-detail', id: 'fatal-detail', text: details() }),
+    ]));
+
+    node.classList.add('open');
+  }
+
+  /** Everything a bug report needs, in the order it is useful. */
+  function details() {
+    var lines = [];
+    var d = global.Diag;
+    if (d) {
+      var recent = d.recent();
+      for (var i = recent.length - 1; i >= 0; i--) {
+        var e = recent[i];
+        lines.push(new Date(e.at).toISOString() + '  [' + e.context + ']  ' + e.message);
+        if (e.stack) {
+          lines.push(e.stack.split('\n').slice(1, 4).join('\n'));
+        }
+        lines.push('');
+      }
+    }
+    lines.push('');
+    if (global.Engine) {
+      var st = global.Engine.state();
+      if (st) {
+        lines.push('battle: ' + (st.status || '?') + '  wave ' + st.waveIndex + '/' + st.totalWaves +
+          '  uptime ' + Math.round(st.uptime) + '%  towers ' + st.towers.length +
+          '  threats ' + st.threats.length + '  t=' + st.time.toFixed(1));
+      }
+      lines.push('engine: protocol ' + global.Engine.protocol + ' types ' + global.Engine.typeHash() +
+        '  net ' + global.Engine.netMode());
+    }
+    if (global.Coop && global.Coop.active()) {
+      var cs = global.Coop.session();
+      lines.push('co-op: role=' + cs.role + ' seat=' + cs.seat + ' seats=' + cs.seats +
+        ' sent=' + cs.snapshotsSent + ' in=' + cs.intentsIn);
+    }
+    if (global.Net && global.Net.session().code) {
+      lines.push('room: ' + global.Net.session().code + '  relay ' + global.Net.base() +
+        '  status ' + global.Net.session().status);
+    }
+    lines.push('ua: ' + (global.navigator && global.navigator.userAgent ? global.navigator.userAgent : 'n/a'));
+    return lines.join('\n');
+  }
+
+  /**
+   * Something threw and the game survived.
+   *
+   * Rate-limited by a cooldown rather than a count, because the failure mode
+   * this guards against is a bug firing every frame - and a toast per frame is a
+   * second bug on top of the first.
+   */
+  function showWarnToast(entry) {
+    var now = Date.now();
+    if (now - toastShown < 15000) return;
+    toastShown = now;
+
+    var node = el('toast');
+    if (!node) return;
+    clear(node);
+    node.appendChild(h('span', { class: 'toast-msg', text: 'A problem was caught: ' + prettyMessage(entry.message) }));
+    node.appendChild(h('button', {
+      class: 'toast-x',
+      text: '×',
+      'aria-label': 'Dismiss',
+      on: { click: function () { node.classList.remove('open'); } },
+    }));
+    node.classList.add('open');
+    global.setTimeout(function () { node.classList.remove('open'); }, 6000);
+  }
+
+  /**
+   * Run something that must not fail silently.
+   *
+   * Wraps the boot-time steps and the screen entry points. Anything that throws
+   * here has broken a screen, so it reports and then says so on the screen rather
+   * than leaving a half-built one.
+   */
+  function guarded(what, fn) {
+    try {
+      return fn();
+    } catch (err) {
+      // Marked BEFORE reporting. report() notifies the listeners synchronously,
+      // so a listener that only checked fatalShown would still fire a toast for
+      // the very failure the overlay is about to explain - which is how the
+      // first version managed to show both at once.
+      expectFatal = true;
+      var entry = global.Diag ? global.Diag.report(err, what) : { message: String(err) };
+      showFatal(entry);
+      expectFatal = false;
+      return undefined;
+    }
   }
 
   /* ------------------------------------------------------------------ *
@@ -729,6 +895,9 @@
         lines(global.Story.reaction('lose'));
         global.setTimeout(function () { finish(result, false); }, 1200);
       },
+      // The frame loop gave up. Without this the battle would simply stop and
+      // the player would be left looking at a frozen board with no explanation.
+      onFatal: showFatal,
     });
 
     global.Engine.run();
@@ -1373,6 +1542,18 @@
      * through Coop.onMessage, which decides whether it is authoritative - the
      * relay is a post box and does not enforce that, so a peer has to.
      */
+    // Any failure the game survived is worth saying out loud, quietly. The frame
+    // loop reports its own and stops after three; everything else lands here.
+    if (global.Diag) {
+      global.Diag.onError(function (entry) {
+        // A fatal already has a screen of its own; a toast over it is noise.
+        // `expectFatal` covers the window between the report and the overlay.
+        if (fatalShown || expectFatal) return;
+        if (entry.context === 'frame') return;   // the loop owns this one
+        showWarnToast(entry);
+      });
+    }
+
     if (global.Net && global.Coop) {
       global.Net.on('message', function (msg, from) {
         global.Coop.onMessage(msg, from);

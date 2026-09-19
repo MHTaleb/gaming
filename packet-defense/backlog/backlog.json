@@ -414,11 +414,19 @@
       "dod": ["a measured profile on a representative low-end device", "a frame-time budget with a pass or a fail, not an impression", "pooling or batching where the profile says it is needed"],
       "deps": [], "refs": ["www/js/engine.js"], "sources": [], "tags": ["performance"] },
 
-    { "id": "PD-302", "title": "Make a crash visible instead of silent", "epic": "E-ENG", "area": "tech", "type": "bug", "status": "next", "priority": "P0", "size": "S", "value": 5, "risk": 1,
+    { "id": "PD-302", "title": "Make a crash visible instead of silent", "epic": "E-ENG", "area": "tech", "type": "bug", "status": "done", "priority": "P0", "size": "S", "value": 5, "risk": 1,
       "summary": "A co-op battle recently failed to start because a music lookup threw on an undefined ticket id, and the exception aborted the rest of startBattle - so the render loop never started and the host broadcast nothing at all. Nothing on screen said anything was wrong. It was found by reading a console log during a manual two-client test.",
       "why": "This is the highest-value item on the board by cost against benefit. A silent failure in a startup path is indistinguishable from a broken game, and the only reason we found this one is that we happened to be looking.",
       "dod": ["a global error handler catches uncaught exceptions and unhandled rejections", "the failure is shown to the player, briefly and in plain words", "it is logged with enough context to reproduce", "the self-test asserts the handler is installed"],
-      "deps": [], "refs": ["www/js/engine.js", "www/js/main.js"], "sources": [], "tags": ["robustness", "lesson"] },
+      "subtasks": [
+        "PD-302a www/js/diag.js: a capped ring buffer, a report() that never itself throws, and global handlers for error and unhandledrejection",
+        "PD-302b engine.js: guard the frame, with a circuit breaker so a frame that throws every time stops the loop instead of spinning at 60 errors a second",
+        "PD-302c main.js: a fatal overlay for a broken screen, and a rate-limited toast for an error the game survived",
+        "PD-302d selftest.js: assert the plumbing exists and captures, rather than trusting it",
+        "PD-302e engine.js: expose the recent errors so a bug report can quote them"
+      ],
+      "deps": [], "refs": ["www/js/engine.js", "www/js/main.js"], "sources": [], "tags": ["robustness", "lesson"],
+      "release": "1.0.1" },
 
     { "id": "PD-303", "title": "Continuous integration that runs the verification we already have", "epic": "E-QA", "area": "qa", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 5, "risk": 2,
       "summary": "Every check in this project is run by hand, by whoever remembers to run it. The campaign invariant sweep, the replay check, the relay self-test and the backlog validator are all one command each and none of them run on a push.",
@@ -541,6 +549,13 @@
       "dod": ["a page that reads backlog.json and renders columns", "filter and search", "progress summary", "it is not shipped to players"],
       "deps": ["PD-703"], "refs": ["backlog/index.html", "backlog/board.js", "backlog/board.css"], "sources": [], "tags": ["docs", "tooling"],
       "note": "Served from outside www/ because www/ is the Capacitor webDir and everything in it ships inside the APK." },
+
+    { "id": "PD-306", "title": "The dev server dies with an opaque error when its port is taken", "epic": "E-ENG", "area": "infra", "type": "bug", "status": "done", "priority": "P1", "size": "S", "value": 3, "risk": 1,
+      "summary": "`PORT=8080 node tools/serve.js` on a machine where 8080 is already bound exits 1 with a raw EADDRINUSE stack. 8080 is the default, so this is the first thing anybody hits when they already run one web server - and it is indistinguishable from the tool being broken.",
+      "why": "The board is served by this script (PD-704), so a confusing failure here is the difference between somebody reading the plan and somebody giving up on it.",
+      "dod": ["a taken port prints one clear line naming the port and a free alternative", "it exits non-zero", "tested against a deliberately occupied port"],
+      "deps": [], "refs": ["tools/serve.js"], "sources": [], "tags": ["tooling", "ux"],
+      "release": "1.0.1" },
 
     { "id": "PD-801", "title": "Per-frame allocation in the threat and shot loops", "epic": "E-ENG", "area": "tech", "type": "chore", "status": "later", "priority": "P3", "size": "M", "value": 2, "risk": 2,
       "summary": "The engine allocates objects inside the update loop. It has never been a measured problem, which is precisely why it will be introduced as one by somebody adding a feature in a hot path.",

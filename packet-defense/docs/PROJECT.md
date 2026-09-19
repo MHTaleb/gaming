@@ -25,7 +25,7 @@ Google Play yet, and the reason is a compliance deadline that has already passed
 | Release | 1.0.0, tagged `v1.0.0` |
 | Campaign | 240 tickets across 12 acts, all winnable on easy, normal and hard |
 | Co-op | Playable between two real clients over a real relay, via room codes |
-| Verification | 47 in-page checks, 20 relay assertions, a full-campaign balance sweep, replay determinism |
+| Verification | 54 in-page checks, 20 relay assertions, a full-campaign balance sweep, replay determinism |
 | Blocking Play | The app must target API 36. It targets 35. See **PD-101**. |
 
 The authoritative list of what is done, in progress and planned is
@@ -169,7 +169,7 @@ Four gates, each one command. All of them run by hand today (**PD-303** adds CI)
 | Determinism | `node tools/balance.js --replay-check` | A battle reproduces exactly from its action log |
 | Co-op rules | `node tools/balance.js --coop --detail` | Per-seat spend sums to the totals and every seat builds something |
 | Networking | `node server/relay/index.js --test` | Seat assignment, forwarding, **that a peer cannot forge state**, reconnect replay |
-| In-page | `?selftest=1` | 47 structural, commerce and gameplay checks in the real page |
+| In-page | `?selftest=1` | 54 structural, commerce, gameplay and diagnostics checks in the real page |
 | Backlog | `node tools/backlog.js` | The plan is internally consistent |
 
 **The single-player campaign is the regression gate for everything.** When
@@ -208,8 +208,9 @@ packet-defense/
       audio.js             generated sound effects
       ads.js purchases.js  AdMob and IAP
       net.js coop.js       co-op transport and session
+      diag.js              the failure ring buffer and global handlers
       main.js              screens and wiring
-      selftest.js          47 in-page checks behind ?selftest=1
+      selftest.js          54 in-page checks behind ?selftest=1
   server/
     relay/                 co-op room server (SSE + POST, zero dependencies)
     validator/             purchase receipt validator (scaffolded, not deployed)

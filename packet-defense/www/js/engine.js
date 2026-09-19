@@ -28,6 +28,17 @@
   var view = { x: 0, y: 0 };   // world-space shake offset
   var bindCount = 0;   // times the pointer listeners have been attached; must stay 1
 
+  /**
+   * Consecutive failed frames.
+   *
+   * Reset by any frame that completes, so a transient error never accumulates
+   * towards stopping a battle that is otherwise running. Three is past any
+   * plausible one-off and still stops within a twentieth of a second.
+   */
+  var MAX_FRAME_FAILURES = 3;
+  var frameFailures = 0;
+  var frameError = null;
+
   /** Movement in CSS px before a press on a card counts as a drag, not a tap. */
   var DRAG_THRESHOLD = 9;
 
@@ -1021,20 +1032,52 @@
     // with different collision outcomes.
     var total = dt * state.speed;
     var steps = Math.min(4, Math.ceil(total / 0.025)) || 1;
-    for (var i = 0; i < steps; i++) step(total / steps);
 
-    draw();
+    /*
+     * The frame is guarded, and the guard has a circuit breaker.
+     *
+     * An uncaught throw in here used to escape the animation callback, which
+     * cancels nothing and reports nothing: requestAnimationFrame was already
+     * scheduled for the next frame, so the game re-threw sixty times a second
+     * with a frozen picture behind it. Silence was the worst part - the screen
+     * simply stopped changing.
+     *
+     * A single bad frame is survivable, and killing the battle over one transient
+     * null would be its own bug. A frame that throws every time is a spin, and a
+     * spin has to stop and say so.
+     */
+    try {
+      for (var i = 0; i < steps; i++) step(total / steps);
+      draw();
+      frameFailures = 0;
+    } catch (err) {
+      frameFailures++;
+      frameError = global.Diag ? global.Diag.report(err, 'frame') : { message: String(err) };
+      if (frameFailures >= MAX_FRAME_FAILURES) {
+        stop();
+        if (hooks.onFatal) hooks.onFatal(frameError);
+      }
+      return;
+    }
 
     // After draw, so anything a hook does is in the next frame rather than this
     // one - and with the real frame delta, because the host's broadcast rate has
     // to be independent of the frame rate. A phone at 30fps and one at 120fps
     // must send state at the same 10Hz, and that is only possible if the sender
     // accumulates time rather than counting frames.
-    if (hooks.onTick) hooks.onTick(dt, state);
+    //
+    // Also guarded: onTick is user code, and a co-op session that throws must not
+    // take the render loop down with it.
+    try {
+      if (hooks.onTick) hooks.onTick(dt, state);
+    } catch (err) {
+      if (global.Diag) global.Diag.report(err, 'onTick');
+    }
   }
 
   function run() {
     if (raf) return;
+    frameFailures = 0;
     lastNow = global.performance ? global.performance.now() : Date.now();
     raf = global.requestAnimationFrame(tick);
   }
@@ -1043,7 +1086,6 @@
     if (raf) global.cancelAnimationFrame(raf);
     raf = null;
   }
-
   /* ------------------------------------------------------------------ *
    * Input
    * ------------------------------------------------------------------ */
@@ -2289,5 +2331,16 @@
     seatOf: function (playerId) { return seatOf(state, playerId); },
     protocol: PROTOCOL,
     typeHash: typeHash,
+
+    /* --- diagnostics (PD-302) ------------------------------------- */
+    /**
+     * The last frame failure, or null.
+     *
+     * Exposed so a bug report can quote the actual exception rather than "the
+     * game froze", which is the report you get when the only evidence is a
+     * screen that stopped changing.
+     */
+    lastFrameError: function () { return frameError; },
+    frameFailures: function () { return frameFailures; },
   };
 })(window);
