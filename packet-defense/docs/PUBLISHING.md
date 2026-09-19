@@ -115,8 +115,15 @@ correct — it cannot be done from a terminal.
 | **Ads declaration** | the app contains ads | App content → Ads |
 | **Data safety form** | must declare what is collected and shared | App content → Data safety. Use `docs/PRIVACY.md` §"Data safety answers" |
 | **Content rating** | questionnaire; this game is fantasy violence against software, no user content | App content → Content rating |
-| **Target API level** | Play requires a recent `targetSdkVersion` for new apps and updates | Capacitor 7 defaults to `targetSdk 35`, which meets it — no action unless you pin it lower |
+| **Target API level** | **BLOCKING, and the deadline has passed.** Since 31 August 2026 new apps and updates must target **Android 16 (API level 36)**. Capacitor 7 targets API 35, so an upload today is rejected. Capacitor 8 sets `compileSdk`/`targetSdk` 36 (`minSdk` 24) and requires Node 22+. An extension to 1 November 2026 can be requested in Play Console. See **PD-101**, and **R-01** in `docs/RESEARCH.md`. | build config — `npx cap sync` after upgrading |
 | **App access** | all content is reachable without login, so "all functionality available without restrictions" | App content → App access |
+
+> **Why this row says what it says.** It previously read "Capacitor 7 defaults to
+> `targetSdk 35`, which meets it — no action unless you pin it lower". That was
+> true when it was written and became false on 31 August 2026, and nothing in the
+> repository recorded when the claim had last been checked. It is now dated and
+> cites the research entry behind it. If you are reading this more than a few
+> months after 2026-09-19, re-read the source before trusting it: **R-01**.
 
 **Permissions actually requested:** `INTERNET` (Capacitor) and
 `com.android.vending.BILLING` (from `cordova-plugin-purchase`). The manifest is

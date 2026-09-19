@@ -16,12 +16,13 @@
     "validator:mock": "node tools/mock-validator.js"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.0.0"
+    "@capacitor/cli": "^7.0.0",
+    "@resvg/resvg-js": "^2.6.2"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^7.0.0",
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
-    "@capacitor-community/admob": "^7.0.0",
     "cordova-plugin-purchase": "^13.18.0"
   }
 }
