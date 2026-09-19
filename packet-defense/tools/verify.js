@@ -198,6 +198,7 @@ run('backlog', 'the plan is internally consistent', () => node('tools/backlog.js
 run('assets', 'store PNGs match the SVG they came from', () => node('tools/store-assets.js', ['--check']));
 run('shots', 'store screenshots are the right shape and not blank', () => node('tools/screenshots.js', ['--check']));
 run('relay', '20 assertions on the co-op room server', () => node('server/relay/index.js', ['--test']));
+run('coop', 'two real clients agree through a real relay', () => node('tools/coop-test.js'));
 run('invariants', 'the campaign rises and every ticket is playable', checkInvariants);
 run('replay', 'a battle reproduces from its action log', () => node('tools/balance.js', ['--replay-check', '--levels', '1-3']));
 

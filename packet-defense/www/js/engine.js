@@ -480,6 +480,13 @@
     // interpolated between the newest state and the oldest one. The world
     // rendered as a stale frame, and because it looked *plausible* the bug read
     // as "towers not syncing" rather than as an index error.
+    //
+    // Note for whoever reads this next: the fix is the default ABOVE, `b` = the
+    // last entry. The `if (b.at < a.at)` guard below is belt-and-braces and
+    // cannot currently fire, because `at` only ever increases, so `a` - the last
+    // entry at or before the target - is never later than `b`. Both are load
+    // bearing in different ways: removing the default, on the assumption that
+    // the guard covers it, puts the original bug straight back.
     if (b.at < a.at) b = a;
     var span = b.at - a.at;
     var f = span > 0.0001 ? Math.min(1, Math.max(0, (target - a.at) / span)) : 0;

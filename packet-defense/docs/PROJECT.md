@@ -46,9 +46,10 @@ RELAY=http://127.0.0.1:8081 node tools/serve.js
 # host in one window, share the four-character code, join in the other
 
 # Verify
-node tools/verify.js                           # 10 seconds, seven gates
+node tools/verify.js                           # 12 seconds, eight gates
 node tools/verify.js --full                    # adds the 240-ticket campaign
 node tools/balance.js --levels 1-40            # is the campaign still sound?
+node tools/coop-test.js                        # two clients against a real relay
 node tools/screenshots.js                      # regenerate the store screenshots
 node tools/balance.js --minimal --levels 1-10    # is it still hard enough?
 node tools/balance.js --replay-check --levels 1-5
@@ -171,12 +172,13 @@ and a person.
 
 | Gate | Command | What it proves |
 |---|---|---|
-| Everything fast | `npm run verify` | syntax, backlog, assets, screenshots, relay, invariants, replay |
+| Everything fast | `npm run verify` | syntax, backlog, assets, screenshots, relay, co-op, invariants, replay |
 | Campaign soundness | `node tools/balance.js` | Difficulty rises monotonically; every ticket is playable; no ticket is a single-threat wall |
 | Real difficulty | `node tools/balance.js --minimal --levels 1-40` | The *cost* of the winning defence against the budget |
 | Determinism | `node tools/balance.js --replay-check` | A battle reproduces exactly from its action log |
 | Co-op rules | `node tools/balance.js --coop --detail` | Per-seat spend sums to the totals and every seat builds something |
 | Networking | `node server/relay/index.js --test` | Seat assignment, forwarding, **that a peer cannot forge state**, reconnect replay |
+| Two clients | `node tools/coop-test.js` | Two real clients through a real relay agree, each pays for its own towers, and a peer renders the newest snapshot it holds |
 | In-page | `?selftest=1` | 54 structural, commerce, gameplay and diagnostics checks in the real page |
 | Store set | `npm run shots -- --check` | Five 1920x1080 screenshots exist and are not blank. `npm run shots` regenerates them from the real build |
 | Backlog | `node tools/backlog.js` | The plan is internally consistent |
@@ -226,6 +228,7 @@ packet-defense/
   tools/
     balance.js             the balance harness and difficulty metric
     verify.js              one entry point for every gate
+    coop-test.js           two clients, one relay, no browser
     serve.js               dev static server + /coop proxy + /backlog board
     backlog.js             validates backlog/backlog.json
     store-assets.js        generates the Play icon and feature graphic

@@ -291,11 +291,49 @@ is the one that matters.
 ## How to verify
 
 ```bash
+node tools/coop-test.js                          # two real clients, one real relay
+node tools/coop-test.js --verbose                # every assertion, with its numbers
 node server/relay/index.js --test                # 20 assertions, no dependencies
 ```
 
+`tools/coop-test.js` is the one that matters for this feature, and it is the
+lesson from how co-op was first tested: two browser pages were driven by hand
+through a real relay, that found three bugs nothing else could have found — a
+stale-snapshot interpolation error, a silent startup failure, and an infinite
+reconnect loop on a dead room — and then it was never run again, because running
+it meant opening two windows and remembering a sequence.
+
+So the second client is in the suite now. It is not a browser and it does not draw
+anything: the engine already runs headless, so a client is the real game modules
+in a VM, and the only thing a browser actually provided that mattered here was
+`EventSource`, which is fifty lines and carried in the test rather than depended
+on. Both clients talk over a real socket to the real relay, so the transport,
+seats, attribution and reconnect buffer under test are the shipping ones.
+
+What it asserts is the set of things only a second client can see:
+
+- both ends derive the same level without it being sent, and agree about the
+  protocol and the content they are exchanging
+- both ends agree on wave, uptime, kills and tower count
+- a peer's build arrives as its own seat, is paid for out of **its own** purse,
+  and does not move the host's
+- a peer cannot upgrade or sell a tower it did not pay for, and an intent from a
+  seat that does not exist is refused
+- **a peer renders the newest snapshot it holds**, on both channels: the scalars
+  come from the newest snapshot, the towers and threats from the interpolated
+  pair, and those are two different questions
+
+That last pair of checks exists because mutation testing said the first version of
+this test could not fail. Four deliberate bugs were introduced and three were
+caught; the peer rendering the *oldest* buffered snapshot — the historical
+symptom, reproduced exactly — left all thirty-one checks green, because everything
+arrives either way and a peer that is a second behind still eventually agrees
+about everything. A second behind is precisely what a player reports as towers not
+appearing. Both channels are now covered deterministically, and both mutations
+fail the suite.
+
 ```bash
-# Two clients, one relay, no second machine needed.
+# Two clients by hand, one relay, no second machine needed.
 node server/relay/index.js &                     # relay on 127.0.0.1:8081
 RELAY=http://127.0.0.1:8081 node tools/serve.js  # game + /coop proxy on :8080
 # then open two windows, host in one, join with the code in the other
