@@ -74,6 +74,32 @@
     },
 
     /* ------------------------------------------------------------------ *
+     * Co-op. The relay hands out room codes and forwards messages between
+     * players; the host of each battle is the only authority on it (see
+     * server/relay/ and docs/COOP.md).
+     *
+     * `url` is where the browser reaches the relay. Empty means same-origin
+     * `/coop`, which is what a deployment behind the nginx in deploy/ should
+     * use - the relay then needs no public port of its own and no CORS.
+     *
+     * Set `enabled: false` and the co-op screen is hidden entirely. That is the
+     * switch to reach for if the relay is down, because a matchmaking button
+     * that cannot match anything is worse than no button.
+     * ------------------------------------------------------------------ */
+    coop: {
+      enabled: true,
+      url: '',
+      /** How often the host broadcasts state. 10Hz is smooth after
+       *  interpolation and about 2-4KB a snapshot. */
+      snapshotHz: 10,
+      maxSeats: 4,
+      /** A peer renders this far behind the newest snapshot, so there is always
+       *  a later one to interpolate towards. Without it the world judders at
+       *  exactly the packet rate. */
+      interpDelayMs: 150,
+    },
+
+    /* ------------------------------------------------------------------ *
      * Purchase validator (see server/validator/).
      * Leave `url` empty and purchases are trusted from the local store
      * receipt - fine for development, NOT fine for money. Deploy the service,

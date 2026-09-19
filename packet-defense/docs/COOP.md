@@ -114,20 +114,27 @@ already been burned by: **the bot is a lower bound.** It maximises road coverage
 per tile, which is exactly the skill the game teaches, so a human who spends
 badly will find co-op considerably harder than these figures suggest.
 
-## Making it playable: what the UI still owes
+## Making it playable: what the UI does and does not do yet
 
-The rules work; the screens do not exist. Specifically:
+The lobby exists: create a room, get a four-character code, share it, join with
+it, see who is in each seat, and start. Towers carry their owner's colour as a
+ring around the pad — only in co-op, because in solo every tower is yours and the
+ring is noise. The HUD labels the purse with the local player's name and shows
+the others' balances right-aligned, dropping them if the column is too narrow to
+fit them (the column's width is decided by the palette, and a number that
+overlaps a tap target is worse than a number that is missing).
 
-1. **Opponent towers must be legible.** Each seat has a colour (`SEAT_COLOURS` in
-   `engine.js`). Tower bases should be drawn in the owner's colour, or a
-   three-player board is an unreadable pile.
-2. **One purse per player in the HUD.** `state.bandwidth` currently exposes the
-   *active* seat, which is right for a local hot-seat and wrong for a networked
-   game; the HUD needs a row per player.
-3. **The palette must show what *you* can afford**, not the team. In a networked
-   game the local seat is fixed, so this falls out of `state.purse(localSeat)`.
-4. **A lobby.** Room code create/join, and the seat count that feeds
-   `coopLevel(theme, tier, seats)`.
+Still owed:
+
+1. **Speed and pause are the host's.** A peer tapping them is told so rather than
+   silently ignored. A peer cannot drive a clock it does not have.
+2. **Your towers are yours.** Upgrade and sell are refused on a team-mate's
+   tower, and the rule is enforced in both places: `remoteIntent` on the host,
+   and the input layer for the host's own pointer, so the host cannot do
+   something no other player can.
+3. **The other seats' towers are only distinguishable by ring colour.** At four
+   players on a crowded board that may not be enough; something like a small
+   initial on hover is the likely answer.
 
 ---
 
@@ -200,35 +207,105 @@ hold a small amount of room state; it must never simulate.
 
 ---
 
+## What is built and what the measurement proved
+
+The rules, the relay, the client transport, the snapshot codec and the lobby all
+exist. Two real clients, one real relay, a real twenty-wave battle:
+
+```
+                            host                     peer
+wave / waves              2 / 20                   2 / 20
+status                     wave                     wave
+uptime                       90                       90
+kills / leaks             5 / 3                    5 / 3
+towers         firewall@0,1 owner 0       firewall@0,1 owner 0
+               waf@0,2      owner 1       waf@0,2      owner 1
+               firewall@0,3 owner 0       firewall@0,3 owner 0
+purses                 5019 / 5029              5018 / 5028
+```
+
+Both ends agree on everything, and the peer's purses are one unit behind because
+it renders deliberately 150ms in the past. The three assertions that matter most
+were checked directly rather than inferred:
+
+| Assertion | Evidence |
+|---|---|
+| The tile is shared but the purse is not | The peer's `waf@0,2` landed on the host's board as `owner 1`, the **host's purse did not move** (5076), and the peer paid (5136 → 5026) |
+| A peer cannot spend the host's money | The same build: only seat 1's purse changed |
+| A peer cannot forge state | The relay refuses `snapshot` from any seat but 0 (relay self-test, 20/20) |
+
+A peer also never simulates: `Engine.step` returns after advancing a render clock
+when `state.net.mode === 'peer'`, so the world it draws is the host's and nothing
+else.
+
+### Three bugs the two-client test found, that no unit test would have
+
+1. **Interpolating between the newest and the oldest snapshot.** When the render
+   clock ran past every buffered snapshot — normal after any hitch, and always in
+   the first moment of a battle — `b` defaulted to `buf[0]` and the peer rendered
+   a stale frame. It looked *plausible*, so it read as "towers not syncing"
+   rather than as an index error.
+2. **A music lookup aborted the battle start.** A co-op battle has no ticket id,
+   and `trackForLevel(undefined)` threw, which killed the rest of `startBattle` —
+   so `Engine.run()` never ran and the host broadcast *nothing*. A thrown
+   exception in a startup path is a silent failure of everything after it.
+3. **An infinite retry loop on a dead room.** `EventSource` cannot see a 404, so
+   a player whose host left reconnected every few seconds forever with no error.
+   The relay now answers `GET /room/<code>` and the client checks it before
+   retrying.
+
+None of these are visible from a single client, which is why the two-client test
+is the one that matters.
+
 ## What is not built yet
 
-1. **The relay** — a WebSocket service (rooms, join, forward, host migration on
-   host drop).
-2. **Snapshot serialisation** — `engine.js` has no serialise/restore for threats.
-   The action log makes this *avoidable for correctness*, but the peer still needs
-   something to render, so a compact view-state codec is required.
-3. **The co-op UI** — see "Making it playable" above.
-4. **Matchmaking screen** — room code create/join, and the lobby.
-5. **A boss finale.** `coopLevel` composes twenty waves with no Zero-Day. The
-   campaign puts one on every act finale and it is the set piece that makes a
-   ticket feel finished; a co-op battle should end with one too. Note that a boss
+1. **Snapshot serialisation is one-way.** Threats, towers, purses and the wave
+   counter are sent; effects, shots and the chat feed are not, so a peer sees the
+   battle but not the sparks. Cheap to add, and the game is legible without it.
+2. **A boss finale.** `coopLevel` composes twenty waves with no Zero-Day. The
+   campaign puts one on every act finale, and it is the set piece that makes a
+   ticket feel finished; a co-op battle should end with one. Note that a boss
    forces the Antivirus bill, which is a *coordination* problem in co-op — worth
    designing deliberately rather than inheriting.
-6. **Theme selection.** `coopLevel` takes a theme, and the measurement says theme
-   matters more than anything else: mid-campaign themes land at 0–2% slack, theme
-   1 at 12–46%, and theme 240 cannot usefully host three seats. The lobby should
-   pick a theme that suits the seat count rather than letting players find the
-   broken combinations themselves.
-7. **Splitting the budget fairly is not enough on a small map.** With ~73
+3. **Theme selection wants to be seat-aware.** `coopLevel` takes a theme, and the
+   measurement says theme matters more than anything else: mid-campaign themes
+   land at 0–2% slack, theme 1 at 12–46%, and theme 240 cannot usefully host
+   three seats. The lobby should offer themes that suit the seat count rather
+   than letting players find the broken combinations themselves.
+4. **Splitting the budget fairly is not enough on a small map.** With ~73
    buildable tiles, a third seat's share has nowhere to go at late-game themes.
    The options are a larger co-op map, seat-scaled tile counts, or (likely best)
    capping co-op at two seats until the map can carry more. This needs a decision
    before matchmaking ships, because it is the difference between a mode and a
    demo.
+5. **Public matchmaking with strangers** — needs a lobby service, a queue, region
+   selection, backfill and moderation. Room codes are what "play with a friend"
+   actually needs; this is a different product.
+6. **Rejoin into an in-progress battle from a cold start.** The relay replays
+   missed events on reconnect, which covers a brief drop. A player who closes the
+   app and comes back needs a snapshot, and the `resync` path exists but is only
+   exercised by a reconnect, not by a relaunch.
 
 ---
 
 ## How to verify
+
+```bash
+node server/relay/index.js --test                # 20 assertions, no dependencies
+```
+
+```bash
+# Two clients, one relay, no second machine needed.
+node server/relay/index.js &                     # relay on 127.0.0.1:8081
+RELAY=http://127.0.0.1:8081 node tools/serve.js  # game + /coop proxy on :8080
+# then open two windows, host in one, join with the code in the other
+```
+
+The dev server **proxies** `/coop/*` to the relay rather than pointing the game at
+a second origin. That is deliberate: the CSP is `connect-src 'self'`, and putting
+a second origin in the policy would mean the development build and the shipped
+build have different security policies — and the one exercised least is the one
+that ships. The deploy's nginx does the same with a `location /coop/`.
 
 ```bash
 node tools/balance.js --coop                      # seat counts 1,2,3 across four themes

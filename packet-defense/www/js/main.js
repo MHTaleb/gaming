@@ -75,7 +75,7 @@
    * Screen plumbing
    * ------------------------------------------------------------------ */
 
-  var SCREENS = ['menu', 'map', 'brief', 'battle', 'result', 'shop', 'base', 'settings'];
+  var SCREENS = ['menu', 'map', 'brief', 'battle', 'result', 'shop', 'base', 'settings', 'coop'];
 
   /*
    * Music.
@@ -157,11 +157,12 @@
     if (id === 'menu') renderMenu();
     if (id === 'map') renderMap();
     if (id === 'brief') renderBrief(data.levelId);
-    if (id === 'battle') startBattle(data.levelId);
+    if (id === 'battle') startBattle(data.levelId, data);
     if (id === 'result') renderResult(data);
     if (id === 'shop') renderShop();
     if (id === 'base') renderBase();
     if (id === 'settings') renderSettings();
+    if (id === 'coop') renderCoop();
 
     if (global.Ads) {
       // Banners on menu screens only. Anything over the playfield is a
@@ -194,6 +195,245 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Co-op
+   *
+   * Room codes rather than public matchmaking. The reasoning is in
+   * docs/COOP.md and it is not only cost: an account-free code needs no lobby
+   * service, no moderation and no region selection, and "share this code with
+   * the person you are already talking to" is what playing with a friend on a
+   * phone actually looks like. Public matchmaking with strangers is a different
+   * product and would need all three of those.
+   * ------------------------------------------------------------------ */
+
+  var coopState = { status: 'idle', error: null, names: [], seats: 2, theme: 60, tier: 'normal', busy: false };
+
+  /** Sensible defaults for a two-player battle, derived rather than hardcoded so
+   *  a theme that cannot host three seats is not offered for three. */
+  function coopThemes() {
+    var out = [];
+    [1, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240].forEach(function (id) {
+      var lv = global.Levels.byId(id);
+      if (!lv) return;
+      // The ticket id is in the label because two tickets in the same act share
+      // an act number and can share a name; "3 · Zero-Day" appearing twice would
+      // be a choice between two identical-looking options.
+      out.push({ id: id, label: '#' + id + ' · ' + lv.act + ' · ' + lv.name });
+    });
+    return out;
+  }
+
+  function renderCoop() {
+    var host = el('screen-coop');
+    if (!host) return;
+    clear(host);
+
+    var session = global.Net.session();
+    var cs = global.Coop.session();
+    var inRoom = !!session.code;
+
+    var body = [];
+
+    if (!inRoom) {
+      body.push(h('p', { class: 'foot-note', text: 'One map, twenty waves, one integrity bar, and everyone pays for their own towers.' }));
+
+      /* ---- host a room ---- */
+      var seatBtns = [];
+      [2, 3, 4].forEach(function (n) {
+        seatBtns.push(h('button', {
+          class: 'btn' + (coopState.seats === n ? ' primary' : ''),
+          text: n + 'P',
+          on: {
+            click: function () {
+              tap();
+              coopState.seats = n;
+              renderCoop();
+            },
+          },
+        }));
+      });
+
+      var themeSel = h('select', {
+        class: 'input',
+        on: {
+          change: function (e) { coopState.theme = Number(e.target.value); },
+        },
+      });
+      coopThemes().forEach(function (t) {
+        themeSel.appendChild(h('option', { value: t.id, text: t.label, selected: t.id === coopState.theme ? 'selected' : null }));
+      });
+
+      var tierSel = h('select', {
+        class: 'input',
+        on: { change: function (e) { coopState.tier = e.target.value; } },
+      });
+      global.Levels.tiers().forEach(function (t) {
+        tierSel.appendChild(h('option', { value: t.id, text: t.name, selected: t.id === coopState.tier ? 'selected' : null }));
+      });
+
+      body.push(h('div', { class: 'coop-panel' }, [
+        h('h3', { text: 'Host a battle' }),
+        h('div', { class: 'row' }, [h('span', { class: 'label', text: 'Players' })].concat(seatBtns)),
+        h('div', { class: 'row' }, [h('span', { class: 'label', text: 'Map' }), themeSel]),
+        h('div', { class: 'row' }, [h('span', { class: 'label', text: 'Difficulty' }), tierSel]),
+        h('button', {
+          class: 'btn primary big',
+          text: cs.active ? 'IN A BATTLE' : (coopState.busy ? 'CREATING…' : 'CREATE ROOM'),
+          on: {
+            click: function () {
+              if (coopState.busy || cs.active) return;
+              tap();
+              coopState.busy = true;
+              coopState.error = null;
+              renderCoop();
+              global.Net.create({ name: playerName(), tier: coopState.tier, theme: coopState.theme })
+                .then(function () {
+                  coopState.busy = false;
+                  coopState.status = 'lobby';
+                  renderCoop();
+                })
+                .catch(function (err) {
+                  coopState.busy = false;
+                  coopState.error = err.message;
+                  renderCoop();
+                });
+            },
+          },
+        }),
+      ]));
+
+      /* ---- join a room ---- */
+      var codeInput = h('input', {
+        class: 'input code',
+        type: 'text',
+        inputmode: 'latin',
+        autocapitalize: 'characters',
+        autocomplete: 'off',
+        spellcheck: 'false',
+        maxlength: '4',
+        placeholder: 'CODE',
+        on: {
+          input: function (e) { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); },
+        },
+      });
+
+      body.push(h('div', { class: 'coop-panel' }, [
+        h('h3', { text: 'Join a battle' }),
+        h('div', { class: 'row' }, [codeInput, h('button', {
+          class: 'btn primary',
+          text: coopState.busy ? 'JOINING…' : 'JOIN',
+          on: {
+            click: function () {
+              if (coopState.busy) return;
+              var code = (codeInput.value || '').trim();
+              if (code.length !== 4) { coopState.error = 'A room code is four characters.'; renderCoop(); return; }
+              tap();
+              coopState.busy = true;
+              coopState.error = null;
+              renderCoop();
+              joinRoom(code);
+            },
+          },
+        })]),
+      ]));
+    } else {
+      /* ---- the lobby ---- */
+      var names = cs.names.slice();
+      var seatRows = [];
+      for (var i = 0; i < coopState.seats; i++) {
+        var isMe = i === session.seat;
+        seatRows.push(h('div', { class: 'coop-seat' + (isMe ? ' me' : '') }, [
+          h('span', { class: 'seat-num', text: 'P' + (i + 1) }),
+          h('span', { class: 'seat-name', text: (names[i] || (i === session.seat ? playerName() : null)) || (i === 0 ? 'Host' : 'waiting…') }),
+          isMe ? h('span', { class: 'seat-tag', text: 'you' }) : null,
+          i === 0 ? h('span', { class: 'seat-tag host', text: 'host' }) : null,
+        ]));
+      }
+
+      body.push(h('div', { class: 'coop-panel' }, [
+        h('h3', { text: 'Room' }),
+        h('div', { class: 'coop-code', text: session.code }),
+        h('p', { class: 'foot-note', text: 'Share this code — the other player taps JOIN and types it.' }),
+        h('button', {
+          class: 'btn',
+          text: 'COPY INVITE LINK',
+          on: {
+            click: function () {
+              tap();
+              var url = global.Net.inviteUrl();
+              if (global.navigator && global.navigator.clipboard) {
+                global.navigator.clipboard.writeText(url).catch(function () { /* nothing to do */ });
+              }
+            },
+          },
+        }),
+        h('div', { class: 'coop-seats' }, seatRows),
+        h('p', {
+          class: 'foot-note',
+          text: global.Coop.isHost()
+            ? 'You host. Start the battle whenever everybody is in.'
+            : 'Waiting for the host to start.',
+        }),
+        global.Coop.isHost()
+          ? h('button', {
+            class: 'btn primary big',
+            text: 'START 20 WAVES',
+            on: {
+              click: function () {
+                tap();
+                var tier = coopState.tier;
+                var theme = coopState.theme;
+                var res = global.Coop.host(theme, tier, coopState.seats);
+                if (!res.ok) { coopState.error = res.reason; renderCoop(); return; }
+                show('battle', { coopoLevel: true });
+              },
+            },
+          })
+          : null,
+        h('button', {
+          class: 'btn',
+          text: 'LEAVE ROOM',
+          on: { click: function () { tap(); global.Coop.leave(); coopState.status = 'idle'; renderCoop(); } },
+        }),
+      ]));
+    }
+
+    if (coopState.error) body.push(h('p', { class: 'warn', text: coopState.error }));
+
+    host.appendChild(topbar('coop', function () { tap(); show('menu'); }, []));
+    host.appendChild(h('div', { class: 'coop-body' }, body));
+  }
+
+  /**
+   * The player's display name.
+   *
+   * Generated once and kept. The first version rolled a new name on every call,
+   * so the lobby drew one name and the relay was sent a different one - the
+   * player saw "P36" and their team-mate saw "P71", which reads as a bug in the
+   * relay rather than in the label.
+   */
+  function playerName() {
+    var stored = global.Store && global.Store.get('playerName');
+    if (stored) return String(stored).slice(0, 14);
+    var name = 'P' + Math.floor(10 + Math.random() * 89);
+    if (global.Store) global.Store.set('playerName', name);
+    return name;
+  }
+
+  function joinRoom(code) {
+    global.Net.join(code, { name: playerName() })
+      .then(function () {
+        coopState.busy = false;
+        coopState.status = 'lobby';
+        renderCoop();
+      })
+      .catch(function (err) {
+        coopState.busy = false;
+        coopState.error = err.message;
+        renderCoop();
+      });
+  }
+
+  /* ------------------------------------------------------------------ *
    * Menu
    * ------------------------------------------------------------------ */
 
@@ -218,6 +458,11 @@
       ]),
       h('div', { class: 'menu-buttons' }, [
         h('button', { class: 'btn primary big', text: 'CAMPAIGN', on: { click: function () { tap(); show('map'); } } }),
+        // Hidden entirely when co-op is switched off in config, because a
+        // matchmaking button that cannot match anything is worse than no button.
+        global.Net && global.Net.configured()
+          ? h('button', { class: 'btn big', text: 'CO-OP', on: { click: function () { tap(); show('coop'); } } })
+          : null,
         h('button', { class: 'btn big', text: 'BASE', on: { click: function () { tap(); show('base'); } } }),
         h('button', { class: 'btn big', text: 'SHOP', on: { click: function () { tap(); show('shop'); } } }),
         h('button', { class: 'btn big', text: 'SETTINGS', on: { click: function () { tap(); show('settings'); } } }),
@@ -430,18 +675,31 @@
    * Battle
    * ------------------------------------------------------------------ */
 
-  function startBattle(levelId) {
+  function startBattle(levelId, data) {
     applyAccessibility();
     var tierId = currentTier();
-    var level = global.Levels.at(levelId, tierId);
-    global.Engine.start(levelId, tierId);
+    // A co-op battle is generated, not a ticket, and both ends derive it from
+    // (theme, tier, seats) rather than receiving it - see Coop.makeLevel. The
+    // battle's own state was already started by Coop.host/follow, so this only
+    // has to mount and drive it.
+    var coop = global.Coop && global.Coop.active();
+    var level = coop ? global.Coop.level() : global.Levels.at(levelId, tierId);
+    if (coop) tierId = global.Coop.session().tier;
+    else global.Engine.start(levelId, tierId);
     global.Story.reset();
 
     var banner = el('battle-banner');
     clear(el('battle-chat'));
-    showBanner(banner, level.code + ' · ' + level.name);
+    showBanner(banner, coop ? ('CO-OP · ' + (global.Coop.session().seats) + ' PLAYERS') : (level.code + ' · ' + level.name));
 
     global.Engine.mount(el('game'), {
+      // The host broadcasts from here, and a peer rebuilds the world from
+      // snapshots. Wired through the engine's own tick so the send rate is
+      // independent of the frame rate: a 30fps phone and a 120fps phone must
+      // send state at the same 10Hz.
+      onTick: function (dt) {
+        if (global.Coop) global.Coop.tick(dt);
+      },
       onLeak: function () {
         haptic(28);
         var st = global.Engine.state();
@@ -478,7 +736,13 @@
     // The act's own piece, then hand the mood machine its starting values. Order
     // matters: playTrack resets the arrangement, so setting the mood first would
     // have it overwritten by the next scheduled bar.
-    playMusic(trackForLevel(levelId), false);
+    //
+    // A co-op battle has no ticket id - it is generated - but it is themed on
+    // one, and that theme is exactly what the music keying wants: a battle on an
+    // act-6 map should sound like act 6. Passing the undefined levelId here threw
+    // inside trackForLevel and aborted the rest of startBattle, which meant
+    // Engine.run() never ran and the host sent no snapshots at all.
+    playMusic(trackForLevel(coop ? global.Coop.session().theme : levelId), false);
     if (global.Music) {
       global.Music.setMood('calm');
       global.Music.setIntensity(0.15);
@@ -517,7 +781,13 @@
    * ------------------------------------------------------------------ */
 
   function finish(result, won) {
-    var record = global.Profile.complete(result.levelId, result, global.Levels.count());
+    // A co-op battle is not a ticket. It is themed on one, and `Engine.result()`
+    // reports that theme as the level id - so without this, clearing a co-op
+    // battle would award stars and credits for a campaign ticket the player may
+    // never have played, and could unlock a map they had not reached. Co-op is
+    // recorded as a co-op battle or not at all.
+    var coop = global.Coop && global.Coop.active();
+    var record = coop ? null : global.Profile.complete(result.levelId, result, global.Levels.count());
     // Ad cadence: every third clear, never on a loss, never on a first clear,
     // and never if the player paid to remove them. A loss is the moment a
     // player is most likely to quit, so that is the worst possible time to
@@ -563,17 +833,23 @@
     });
   }
 
-  function renderResult(data) {    var host = el('screen-result');
+  function renderResult(data) {
+    var host = el('screen-result');
     clear(host);
     var r = data.result;
+    // `levelId` is a theme for a co-op battle and a ticket otherwise, and
+    // `record` is null for co-op, so every progress-derived line below is
+    // guarded rather than assumed.
+    var coop = !data.record;
     var level = global.Levels.byId(r.levelId);
 
     host.appendChild(h('div', { class: 'result-body' }, [
       h('h1', { class: 'result-title ' + (data.won ? 'ok' : 'bad'), text: data.won ? 'TICKET CLOSED' : 'PROD IS DOWN' }),
-      h('p', { class: 'result-sub', text: level.code + ' · ' + level.name +
-        (r.tier && r.tier !== 'normal' ? '  ·  ' + tierName(r.tier) : '') }),
+      h('p', { class: 'result-sub', text: coop
+        ? ('CO-OP · ' + (global.Coop.session().theme) + '  ·  ' + (r.tier && r.tier !== 'normal' ? tierName(r.tier) : 'normal'))
+        : (level.code + ' · ' + level.name + (r.tier && r.tier !== 'normal' ? '  ·  ' + tierName(r.tier) : '')) }),
 
-      data.won ? starsFor(data.record.stars) : h('div', { class: 'stars' }),
+      data.won && data.record ? starsFor(data.record.stars) : h('div', { class: 'stars' }),
 
       h('div', { class: 'result-grid' }, [
         stat('UPTIME', Math.round(r.uptime) + '%'),
@@ -592,7 +868,7 @@
         ? h('p', { class: 'act-closing', text: global.Story.narration(r.levelId, 'closing') })
         : null,
 
-      data.won && data.record.credits
+      data.won && data.record && data.record.credits
         ? h('p', { class: 'payout', text: '+' + data.record.credits + ' credits  ·  ★' + data.record.stars })
         : null,
 
@@ -603,7 +879,7 @@
       // a tower defence game - there is no revive to sell and interrupting a wave
       // would be worse than the revenue. Owners of 'remove ads' never see it, and
       // neither does anyone when the kill switch is off.
-      data.won && data.record.credits && !data.record.doubled &&
+      data.won && data.record && data.record.credits && !data.record.doubled &&
       global.Ads && !global.Ads.adsRemoved() && global.Ads.adsEnabled()
         ? h('button', {
             class: 'btn rewarded',
@@ -612,16 +888,22 @@
           })
         : null,
 
-      data.record.doubled
+      data.record && data.record.doubled
         ? h('p', { class: 'payout doubled', text: 'payout doubled — thanks for watching' })
         : null,
-      data.record.unlocked
+      data.record && data.record.unlocked
         ? h('p', { class: 'unlock', text: 'NEW TICKET UNLOCKED — ' + global.Levels.byId(data.record.unlocked).code })
         : null,
 
       h('div', { class: 'result-buttons' }, [
-        h('button', { class: 'btn', text: 'RETRY', on: { click: function () { tap(); show('battle', { levelId: r.levelId }); } } }),
-        data.won && data.hasNext
+        // RETRY and NEXT TICKET are campaign controls: they address a ticket by
+        // id, and a co-op battle has a theme instead. Offering them here would
+        // either restart a campaign ticket the player was not playing, or do
+        // nothing at all.
+        coop
+          ? h('button', { class: 'btn primary', text: 'BACK TO CO-OP', on: { click: function () { tap(); show('coop'); } } })
+          : h('button', { class: 'btn', text: 'RETRY', on: { click: function () { tap(); show('battle', { levelId: r.levelId }); } } }),
+        !coop && data.won && data.hasNext
           ? h('button', {
             class: 'btn primary', text: 'NEXT TICKET',
             on: { click: function () { tap(); show('brief', { levelId: r.levelId + 1 }); } },
@@ -1085,6 +1367,48 @@
       });
     }
 
+    /* ---- co-op wiring ------------------------------------------- *
+     *
+     * The two callbacks that make the session work. Every relay message goes
+     * through Coop.onMessage, which decides whether it is authoritative - the
+     * relay is a post box and does not enforce that, so a peer has to.
+     */
+    if (global.Net && global.Coop) {
+      global.Net.on('message', function (msg, from) {
+        global.Coop.onMessage(msg, from);
+        // The lobby redraws on membership changes, so a seat appearing is
+        // visible without polling.
+        if (current === 'coop' && msg && (msg.t === 'joined' || msg.t === 'left')) renderCoop();
+      });
+      global.Net.on('status', function (status) {
+        coopState.status = status;
+        if (current === 'coop' && (status === 'error' || status === 'idle')) renderCoop();
+      });
+      global.Net.on('error', function (message) {
+        coopState.busy = false;
+        coopState.error = message;
+        if (current === 'coop') renderCoop();
+      });
+
+      // A peer is pulled into the battle the moment the host starts it, without
+      // having to press anything: being told "the host started" and then having
+      // to find a button is the kind of friction that reads as a broken game.
+      global.Coop.onStarted(function () {
+        if (global.Coop.session().seats) coopState.seats = global.Coop.session().seats;
+        show('battle', { coopoLevel: true });
+      });
+
+      // An invite link: `?coop=AB12` drops the player straight into the join
+      // path. On a phone this is the whole acquisition funnel - the share sheet
+      // is the only reliable way to get a code from one person to another.
+      var m = /[?&]coop=([A-Za-z0-9]{4})/.exec(global.location.search || '');
+      if (m) {
+        coopState.busy = true;
+        show('coop');
+        joinRoom(m[1]);
+      }
+    }
+
     var quit = el('battle-quit');
     if (quit) {
       quit.addEventListener('click', function (e) {
@@ -1092,6 +1416,11 @@
         tap();
         // Abandoning is not a loss: it records nothing and unlocks nothing, so
         // a player cannot farm an easy level by quitting mid-wave.
+        if (global.Coop && global.Coop.active()) {
+          global.Coop.leave();
+          show('menu');
+          return;
+        }
         show('map');
       });
     }

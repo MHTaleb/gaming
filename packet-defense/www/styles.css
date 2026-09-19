@@ -773,3 +773,94 @@ body.selftest #screen-selftest.active { display: flex; }
     z-index: 50;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Co-op lobby
+ *
+ * A code that gets read aloud and typed on a phone is the only thing in this
+ * game a player has to transcribe, so it is set large, spaced and monospaced
+ * rather than left as another line of body text.
+ * ------------------------------------------------------------------ */
+
+.coop-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 6px; }
+
+.coop-panel {
+  border: 1px solid var(--panel-edge);
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coop-panel h3 {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.coop-panel .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.coop-panel .row .label { font-size: 10px; letter-spacing: 0.1em; color: var(--dim); min-width: 64px; }
+
+.coop-panel select,
+.coop-panel input.code {
+  flex: 1;
+  min-width: 0;
+  background: rgba(5, 9, 16, 0.85);
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+.coop-panel input.code {
+  /* The code is a capability, not prose: it is shown the way it is meant to be
+     read out and never autocorrected, autocapitalised away, or spell-checked. */
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.coop-code {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-align: center;
+  color: var(--cyan);
+  text-shadow: 0 0 18px rgba(34, 211, 238, 0.45);
+  padding: 6px 0;
+}
+
+.coop-seats { display: flex; flex-direction: column; gap: 6px; }
+
+.coop-seat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  background: rgba(5, 9, 16, 0.5);
+  font-size: 13px;
+}
+
+.coop-seat.me { border-color: rgba(34, 211, 238, 0.5); background: rgba(34, 211, 238, 0.08); }
+.coop-seat .seat-num { font-weight: 700; color: var(--cyan); font-size: 12px; }
+.coop-seat .seat-name { flex: 1; color: var(--ink); }
+.coop-seat .seat-tag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border: 1px solid var(--panel-edge);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+.coop-seat .seat-tag.host { color: var(--amber); border-color: rgba(245, 158, 11, 0.4); }

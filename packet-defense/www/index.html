@@ -52,6 +52,12 @@
   <!-- ------------------------------- base ------------------------------ -->
   <section id="screen-base" class="screen"></section>
 
+  <!-- ------------------------------- co-op ----------------------------- -->
+  <!-- Rendered by main.js. Separate from the campaign screens because a co-op
+       battle is generated rather than a ticket, and because the lobby has to
+       exist without a battle. -->
+  <section id="screen-coop" class="screen"></section>
+
   <!-- ------------------------------ settings ---------------------------- -->
   <section id="screen-settings" class="screen"></section>
 
@@ -106,6 +112,12 @@
 <script src="js/levels.js"></script>
 <script src="js/story.js"></script>
 <script src="js/engine.js"></script>
+<!-- Co-op transport and session, between the engine and the screens: the engine
+     exposes the codec and the authority switch, net.js moves bytes, and coop.js
+     is the session that decides which of those two things happens. Loaded before
+     main.js because the lobby screen calls into it. -->
+<script src="js/net.js"></script>
+<script src="js/coop.js"></script>
 <script src="js/main.js"></script>
 <script src="js/selftest.js"></script>
 </body>

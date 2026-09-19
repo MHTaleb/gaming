@@ -587,7 +587,7 @@
     ctx.restore();
   }
 
-  function drawTower(ctx, tower, time) {
+  function drawTower(ctx, tower, time, ownerColour) {
     var d = DEFS[tower.type];
     var offline = tower.disabledUntil > time;
     var lv = tower.level;
@@ -603,6 +603,23 @@
     ctx.arc(0, 0, 14, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    /*
+     * Whose tower it is.
+     *
+     * Only drawn in co-op - `ownerColour` is null in solo, where every tower is
+     * the player's own and a ring would be pure noise. The ring sits *outside*
+     * the pad and uses the seat colour, because the pad's own stroke already
+     * carries the tower TYPE and losing that to show ownership would trade one
+     * unreadable board for another.
+     */
+    if (ownerColour) {
+      ctx.strokeStyle = ownerColour;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 17.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     ctx.globalAlpha = offline ? 0.4 : 1;
 

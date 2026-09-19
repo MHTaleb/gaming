@@ -290,6 +290,316 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Network state: snapshots out, snapshots in
+   *
+   * The host is the only authority. A peer never simulates - it receives state
+   * and draws it. That split is what makes a 20-wave battle survivable over a
+   * phone connection, and it is why this section is a codec and an interpolator
+   * rather than anything that touches the rules.
+   *
+   * Wire format is arrays of numbers, not objects of named fields, because the
+   * same state is sent ten times a second to every player and a field name is
+   * paid for on every threat in every frame. Roughly: a named-field snapshot of
+   * a busy wave is about 40KB, and the same state here is under 4KB.
+   * ------------------------------------------------------------------ */
+
+  var PROTOCOL = 1;
+
+  /**
+   * Threat types are sent as indices into a table both ends derive from
+   * `Threats.DEFS`, sorted so the order cannot depend on insertion order.
+   *
+   * The hash is the important part. An index is meaningless if the two ends
+   * disagree about the table, and two clients running different builds would
+   * otherwise render a Drone as a Zero-Day and - worse - never say so. A
+   * mismatch is refused at the handshake instead of being discovered as a
+   * "weird bug" mid-battle.
+   */
+  var TYPE_TABLE = null;
+  function threatTypes() {
+    if (TYPE_TABLE) return TYPE_TABLE;
+    var D = (global.Threats && global.Threats.DEFS) || {};
+    TYPE_TABLE = Object.keys(D).sort();
+    return TYPE_TABLE;
+  }
+
+  function typeHash() {
+    var s = threatTypes().join(',');
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  var r1 = function (v) { return Math.round(v * 10) / 10; };
+  var r2 = function (v) { return Math.round(v * 100) / 100; };
+
+  /** The whole render-relevant world, small enough to send at 10Hz. */
+  function snapshot() {
+    if (!state) return null;
+    var types = threatTypes();
+    // Read once, not per tower: order() returns a copy, and a busy board is
+    // seventy-odd towers ten times a second.
+    var order = global.Towers.order();
+
+    var threats = [];
+    for (var i = 0; i < state.threats.length; i++) {
+      var t = state.threats[i];
+      if (t.dead) continue;
+      var ti = types.indexOf(t.type);
+      if (ti < 0) continue;
+      var flags = 0;
+      if (t.immune && t.immune.length) flags |= 1;
+      if (t.revived) flags |= 2;
+      if (t.leaked) flags |= 4;
+      threats.push([
+        ti, r1(t.x), r1(t.y), r2(t.angle),
+        Math.max(0, Math.round(t.hp)), Math.round(t.maxHp),
+        r1(t.radius), r2(t.flash || 0), r2(t.wobble || 0), r2(t.slowMul || 1),
+        flags,
+      ]);
+    }
+
+    var towers = [];
+    for (i = 0; i < state.towers.length; i++) {
+      var w = state.towers[i];
+      var wi = order.indexOf(w.type);
+      if (wi < 0) continue;
+      towers.push([w.c, w.r, wi, w.level, w.owner || 0, r2(w.angle)]);
+    }
+
+    var purses = [];
+    for (i = 0; i < state.seats.length; i++) purses.push(Math.floor(state.seats[i].bandwidth));
+
+    return {
+      v: PROTOCOL,
+      th: typeHash(),
+      t: r2(state.time),
+      w: state.waveIndex,
+      tw: state.totalWaves,
+      st: state.status,
+      up: Math.round(state.uptime),
+      k: state.kills,
+      l: state.leaks,
+      e: Math.round(state.earned),
+      b: purses,
+      s: towers,
+      m: threats,
+    };
+  }
+
+  /** Send a peer on its way: same shape as snapshot(), built from nothing. */
+  function emptySnapshot() {
+    return {
+      v: PROTOCOL, th: typeHash(), t: 0, w: 0, tw: 0, st: 'building',
+      up: 100, k: 0, l: 0, e: 0, b: [], s: [], m: [],
+    };
+  }
+
+  /**
+   * Put the local player in a seat and stop this client from simulating.
+   *
+   * Called on a peer, never on the host. `seat` decides which purse the HUD and
+   * the build cards read, because `state.bandwidth` is the ACTIVE seat - a peer
+   * that leaves activeSeat at 0 would show the host's money and let its palette
+   * price every tower against somebody else's account.
+   */
+  function joinAsPeer(seat) {
+    if (!state) return false;
+    state.net = { mode: 'peer', seat: seat || 0, buf: [], renderTime: 0, delay: 0.15 };
+    state.activeSeat = seat || 0;
+    return true;
+  }
+
+  function hostAs(seats) {
+    if (!state) return false;
+    state.net = { mode: 'host', seat: 0, buf: [], renderTime: 0, delay: 0 };
+    return true;
+  }
+
+  function netMode() {
+    return state && state.net ? state.net.mode : 'solo';
+  }
+
+  /** Receive a snapshot from the host. */
+  function applySnapshot(snap) {
+    if (!state || !snap) return false;
+    if (!state.net || state.net.mode !== 'peer') return false;
+    if (snap.v !== PROTOCOL || snap.th !== typeHash()) {
+      // Refused loudly rather than rendered wrongly: a protocol or content
+      // mismatch means the two clients disagree about what the numbers mean.
+      state.net.mismatch = true;
+      return false;
+    }
+    state.net.mismatch = false;
+    // Arrival time, not the host's clock. Interpolation is between two moments
+    // this client actually observed, so a host running ahead does not make the
+    // peer extrapolate into the future.
+    state.net.buf.push({ at: state.net.renderTime, snap: snap });
+    if (state.net.buf.length > 10) state.net.buf.shift();
+    return true;
+  }
+
+  /**
+   * Rebuild `state.threats` and `state.towers` for drawing, interpolated.
+   *
+   * Rendered `delay` behind the newest snapshot so there is always a snapshot
+   * ahead to interpolate *towards*. Without a deliberate delay the newest
+   * snapshot is the only one with a future, so every arriving packet would snap
+   * the world forward and the game would judder at exactly the packet rate.
+   */
+  function interpolate() {
+    var net = state.net;
+    if (!net || !net.buf.length) return;
+    var target = net.renderTime - net.delay;
+
+    var a = net.buf[0];
+    var b = net.buf[net.buf.length - 1];
+    for (var i = 0; i < net.buf.length; i++) {
+      if (net.buf[i].at <= target) a = net.buf[i];
+      if (net.buf[i].at >= target) { b = net.buf[i]; break; }
+    }
+    // The target is past every snapshot we hold: render the newest and stop.
+    //
+    // This was wrong and the symptom was nasty. `b` defaulted to the OLDEST
+    // snapshot, so once the render clock ran ahead of arrivals - which is normal
+    // after any hitch, and always in the first moments of a battle - the peer
+    // interpolated between the newest state and the oldest one. The world
+    // rendered as a stale frame, and because it looked *plausible* the bug read
+    // as "towers not syncing" rather than as an index error.
+    if (b.at < a.at) b = a;
+    var span = b.at - a.at;
+    var f = span > 0.0001 ? Math.min(1, Math.max(0, (target - a.at) / span)) : 0;
+
+    var latest = net.buf[net.buf.length - 1].snap;
+    state.time = latest.t;
+    state.waveIndex = latest.w;
+    state.totalWaves = latest.tw;
+    state.status = latest.st;
+    state.uptime = latest.up;
+    state.kills = latest.k;
+    state.leaks = latest.l;
+    state.totalEarned = latest.e;
+    for (i = 0; i < state.seats.length && i < latest.b.length; i++) {
+      state.seats[i].bandwidth = latest.b[i];
+    }
+
+    var types = threatTypes();
+    var D = global.Threats.DEFS;
+
+    // Match by index only when the two ends agree on order, which they do for
+    // anything the host did not reorder - and the host does not reorder, because
+    // the composer appends. When they do not line up, the newcomer is spawned at
+    // its own position rather than teleported from someone else's.
+    var prev = a.snap.m;
+    var next = b.snap.m;
+    var out = [];
+    for (i = 0; i < next.length; i++) {
+      var n = next[i];
+      var typeId = types[n[0]];
+      var def = D[typeId];
+      if (!def) continue;
+      var p = null;
+      if (a !== b && i < prev.length && prev[i][0] === n[0]) p = prev[i];
+      var x = n[1], y = n[2], ang = n[3];
+      if (p) {
+        x = p[1] + (n[1] - p[1]) * f;
+        y = p[2] + (n[2] - p[2]) * f;
+        // Angles are interpolated the short way round; going the long way makes
+        // a threat spin on the spot every time it crosses the seam at PI.
+        var d = n[3] - p[3];
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        ang = p[3] + d * f;
+      }
+      out.push({
+        type: typeId,
+        def: def,
+        cls: def.cls,
+        x: x, y: y, angle: ang,
+        hp: n[4], maxHp: n[5] || 1,
+        radius: n[6],
+        flash: n[7], wobble: n[8], slowMul: n[9],
+        immune: (n[10] & 1) ? ['*'] : [],
+        revived: (n[10] & 2) ? 1 : 0,
+        leaked: !!(n[10] & 4),
+        dead: false,
+        traits: [],
+      });
+    }
+    state.threats = out;
+
+    var towerOrder = global.Towers.order();
+    state.towers = b.snap.s.map(function (w) {
+      var tp = towerOrder[w[2]];
+      var pos = Map.tileToWorld(w[0], w[1]);
+      return {
+        type: tp, c: w[0], r: w[1], x: pos.x, y: pos.y,
+        level: w[3], owner: w[4], angle: w[5],
+        cooldown: 0, shots: 0, invested: 0, disabledUntil: 0,
+      };
+    });
+  }
+
+  /** The local player's seat, which is whose money the HUD shows. */
+  function localSeat() {
+    return state && state.net && state.net.mode === 'peer' ? state.net.seat : 0;
+  }
+
+  /**
+   * Apply an action that arrived over the network.
+   *
+   * Deliberately NOT the same path as `applyAction` above, and the difference is
+   * the point. A replay is a recording of input this client already accepted, so
+   * it is trusted and re-applied verbatim. This is a stranger's message, so every
+   * field is validated and the player id comes from the relay's attribution
+   * rather than from the message body.
+   *
+   * The ownership rule is the one that needs saying out loud: you may only
+   * upgrade or sell a tower you paid for. Selling is the obvious exploit - a
+   * player could strip a team-mate's defence to fund their own - and upgrading
+   * somebody else's tower is worse than it looks, because the refund on a later
+   * sale goes to the OWNER, so funding a team-mate by upgrading their tower gives
+   * the money away with no way to get it back. Both are refused rather than
+   * negotiated; a "fund a team-mate" feature would need its own design, not a
+   * loophole in this check.
+   */
+  function remoteIntent(playerId, a) {
+    if (!state || !a || typeof a !== 'object') return { ok: false, reason: 'bad intent' };
+    var seat = Number(playerId);
+    if (!Number.isInteger(seat) || seat < 0 || seat >= state.seats.length) {
+      return { ok: false, reason: 'no such player' };
+    }
+
+    if (a.t === 'build') {
+      if (!Number.isInteger(a.c) || !Number.isInteger(a.r)) return { ok: false, reason: 'bad tile' };
+      if (!Map.inGrid(a.c, a.r)) return { ok: false, reason: 'bad tile' };
+      return global.Towers.place(state, a.c, a.r, a.type, Map, seat);
+    }
+
+    if (a.t === 'upgrade' || a.t === 'sell') {
+      if (!Number.isInteger(a.c) || !Number.isInteger(a.r)) return { ok: false, reason: 'bad tile' };
+      var tw = global.Towers.at(state, a.c, a.r);
+      if (!tw) return { ok: false, reason: 'no tower there' };
+      if ((tw.owner || 0) !== seat) return { ok: false, reason: 'not your tower' };
+      return a.t === 'upgrade'
+        ? global.Towers.upgrade(state, tw)
+        : global.Towers.sell(state, tw);
+    }
+
+    if (a.t === 'wave') {
+      if (state.waveIndex >= state.totalWaves) return { ok: false, reason: 'no waves left' };
+      if (state.status !== 'building') return { ok: false, reason: 'wave already running' };
+      startNextWave();
+      return { ok: true };
+    }
+
+    return { ok: false, reason: 'unknown action' };
+  }
+
+  /* ------------------------------------------------------------------ *
    * Seats: co-op's shared map, individual purses
    *
    * Co-op is one battlefield and one integrity bar, with every player free to
@@ -610,6 +920,18 @@
 
   function step(dt) {
     if (!state || state.paused) return;
+
+    // A peer does not simulate. The host is the clock, and two clocks that both
+    // advance the world is a desync in seconds - which is the whole reason the
+    // authority model is host-authoritative rather than lockstep. All a peer
+    // does is move its render clock forward and rebuild the world from the last
+    // two snapshots.
+    if (state.net && state.net.mode === 'peer') {
+      state.net.renderTime += dt;
+      interpolate();
+      return;
+    }
+
     if (state.status === 'won' || state.status === 'lost') return;
 
     state.time += dt;
@@ -702,6 +1024,13 @@
     for (var i = 0; i < steps; i++) step(total / steps);
 
     draw();
+
+    // After draw, so anything a hook does is in the next frame rather than this
+    // one - and with the real frame delta, because the host's broadcast rate has
+    // to be independent of the frame rate. A phone at 30fps and one at 120fps
+    // must send state at the same 10Hz, and that is only possible if the sender
+    // accumulates time rather than counting frames.
+    if (hooks.onTick) hooks.onTick(dt, state);
   }
 
   function run() {
@@ -876,6 +1205,18 @@
    * to keep for the next tile.
    */
   function tryPlace(type, c, r, opts) {
+    // Co-op: only the host owns the world. A peer does not place anything - it
+    // asks, and the host's snapshot is what puts the tower on the board. See
+    // Coop.intent for why this is not done optimistically.
+    if (state.net && state.net.mode === 'peer') {
+      var asked = global.Coop && global.Coop.intent({ t: 'build', c: c, r: r, type: type });
+      if (asked) {
+        if (global.Sfx) global.Sfx.drop(4);
+        if (!opts || !opts.fromDrag) state.selectedBuild = type;
+      }
+      return !!asked;
+    }
+
     var res = global.Towers.place(state, c, r, type, Map);
     var w = Map.tileToWorld(c, r);
 
@@ -958,10 +1299,24 @@
     }
 
     if (hitRect(layout.btnNext, x, y)) {
-      if (state.waveIndex < state.totalWaves) startNextWave();
+      if (state.waveIndex >= state.totalWaves) return;
+      // A peer cannot start a wave; the host's clock decides when the next one
+      // begins, and the snapshot is how a peer finds out.
+      if (state.net && state.net.mode === 'peer') {
+        if (global.Coop) global.Coop.intent({ t: 'wave' });
+        return;
+      }
+      startNextWave();
       return;
     }
     if (hitRect(layout.btnSpeed, x, y)) {
+      // Speed is the host's clock in co-op. Letting a peer raise it would either
+      // do nothing (the sim is not here) or make it interpolate faster than the
+      // snapshots arrive, which reads as a stutter, not as 2x.
+      if (state.net && state.net.mode === 'peer') {
+        nope(x, y, 'host sets the speed');
+        return;
+      }
       state.speed = state.speed === 1 ? 2 : 1;
       if (global.Store) global.Store.set('gameSpeed', state.speed);
       return;
@@ -973,7 +1328,20 @@
     }
 
     if (state.selectedTower) {
+      // Your towers are yours. This is the same rule remoteIntent enforces on a
+      // peer, applied to the host's own pointer - otherwise the host could do
+      // something no other player can, and the rule would only be true for
+      // people who are not the host.
+      var mine = (state.selectedTower.owner || 0) === localSeat();
+      if (!mine) return;
+
       if (hitRect(layout.btnUpgrade, x, y)) {
+        if (state.net && state.net.mode === 'peer') {
+          if (global.Coop) {
+            global.Coop.intent({ t: 'upgrade', c: state.selectedTower.c, r: state.selectedTower.r });
+          }
+          return;
+        }
         var u = global.Towers.upgrade(state, state.selectedTower);
         if (u.ok) {
           if (global.Sfx) global.Sfx.perfect(1);
@@ -984,6 +1352,13 @@
         return;
       }
       if (hitRect(layout.btnSell, x, y)) {
+        if (state.net && state.net.mode === 'peer') {
+          if (global.Coop) {
+            global.Coop.intent({ t: 'sell', c: state.selectedTower.c, r: state.selectedTower.r });
+          }
+          state.selectedTower = null;
+          return;
+        }
         var s = global.Towers.sell(state, state.selectedTower);
         if (s.ok) {
           state.selectedTower = null;
@@ -1077,7 +1452,12 @@
       }
 
       for (var i = 0; i < state.towers.length; i++) {
-        global.Towers.drawTower(ctx, state.towers[i], t);
+        // In co-op the board is shared, so a tower says who paid for it. In solo
+        // every tower is the player's own and the ring would be noise.
+        var colour = state.seats.length > 1
+          ? SEAT_COLOURS[(state.towers[i].owner || 0) % SEAT_COLOURS.length]
+          : null;
+        global.Towers.drawTower(ctx, state.towers[i], t, colour);
       }
 
       global.Towers.drawShots(ctx, state);
@@ -1200,9 +1580,36 @@
     // y is the top of the left block, not the top of the strip: the block is
     // centred in the strip by computeLayout.
     var loy = L.leftY;
-    label(c, 'BANDWIDTH', lx, loy + 18, 'rgba(111, 137, 168, 0.9)', 9);
+    var mine = st.seats.length > 1 ? st.seats[localSeat()] : null;
+
+    // In co-op the number the player spends is their own, so the label says
+    // whose it is. A shared "BANDWIDTH" over one player's purse is worse than no
+    // label: it invites the reading that the team has this much between them.
+    label(c, mine ? (mine.name + ' · BANDWIDTH') : 'BANDWIDTH', lx, loy + 18,
+      mine ? mine.colour : 'rgba(111, 137, 168, 0.9)', 9);
     label(c, String(Math.floor(st.bandwidth)), lx, loy + 42, accent, 20);
     label(c, 'B/W', lx + (String(Math.floor(st.bandwidth)).length * 12) + 4, loy + 42, 'rgba(111, 137, 168, 0.9)', 10);
+
+    // What everybody else has, right-aligned in the same block. Small and dim:
+    // a team-mate's balance is context, not something to act on, and the player
+    // can only spend their own.
+    //
+    // Drawn only while it fits inside the left column. The column's width is
+    // derived from the palette's needs (see computeLayout), so at three or four
+    // seats the labels would otherwise run under the build cards - and a number
+    // that overlaps a tap target is worse than a number that is missing.
+    if (st.seats.length > 1) {
+      var ox = L.left.x + L.left.w;
+      for (var si = st.seats.length - 1; si >= 0; si--) {
+        if (si === localSeat()) continue;
+        var seat = st.seats[si];
+        var text = Math.floor(seat.bandwidth) + ' ' + seat.name;
+        var w = c.measureText(text).width;
+        if (ox - w < L.left.x) break;
+        label(c, text, ox - w, loy + 42, seat.colour, 10);
+        ox -= w + 8;
+      }
+    }
 
     var barY = loy + 52;
     var barW = L.left.w;
@@ -1863,5 +2270,24 @@
     inputBindings: function () { return bindCount; },
     setSpeed: function (n) { if (state) state.speed = Math.max(1, Math.min(2, n)); },
     setPaused: function (p) { if (state) state.paused = !!p; },
+
+    /* --- co-op ---------------------------------------------------- */
+    /** The render-relevant world, small enough to send at 10Hz. */
+    snapshot: snapshot,
+    emptySnapshot: emptySnapshot,
+    /** Receive state from the host. Refuses a mismatched protocol or build. */
+    applySnapshot: applySnapshot,
+    /** Apply an action that arrived over the network, validated. */
+    remoteIntent: remoteIntent,
+    /** Stop simulating and follow the host on this seat. */
+    joinAsPeer: joinAsPeer,
+    hostAs: hostAs,
+    netMode: netMode,
+    localSeat: localSeat,
+    /** Whose money the HUD and the build cards should be priced against. */
+    seatColours: function () { return SEAT_COLOURS.slice(); },
+    seatOf: function (playerId) { return seatOf(state, playerId); },
+    protocol: PROTOCOL,
+    typeHash: typeHash,
   };
 })(window);
