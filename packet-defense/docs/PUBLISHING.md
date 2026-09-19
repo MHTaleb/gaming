@@ -183,16 +183,35 @@ move these into `tools/harden-android.js` so a number cannot be forgotten.
 
 ## 6. Store listing assets (you must supply these)
 
-| Asset | Requirement |
-|---|---|
-| App icon | 512 × 512 PNG, 32-bit, no alpha |
-| Feature graphic | 1024 × 500 PNG/JPG |
-| Phone screenshots | 2–8, at least 320px on the short side |
-| Short description | ≤ 80 characters |
-| Full description | ≤ 4000 characters |
+| Asset | Requirement | Where it comes from |
+|---|---|---|
+| App icon | 512 × 512 PNG, 32-bit, no alpha | `npm run assets` |
+| Feature graphic | 1024 × 500 PNG/JPG | `npm run assets` |
+| Phone screenshots | 2–8, at least 320px on the short side | `npm run shots` |
+| Short description | ≤ 80 characters | not written yet — PD-109 |
+| Full description | ≤ 4000 characters | not written yet — PD-109 |
 
-`store/listing.md` already holds draft copy — check it against the current
-listing requirements before pasting.
+### Screenshots
+
+`npm run shots` writes five 1920×1080 PNGs into `store/screenshots/`, along
+with a manifest recording what each one shows. They are captured from the real
+build by `tools/screenshots.js`: a headless Chromium drives the actual game, so a
+screenshot cannot show something the game does not do, and re-running the tool
+after a change to the palette or the HUD regenerates all five.
+
+| File | What it shows |
+|---|---|
+| `01-board.png` | Act 11 mid-wave on Insane, thirty towers, one of every type |
+| `02-briefing.png` | The same ticket's briefing: the premise, the threat list, the tip |
+| `03-coop.png` | A co-op lobby with two real players in it |
+| `04-victory.png` | The results screen for the ticket in shot one |
+| `05-title.png` | The menu |
+
+The order is the order to upload them in — the first two are what a browsing
+player actually looks at. Capture refuses to write a file if it can find a
+placeholder package id, a debug value, a TODO or an ad test unit in the text on
+screen, including text the canvas drew, and `node tools/screenshots.js --check`
+proves the set is complete and not blank without needing a browser.
 
 ---
 

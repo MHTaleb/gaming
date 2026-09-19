@@ -41,6 +41,11 @@
  * The in-page self-test needs a browser, so it is a separate CI job. It covers
  * what this cannot: the DOM, the ad and purchase flows, and the diagnostics
  * plumbing.
+ *
+ * Regenerating the store screenshots also needs a browser, and is a deliberate
+ * act rather than a check - so what runs here is their --check half, which
+ * asserts the set is complete, the right size, and has ink on it. Whether the
+ * pictures are any good stays a judgement.
  */
 'use strict';
 
@@ -191,6 +196,7 @@ console.log('\npacket-defense verification' + (FULL ? '  (full)' : '') + '\n');
 run('syntax', 'every .js file parses', checkSyntax);
 run('backlog', 'the plan is internally consistent', () => node('tools/backlog.js'));
 run('assets', 'store PNGs match the SVG they came from', () => node('tools/store-assets.js', ['--check']));
+run('shots', 'store screenshots are the right shape and not blank', () => node('tools/screenshots.js', ['--check']));
 run('relay', '20 assertions on the co-op room server', () => node('server/relay/index.js', ['--test']));
 run('invariants', 'the campaign rises and every ticket is playable', checkInvariants);
 run('replay', 'a battle reproduces from its action log', () => node('tools/balance.js', ['--replay-check', '--levels', '1-3']));

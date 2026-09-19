@@ -269,11 +269,25 @@
       "deps": ["PD-103"], "refs": ["tools/store-assets.js"], "sources": ["R-03"], "tags": ["assets", "store"],
       "note": "The mark and the wordmark read at thumbnail size, which is what the criterion is for. The tagline underneath is decoration at that scale and is meant to be." },
 
-    { "id": "PD-105", "title": "Store screenshots captured from the real game", "epic": "E-PLAY", "area": "art-audio", "type": "task", "status": "next", "priority": "P0", "size": "M", "value": 5, "risk": 2,
+    { "id": "PD-105", "title": "Store screenshots captured from the real game", "epic": "E-PLAY", "area": "art-audio", "type": "task", "status": "done", "priority": "P0", "size": "M", "value": 5, "risk": 2,
       "summary": "Play requires screenshots, and they are what a browsing player actually judges. They must show the real game, in landscape, at a legible size.",
       "why": "The first two screenshots decide the install. This is marketing that happens to be a build step.",
       "dod": ["at least four, captured from a running build not mocked up", "one shows a late-game board with a full tower set", "one shows the co-op lobby", "one shows the briefing screen, because it is the clearest explanation of the game", "no debug text or placeholder ids visible"],
-      "deps": [], "refs": [], "sources": ["R-03"], "tags": ["assets", "store", "marketing"] },
+      "deps": [], "refs": ["tools/screenshots.js", "tools/cdp.js", "store/screenshots/"], "sources": ["R-03"], "tags": ["assets", "store", "marketing"],
+      "release": "1.0.2",
+      "subtasks": [
+        { "id": "PD-105a", "title": "A small Chrome DevTools Protocol client", "note": "Playwright is 150MB of browser download in a project whose only dependency rasterises one SVG. Chrome already speaks a protocol over a WebSocket and node 22 has one built in, so tools/cdp.js is launch, goto, eval, click, screenshot." },
+        { "id": "PD-105b", "title": "Build a late-game board with one of every tower", "note": "Greedy placement by road covered, with an overlap penalty so the towers spread out instead of piling onto the best tile. Patch has a range of 0 - it repairs PROD rather than shooting - so it needs its own rule or a coverage-based placer silently skips it and calls seven of eight a full set." },
+        { "id": "PD-105c", "title": "Shoot at the busiest moment of a wave", "note": "Fixed delays do not work: three seconds caught a pile on the spawn tile, nine seconds was after the wave had already been cleared. The rule that holds is to step until the count on the road stops rising. On Insane that is 44 at seven seconds." },
+        { "id": "PD-105d", "title": "Refuse to write a picture with debug text on it", "note": "Patches fillText for two frames and reads back the strings the renderer asked for, so the canvas HUD is audited too, not only the DOM. Fails on a placeholder package id, undefined/NaN/[object, a TODO, an ad test unit or a localhost address." },
+        { "id": "PD-105e", "title": "A --check half that needs no browser", "note": "Asserts the set is complete, 1920x1080 and has ink on it, so tools/verify.js can gate it in 0.1s without starting Chrome." }
+      ] },
+
+    { "id": "PD-308", "title": "Fix the generated briefing prose", "epic": "E-FEEL", "area": "content", "type": "bug", "status": "next", "priority": "P1", "size": "S", "value": 4, "risk": 1,
+      "summary": "The briefing sentence that introduces a ticket is ungrammatical. INC-1220 reads: \"Expect mostly Code Smells arrive in numbers and die in numbers, with DDoS Botnets are one hit each and there are never few of them layered in behind.\" Counts are also singular: \"60 DDoS Botnet\", \"8 waves\": \"The heaviest single push is wave 8: 60 DDoS Botnet in one go.\"",
+      "why": "Found by reading a screenshot rather than by playing. The briefing is the one screen a player reads before every ticket - 240 times - and it is the screen the store copy points at as the clearest explanation of the game. A sentence that does not parse undercuts the premise it is explaining.",
+      "dod": ["the sentence is one a person would write", "counts agree with their nouns", "the same generator still covers every act and every wave mix, so no ticket loses its warning"],
+      "deps": [], "refs": ["www/js/levels.js", "www/js/campaign.js"], "sources": [], "tags": ["content", "writing", "cheap-win"] },
 
     { "id": "PD-106", "title": "Update the privacy policy for co-op networking", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P1", "size": "S", "value": 4, "risk": 3,
       "summary": "docs/PRIVACY.md and the in-game Settings screen both state that no network calls happen during play. Co-op connects to a relay and shows another player's chosen display name, so both statements are now false.",

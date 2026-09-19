@@ -1,0 +1,103 @@
+{
+  "note": "Written by tools/screenshots.js. Do not edit by hand.",
+  "viewport": {
+    "width": 960,
+    "height": 540,
+    "scale": 2
+  },
+  "size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "shots": [
+    {
+      "name": "01-board",
+      "file": "01-board.png",
+      "scene": "A late ticket, mid-wave, with one of every tower on the map.",
+      "words": 29,
+      "width": 1920,
+      "height": 1080,
+      "samples": 121977,
+      "colours": 1410,
+      "ink": 0.6704,
+      "level": 220,
+      "board": {
+        "level": 220,
+        "difficulty": "insane",
+        "cleared": 4,
+        "waves": 4,
+        "of": 8,
+        "towers": 30,
+        "roster": 8,
+        "uptime": 100,
+        "bandwidth": 757,
+        "status": "building"
+      },
+      "frame": {
+        "reached": true,
+        "threats": 31,
+        "peak": 44,
+        "peakAt": 7,
+        "seconds": 12,
+        "wave": 5,
+        "uptime": 100,
+        "status": "wave"
+      }
+    },
+    {
+      "name": "02-briefing",
+      "file": "02-briefing.png",
+      "scene": "The briefing for the same ticket: what is coming, and why it matters.",
+      "words": 46,
+      "width": 1920,
+      "height": 1080,
+      "samples": 121977,
+      "colours": 299,
+      "ink": 0.7087,
+      "level": 220
+    },
+    {
+      "name": "03-coop",
+      "file": "03-coop.png",
+      "scene": "Two players in a co-op lobby, on a real relay.",
+      "words": 17,
+      "width": 1920,
+      "height": 1080,
+      "samples": 121977,
+      "colours": 182,
+      "ink": 0.6529,
+      "room": "RC4H"
+    },
+    {
+      "name": "04-victory",
+      "file": "04-victory.png",
+      "scene": "The results screen for the ticket in shot one, won for real.",
+      "words": 25,
+      "width": 1920,
+      "height": 1080,
+      "samples": 121977,
+      "colours": 312,
+      "ink": 0.5436,
+      "level": 220,
+      "end": {
+        "outcome": "won",
+        "screen": "result",
+        "uptime": 100,
+        "leaks": 0,
+        "kills": 505,
+        "wave": 8
+      }
+    },
+    {
+      "name": "05-title",
+      "file": "05-title.png",
+      "scene": "The menu.",
+      "words": 11,
+      "width": 1920,
+      "height": 1080,
+      "samples": 121977,
+      "colours": 196,
+      "ink": 0.6014
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "packet-defense",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "Packet Defense - a tower defence game about holding a production server against everything the internet throws at it.",
   "scripts": {
@@ -10,6 +10,7 @@
     "verify:full": "node tools/verify.js --full",
     "backlog": "node tools/backlog.js --summary",
     "assets": "node tools/store-assets.js",
+    "shots": "node tools/screenshots.js",
     "android:prepare": "npx cap sync android && node tools/harden-android.js",
     "android:add": "cap add android",
     "android:harden": "node tools/harden-android.js",

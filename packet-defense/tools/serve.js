@@ -59,14 +59,14 @@ const TYPES = {
  * is what stops node holding the response until the first byte - which for a
  * stream that may go quiet for fifteen seconds looks exactly like a hang.
  */
-function proxy(req, res) {
-  if (!RELAY) {
+function proxy(req, res, relayBase) {
+  if (!relayBase) {
     res.writeHead(503, { 'Content-Type': 'application/json' }).end('{"error":"no relay configured"}');
     return;
   }
   let target;
   try {
-    target = new URL(req.url.replace(/^\/coop/, '') || '/', RELAY);
+    target = new URL(req.url.replace(/^\/coop/, '') || '/', relayBase);
   } catch (err) {
     res.writeHead(400).end('Bad relay url');
     return;
@@ -91,10 +91,11 @@ function proxy(req, res) {
   req.pipe(upstream);
 }
 
-function createServer() {
+function createServer(opts) {
+  const relayBase = opts && opts.relay !== undefined ? opts.relay : RELAY;
   return http.createServer((req, res) => {
     if (req.url === '/coop' || req.url.startsWith('/coop/')) {
-      proxy(req, res);
+      proxy(req, res, relayBase);
       return;
     }
 
@@ -156,7 +157,9 @@ function createServer() {
   });
 }
 
-function listen(server) {
+function listen(server, port) {
+  // 0 is a real value here - it means "any free port" - so this cannot be `||`.
+  const p = port === undefined ? PORT : port;
   server.on('error', (err) => {
     /*
      * A taken port, said plainly.
@@ -169,8 +172,8 @@ function listen(server) {
      * reading the plan and somebody giving up on it.
      */
     if (err.code === 'EADDRINUSE') {
-      const next = PORT + 1;
-      console.error('\nPort ' + PORT + ' is already in use.');
+      const next = p + 1;
+      console.error('\nPort ' + p + ' is already in use.');
       console.error('  Something else is on it - on this machine that is often another project\'s dev server.');
       console.error('\n  Try a different port:\n');
       console.error('      PORT=' + next + ' node tools/serve.js');
@@ -178,7 +181,7 @@ function listen(server) {
       process.exit(1);
     }
     if (err.code === 'EACCES') {
-      console.error('\nPort ' + PORT + ' needs privileges this process does not have.');
+      console.error('\nPort ' + p + ' needs privileges this process does not have.');
       console.error('  Ports below 1024 are reserved; use one above it.\n');
       process.exit(1);
     }
@@ -186,12 +189,26 @@ function listen(server) {
     process.exit(1);
   });
 
-  return server.listen(PORT, HOST, () => {
+  return server.listen(p, HOST, () => {
     const shown = HOST === '0.0.0.0' || HOST === '::' ? 'localhost' : HOST;
-    console.log('Packet Defense running at http://' + shown + ':' + PORT);
-    console.log('backlog board at        http://' + shown + ':' + PORT + '/backlog/');
+    // The bound port, not the requested one: 0 means "any free port" and the
+    // number that matters afterwards is the one the OS chose.
+    const bound = server.address().port;
+    console.log('Packet Defense running at http://' + shown + ':' + bound);
+    console.log('backlog board at        http://' + shown + ':' + bound + '/backlog/');
     console.log(RELAY ? 'co-op relay proxied at /coop -> ' + RELAY : 'co-op relay not configured (set RELAY=...)');
   });
 }
 
-listen(createServer());
+/*
+ * Run only when invoked directly.
+ *
+ * tools/screenshots.js - and, later, the co-op test - need a build on a scratch
+ * port, and killing whatever is on 8080 to get one is not acceptable. Exported
+ * rather than copied: there is one static server in this project, serving one
+ * www/ with one set of headers. A second copy would drift, and the copy that
+ * drifted would be the one the tests used.
+ */
+if (require.main === module) listen(createServer());
+
+module.exports = { createServer: createServer, listen: listen, PORT: PORT };
