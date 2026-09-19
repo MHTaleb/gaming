@@ -118,6 +118,37 @@
      */
     hpFloorCap: 6,
 
+    /* ---- co-op ------------------------------------------------------ *
+     *
+     * One map, twenty waves, one integrity bar, separate purses.
+     *
+     * The opener and the closer are multiples of the *theme act's* body power,
+     * so a battle themed on act 3 opens and closes at act-3 sizes across twenty
+     * waves instead of being an act-12 wall wearing an act-1 name.
+     *
+     * `coopTotal` is how much of the theme's ticket a co-op battle holds, and it
+     * is a BATTLE total spread across the twenty waves - not a per-wave figure.
+     * Getting that wrong was the first attempt's mistake and the measurement
+     * caught it: a 20x multiplier applied per wave flooded every count cap and
+     * turned extra seats into extra enemy health rather than extra enemies.
+     *
+     * `coopBudget` is the team's budget as a multiple of the theme's own ticket
+     * budget, divided between the seats rather than given to each of them - a
+     * shared map has a fixed number of buildable tiles, so extra purses buy
+     * nothing and made co-op easier the more people joined.
+     *
+     * `coopSeatThreat` is the dial to move when co-op is the wrong difficulty,
+     * and it is the honest one to measure against: what a second player adds is
+     * attention, not tiles, so the threat has to rise with the head count or the
+     * mode is solo with spectators. Calibrate it with --coop the way insane's
+     * `lean` was calibrated with --minimal.
+     */
+    coopWaves: 20,
+    coopTotal: 2.5,
+    coopRamp: 1.35,
+    coopBudget: 1.0,
+    coopSeatThreat: 1.7,
+
     /* ---- the economy ------------------------------------------------- */
 
     /** One unit of threat power per this much bandwidth, at ticket 1. */
@@ -1331,6 +1362,103 @@
   }
 
   /**
+   * A co-op battle: one map, twenty waves, one integrity bar, separate purses.
+   *
+   * Built on the campaign's own generator rather than beside it, so a co-op
+   * battle inherits the road scoring, the threat mix for its act and the same
+   * measured power model - and so a change to the curve shows up in both modes
+   * instead of only one of them. What is co-op specific is the wave count, the
+   * ramp across it, and the fact that every seat is handed its own budget.
+   *
+   * `themeId` picks which act the road and the threat mix come from; the wave
+   * count and the ramp are the co-op part.
+   */
+  function coopLevel(themeId, tierId, seats) {
+    var base = build(themeId);
+    var t = tierDef(tierId);
+    var players = Math.max(1, seats || 1);
+    var want = DIALS.coopWaves;
+    var rand = rng(themeId * 6151 + 29);
+
+    // A shared map has a hard ceiling - about eighty buildable tiles - and one
+    // player already saturates it. So a second player does not add defence
+    // capacity the way they add money: measured with a per-seat budget, three
+    // seats spent 13,286 of 34,038 and finished with 156% slack, because the
+    // board was full and the extra purses had nothing to buy. Handing each seat a
+    // full budget therefore made co-op *easier* the more people joined, which is
+    // backwards.
+    //
+    // Two dials fix it, and they do different jobs:
+    //
+    //   * the team's total budget is held roughly constant, so co-op is a
+    //     division of one budget rather than a multiplication of it. Wasting your
+    //     share now costs the team, which is the decision the mode is about.
+    //   * the threat scales with the seat count, because the thing more players
+    //     actually bring is attention: three people can hold three lanes, react
+    //     to a leak and still call waves early. Without this the mode collapses
+    //     to solo difficulty with extra spectators.
+    var threatScale = Math.pow(DIALS.coopSeatThreat, players - 1);
+
+    // The ramp is a BATTLE total, distributed across the twenty waves - not a
+    // per-wave figure. This was wrong on the first attempt and the measurement
+    // caught it: treating `coopClose: 2.4` as a per-wave multiplier made the
+    // battle about twenty-four times a ticket's total, which saturates every
+    // count cap and spills the surplus into health. The symptom was extra seats
+    // scaling *health* rather than bodies - theme 240 went from 1,545 threats at
+    // one seat to 1,610 at three while its power nearly doubled, so the extra
+    // players were being paid for with tankier enemies instead of more of them,
+    // which is the exact failure this campaign's tier work was built to avoid.
+    //
+    // The theme's own ticket is the unit: a co-op battle holds `coopTotal` of
+    // them, and the weights below put the peak wave at roughly the share a
+    // ticket's hardest wave carries.
+    var ticketTotal = bodyPowerFor(themeId) * t.mass;
+    var battleTotal = ticketTotal * DIALS.coopTotal * threatScale;
+
+    var weights = [];
+    var sumW = 0;
+    for (var i = 0; i < want; i++) {
+      var w = Math.pow(i + 1, DIALS.coopRamp);
+      weights.push(w);
+      sumW += w;
+    }
+
+    var waves = [];
+    for (i = 0; i < want; i++) {
+      waves.push(composeWave(battleTotal * weights[i] / sumW, themeId, rand, tierId));
+    }
+
+    var level = {};
+    Object.keys(base).forEach(function (k) { level[k] = base[k]; });
+    level.coop = true;
+    // The id stays the theme's, because everything downstream - the act lookup,
+    // the tuning curve, the briefing text - is keyed off it and the battle is
+    // meant to read as taking place in that act. The *seed* is separate, so a
+    // co-op battle cannot share a random stream with the campaign ticket it is
+    // themed on; two battles with the same stream is the kind of coincidence
+    // that looks like a bug and is a nightmare to reproduce.
+    level.seedId = 'coop:' + themeId;
+    level.tier = t.id;
+    level.waves = waves;
+    level.boss = null;
+    level.miniBoss = false;
+    level.seats = players;
+    // Per seat, and the team total is what stays roughly constant: see above for
+    // why dividing is the right answer on a map this small. `coopBudget` is the
+    // calibration knob - the budget is derived from the theme's own ticket, so it
+    // needs only a small allowance for the extra length of a twenty-wave battle.
+    level.bandwidth = Math.max(1, Math.round(
+      bandwidthFor(themeId, null) * DIALS.coopTotal * DIALS.coopBudget / players
+    ));
+    level.bodyPower = Math.round(battleTotal);
+    level.power = power(level, tierId);
+    level.difficulty = level.power;
+    level.brief = briefFor(level);
+    level.tip = tipFor(level);
+    return level;
+  }
+
+  /**
    * "How much is coming at you", measured from the composed waves.
    *
    * Same arithmetic as powerOf, applied to the finished wave table rather than
@@ -1505,6 +1633,7 @@
     isBoss: isBoss,
     isMini: isMini,
     build: build,
+    coopLevel: coopLevel,
     all: all,
     byId: byId,
     count: count,

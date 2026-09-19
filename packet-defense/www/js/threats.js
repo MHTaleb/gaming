@@ -245,8 +245,25 @@
     var d = t.def;
     var bounty = Math.max(1, Math.round(d.bounty * (t.bountyMul === undefined ? 1 : t.bountyMul)));
     game.kills += 1;
-    game.bandwidth += bounty;
-    game.earned = (game.earned || 0) + bounty;
+    // Co-op: every seat banks an equal share of every bounty.
+    //
+    // Crediting the tower that landed the killing blow would be easy to argue
+    // for and worse in practice: three of the seven tower types deal no damage
+    // at all, so the player who builds the Honeypot or the Patch Queue the team
+    // needs would earn nothing and fall further behind every wave. Shared income
+    // keeps every build viable; separate purses keep the spending decisions
+    // personal, which is the part the design actually asked for.
+    //
+    // One seat goes through the same path as many, rather than keeping the old
+    // `game.bandwidth += bounty` branch: two ways to pay income meant the solo
+    // branch skipped the seat's own ledger, so "earned" was right for the team
+    // and wrong for the player. It also invited exactly the bug this line was
+    // written on top of - the old expression appeared twice, so every bounty was
+    // banked at double.
+    var earners = (game.seats && game.seats.length) || 1;
+    var share = bounty / earners;
+    for (var si = 0; si < earners; si++) game.credit(si, share);
+    game.earned += bounty;
     // Tracked apart from the total, because "where did the money come from" is
     // the first question when a level will not balance: a level leaning on bonus
     // income plays completely differently from one leaning on bounties.

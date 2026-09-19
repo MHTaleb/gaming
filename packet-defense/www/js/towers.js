@@ -276,7 +276,22 @@
    * reports, so the drag preview and the actual drop can never disagree about
    * whether a spot is legal.
    */
-  function canPlace(game, c, r, type, map) {
+  /**
+   * What a player can afford.
+   *
+   * Goes through the seat API when the game object has one, and falls back to the
+   * plain field otherwise. The fallback exists because canPlace is the one
+   * function in this file that is called with a hand-built stub - the self-test
+   * asserts that the research gate lives here and not only in the palette, and it
+   * passes a `{bandwidth, towers}` object to do it. Making the rule reachable
+   * without a full game state is what lets that test check the gate itself rather
+   * than a simulation of it.
+   */
+  function purseOf(game, playerId) {
+    return game.purse ? game.purse(playerId) : game.bandwidth;
+  }
+
+  function canPlace(game, c, r, type, map, playerId) {
     if (!DEFS[type]) return { ok: false, reason: 'unknown tower' };
     // The gate lives here, in the one function both the preview and the drop
     // call, rather than in the palette that hides the card. Hiding a card is a
@@ -284,7 +299,9 @@
     if (!available(type)) return { ok: false, reason: 'not researched' };
     if (!map.isBuildable(c, r)) return { ok: false, reason: 'blocked tile' };
     if (at(game, c, r)) return { ok: false, reason: 'tile occupied' };
-    if (game.bandwidth < cost(type)) return { ok: false, reason: 'not enough bandwidth' };
+    // In co-op the tile is shared but the purse is not: this is the check that
+    // makes "every player has their own money" true rather than decorative.
+    if (purseOf(game, playerId) < cost(type)) return { ok: false, reason: 'not enough bandwidth' };
     return { ok: true };
   }
 
@@ -311,15 +328,18 @@
     if (game && game.record) game.record(entry);
   }
 
-  function place(game, c, r, type, map) {
-    var check = canPlace(game, c, r, type, map);
+  function place(game, c, r, type, map, playerId) {
+    var check = canPlace(game, c, r, type, map, playerId);
     if (!check.ok) return check;
 
     var price = cost(type);
-    game.bandwidth -= price;
+    var owner = game.seatId(playerId);
+    game.debit(playerId, price);
     var p = map.tileToWorld(c, r);
     var tower = {
       type: type, c: c, r: r, x: p.x, y: p.y,
+      // Who paid for it. Co-op draws ownership (and the sell refund) from this.
+      owner: owner,
       level: 1, cooldown: 0, angle: -Math.PI / 2,
       // `invested` is what this tower actually cost, research discount
       // included. sellValue() refunds a share of it, so a discounted tower must
@@ -327,27 +347,28 @@
       disabledUntil: 0, shots: 0, damageDone: 0, invested: price,
     };
     game.towers.push(tower);
-    log(game, { t: 'build', c: c, r: r, type: type });
+    log(game, { t: 'build', c: c, r: r, type: type, p: owner });
     return { ok: true, tower: tower };
   }
 
   function upgrade(game, tower) {
     var price = upgradeCost(tower);
     if (price === null) return { ok: false, reason: 'fully upgraded' };
-    if (game.bandwidth < price) return { ok: false, reason: 'not enough bandwidth' };
-    game.bandwidth -= price;
+    if (purseOf(game, tower.owner) < price) return { ok: false, reason: 'not enough bandwidth' };
+    game.debit(tower.owner, price);
     tower.level += 1;
     tower.invested += price;
-    log(game, { t: 'upgrade', c: tower.c, r: tower.r });
+    log(game, { t: 'upgrade', c: tower.c, r: tower.r, p: tower.owner });
     return { ok: true, cost: price };
   }
 
   function sell(game, tower) {
     var refund = sellValue(tower);
-    game.bandwidth += refund;
+    // A refund, not income - see state.refund in engine.js.
+    game.refund(tower.owner, refund);
     var i = game.towers.indexOf(tower);
     if (i >= 0) game.towers.splice(i, 1);
-    log(game, { t: 'sell', c: tower.c, r: tower.r });
+    log(game, { t: 'sell', c: tower.c, r: tower.r, p: tower.owner });
     return { ok: true, refund: refund };
   }
 

@@ -246,15 +246,29 @@
     state.actions.push(entry);
   }
 
+  /** Pay every seat an equal share. Used by the shared early-call bonus. */
+  function payAll(amount) {
+    if (!state.seats || state.seats.length <= 1) {
+      state.bandwidth += amount;
+      state.earned += amount;
+      return;
+    }
+    var share = amount / state.seats.length;
+    for (var i = 0; i < state.seats.length; i++) state.credit(i, share);
+    state.earned += amount;
+  }
+
   /**
    * Apply a recorded action.
    *
    * Towers are addressed by tile, not by object identity: a replay rebuilds the
    * board from scratch, so the only stable handle on a tower is where it stands.
+   * A build carries the player who paid for it; an upgrade or a sell acts on the
+   * tower that is standing there, and therefore on whatever purse owns it.
    */
   function applyAction(a) {
     if (a.t === 'build') {
-      global.Towers.place(state, a.c, a.r, a.type, Map);
+      global.Towers.place(state, a.c, a.r, a.type, Map, a.p);
     } else if (a.t === 'upgrade') {
       var up = global.Towers.at(state, a.c, a.r);
       if (up) global.Towers.upgrade(state, up);
@@ -276,16 +290,67 @@
   }
 
   /* ------------------------------------------------------------------ *
+   * Seats: co-op's shared map, individual purses
+   *
+   * Co-op is one battlefield and one integrity bar, with every player free to
+   * build anywhere on the road - but each player spends only their own money.
+   * That split is why seats exist: the map and the waves are shared, the purse
+   * is not.
+   *
+   * `state.bandwidth` is deliberately kept as an accessor onto the ACTIVE seat
+   * rather than being ripped out and replaced. There are only eleven call sites
+   * that touch money, but they are spread across the engine, the towers and the
+   * input layer, and rewriting them all to be seat-aware would have put the
+   * single-player game - which is released and verified - through a refactor for
+   * no behaviour change. With one seat, `state.bandwidth` IS the player's money
+   * exactly as before; with several, it is the local player's money and the
+   * co-op code addresses seats explicitly.
+   * ------------------------------------------------------------------ */
+
+  var SEAT_COLOURS = ['#22d3ee', '#f59e0b', '#4ade80', '#a78bfa', '#f472b6', '#38bdf8'];
+
+  function makeSeats(count, bandwidth, names) {
+    var out = [];
+    for (var i = 0; i < count; i++) {
+      out.push({
+        id: i,
+        name: (names && names[i]) || ('P' + (i + 1)),
+        colour: SEAT_COLOURS[i % SEAT_COLOURS.length],
+        bandwidth: bandwidth,
+        startingBandwidth: bandwidth,
+        earned: 0,
+        spent: 0,
+        kills: 0,
+      });
+    }
+    return out;
+  }
+
+  /** The seat a player id refers to, defaulting to the local player. */
+  function seatOf(game, playerId) {
+    if (!game || !game.seats || !game.seats.length) return null;
+    var id = playerId === undefined || playerId === null ? game.activeSeat : playerId;
+    return game.seats[id] || game.seats[game.activeSeat] || game.seats[0];
+  }
+
+  /* ------------------------------------------------------------------ *
    * Level lifecycle
    * ------------------------------------------------------------------ */
 
-  function start(levelId, tierId) {
+  function start(levelId, tierId, seats) {
     Map = global.PDMap;
     // at() is the only way to get a level object that carries a tier, and
     // tuning() reads the tier back off the level - so this single line is the
     // whole plumbing between the difficulty a player picked and the stats the
     // spawner applies to every wave.
-    var level = global.Levels.at(levelId, tierId) || global.Levels.all()[0];
+    //
+    // A level object may also be handed in directly, which is how a co-op battle
+    // starts: it is generated rather than sitting in the campaign list, so there
+    // is no id to look up. `seedFor` hashes the id as a string, so a generated
+    // level needs only a stable id of its own.
+    var level = (levelId && typeof levelId === 'object' && levelId.waves)
+      ? levelId
+      : (global.Levels.at(levelId, tierId) || global.Levels.all()[0]);
 
     var paths = global.Levels.paths();
     var waypoints = paths[level.path] || paths.switchback;
@@ -298,19 +363,18 @@
       // Determinism plumbing. `rand` replaces the last unseeded randomness in
       // the simulation; `actions` is the replay log; `replay` is a log being
       // played back, which is also what switches recording off.
-      rand: makeRand(seedFor(level.id, level.tier || tierId)),
+      rand: makeRand(seedFor(level.seedId || level.id, level.tier || tierId)),
       actions: [],
       replay: null,
       replayIndex: 0,
       record: record,
-      bandwidth: level.bandwidth,
-      startingBandwidth: level.bandwidth,
+      seats: makeSeats(seats || 1, level.bandwidth),
+      activeSeat: 0,
       uptime: 100,
       leaks: 0,
       kills: 0,
       earned: 0,
       killIncome: 0,        // earned from kills alone; the rest is wave bonuses
-      spent: 0,
       time: 0,
       waveIndex: 0,          // waves *started*
       totalWaves: level.waves.length,
@@ -336,6 +400,69 @@
       pathLength: pathInfo.length,
       roadTiles: pathInfo.tiles,
       bossSpawned: false,
+    };
+
+    // Money lives on the seats. Every existing `state.bandwidth` read or write
+    // now means "the active player's purse" without changing a single call site,
+    // and with one seat that is the same value it always was.
+    Object.defineProperty(state, 'bandwidth', {
+      get: function () { return seatOf(state).bandwidth; },
+      set: function (v) { seatOf(state).bandwidth = v; },
+      enumerable: true,
+      configurable: true,
+    });
+    Object.defineProperty(state, 'startingBandwidth', {
+      get: function () { return seatOf(state).startingBandwidth; },
+      enumerable: true,
+      configurable: true,
+    });
+    Object.defineProperty(state, 'earned', {
+      get: function () { return state.totalEarned || 0; },
+      set: function (v) { state.totalEarned = v; },
+      enumerable: true,
+      configurable: true,
+    });
+    // Spend is derived from the seats rather than counted separately. It used to
+    // be a plain field incremented by the input layer, which meant the balance
+    // harness - which drives the tower layer directly and never touches the input
+    // layer - reported every run as having spent nothing. One ledger, on the
+    // seats, so the UI and the harness cannot disagree.
+    Object.defineProperty(state, 'spent', {
+      get: function () {
+        var total = 0;
+        for (var i = 0; i < state.seats.length; i++) total += state.seats[i].spent;
+        return total;
+      },
+      enumerable: true,
+      configurable: true,
+    });
+    state.totalEarned = 0;
+
+    // The money API the towers use, so seat arithmetic lives in one place.
+    // A player id of undefined always means the local player, which is what
+    // keeps single-player call sites reading as they always did.
+    state.purse = function (playerId) { return seatOf(state, playerId).bandwidth; };
+    state.seatId = function (playerId) {
+      return playerId === undefined || playerId === null ? state.activeSeat : playerId;
+    };
+    state.debit = function (playerId, amount) {
+      var s = seatOf(state, playerId);
+      s.bandwidth -= amount;
+      s.spent += amount;
+    };
+    // Income: adds to the purse AND counts as earned, so "what did this battle
+    // pay me" stays answerable.
+    state.credit = function (playerId, amount) {
+      var s = seatOf(state, playerId);
+      s.bandwidth += amount;
+      s.earned += amount;
+    };
+    // A sell refund is not income. It is the player's own money coming back, and
+    // folding it into `earned` would make a ticket look more generous than it is
+    // - the balance report reads income to judge an economy, so a refund counted
+    // as income is a measurement error, not a cosmetic one.
+    state.refund = function (playerId, amount) {
+      seatOf(state, playerId).bandwidth += amount;
     };
 
     /*
@@ -413,8 +540,7 @@
     var bonus = 0;
     if (busy && state.waveIndex > 0) {
       bonus = 25 + state.waveIndex * 12;
-      state.bandwidth += bonus;
-      state.earned += bonus;
+      payAll(bonus);
       state.earlyBonuses += 1;
       state.effects.push({ kind: 'bonus', x: Map.VW() / 2, y: 60, r: 40, life: 1.1, max: 1.1, accent: '#4ade80', text: '+' + bonus });
       if (global.Music) global.Music.react('coin');
@@ -763,7 +889,8 @@
     }
 
     state.selectedTower = res.tower;
-    state.spent += global.Towers.cost(res.tower.type);
+    // No spend accounting here: Towers.place debits the owner's purse through
+    // state.debit, which is the single place money leaves a player's account.
     if (global.Sfx) global.Sfx.drop(4);
     if (global.Music) global.Music.react('coin');
 
@@ -849,7 +976,6 @@
       if (hitRect(layout.btnUpgrade, x, y)) {
         var u = global.Towers.upgrade(state, state.selectedTower);
         if (u.ok) {
-          state.spent += u.cost;
           if (global.Sfx) global.Sfx.perfect(1);
           if (global.Music) global.Music.react('perfect');
         } else {
@@ -861,7 +987,6 @@
         var s = global.Towers.sell(state, state.selectedTower);
         if (s.ok) {
           state.selectedTower = null;
-          state.earned += s.refund;
           if (global.Sfx) global.Sfx.coin();
         }
         return;

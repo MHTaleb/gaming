@@ -509,6 +509,182 @@ function replayCheck(W, id, tier) {
 }
 
 /* ------------------------------------------------------------------ *
+ * Co-op
+ * ------------------------------------------------------------------ */
+
+/**
+ * Play a co-op battle: one map, twenty waves, one integrity bar, N purses.
+ *
+ * Written as its own loop rather than by parameterising playTicket, because the
+ * two ask different questions. playTicket measures whether a ticket is beatable;
+ * this measures whether the *co-op rules* work - that a seat cannot spend another
+ * seat's money, that the tile is shared while the purse is not, and that a team
+ * splitting its income across two players ends up with a viable defence rather
+ * than two halves of one.
+ *
+ * Each seat runs the same bot policy independently, in turn, one action per tick
+ * each - so the seats contend for the same good tiles and for their own budgets,
+ * which is exactly the pressure a real co-op game applies.
+ *
+ * `--seats 1` is the control: it must clear at least as well as the multi-seat
+ * runs, because a solo player has the whole budget to themselves.
+ */
+function playCoop(W, opts = {}) {
+  const Engine = W.Engine;
+  const Towers = W.Towers;
+  const Map = W.PDMap;
+  const tier = opts.tier || 'normal';
+  const seatCount = opts.seats || 2;
+  const theme = opts.theme || 1;
+  const level = W.Campaign.coopLevel(theme, tier, seatCount);
+  if (!level) return { error: 'no co-op level' };
+
+  Engine.start(level, tier, seatCount);
+  const state = Engine.state();
+  const samples = roadSamples(level.waypoints || W.Levels.paths()[level.path], Map);
+  const REACH = Towers.DEFS.firewall.range;
+
+  const dt = 1 / 60;
+  const maxSeconds = opts.maxSeconds || 2400;
+  const trace = [];
+  const perSeat = [];
+
+  /** The best empty, legal tile for `si`, scored the way a player would. */
+  function bestSpot(si, type) {
+    let best = null;
+    for (let c = 0; c < Map.COLS; c++) {
+      for (let r = 0; r < Map.ROWS; r++) {
+        if (!Towers.canPlace(state, c, r, type, Map, si).ok) continue;
+        const w = Map.tileToWorld(c, r);
+        const score = coverage(w.x, w.y, REACH, samples);
+        if (score <= 0) continue;
+        if (!best || score > best.score) best = { c, r, score };
+      }
+    }
+    return best;
+  }
+
+  /**
+   * One seat, one action.
+   *
+   * Every call passes `si` down into the tower layer, so the affordability check,
+   * the debit and the tower's recorded owner are all that seat's. If the purse
+   * split is wrong anywhere, this is where it shows up: a seat that cannot build
+   * while a team-mate can is the bug, and a seat that builds on a team-mate's
+   * money is a worse one.
+   */
+  function seatSpend(si) {
+    const purse = state.purse(si);
+    const type = chooseTower(W, level, state.waveIndex, purse);
+
+    const spot = bestSpot(si, type);
+    if (spot) {
+      const r = Towers.place(state, spot.c, spot.r, type, Map, si);
+      if (r.ok) { trace.push('P' + (si + 1) + ' build ' + type + ' ' + spot.c + ',' + spot.r); return 'build'; }
+    }
+
+    // Nothing worth building on this seat's budget: improve what it already owns.
+    // Deliberately optional ownership - a seat upgrades its own towers, because
+    // the money and the refund both belong to whoever paid.
+    let bestTower = null;
+    let bestScore = -1;
+    for (const tw of state.towers) {
+      if (tw.owner !== si) continue;
+      const cost = Towers.upgradeCost(tw);
+      if (cost === null || purse < cost) continue;
+      const score = coverage(tw.x, tw.y, REACH, samples);
+      if (score > bestScore) { bestScore = score; bestTower = tw; }
+    }
+    if (bestTower) {
+      const u = Towers.upgrade(state, bestTower);
+      if (u.ok) { trace.push('P' + (si + 1) + ' upgrade ' + bestTower.type + ' ' + bestTower.c + ',' + bestTower.r); return 'upgrade'; }
+    }
+    return null;
+  }
+
+  /** Does this seat still have anything it can usefully buy? */
+  function canSpendMore(si) {
+    const purse = state.purse(si);
+    const type = chooseTower(W, level, state.waveIndex, purse);
+    if (purse >= Towers.DEFS[type].cost && bestSpot(si, type)) return true;
+    for (const tw of state.towers) {
+      if (tw.owner !== si) continue;
+      const cost = Towers.upgradeCost(tw);
+      if (cost !== null && purse >= cost) return true;
+    }
+    return false;
+  }
+
+  let simSeconds = 0;
+  let buildWait = 0;
+
+  while (state.status !== 'won' && state.status !== 'lost' && simSeconds < maxSeconds) {
+    for (let si = 0; si < state.seats.length; si++) seatSpend(si);
+
+    if (state.status === 'building' && state.waveIndex < state.totalWaves) {
+      buildWait += dt;
+      // The wave is called only when *every* seat has run out of things to buy,
+      // or after a few seconds. One seat saving up must not hold the team's wave
+      // hostage, which is why the timeout is short.
+      let anyone = false;
+      for (let si = 0; si < state.seats.length; si++) if (canSpendMore(si)) { anyone = true; break; }
+      if (!anyone || buildWait > 5) {
+        Engine.startNextWave();
+        buildWait = 0;
+      }
+    } else {
+      buildWait = 0;
+    }
+
+    Engine.step(dt);
+    simSeconds += dt;
+  }
+
+  const r = Engine.result();
+  for (let si = 0; si < state.seats.length; si++) {
+    const s = state.seats[si];
+    const owned = state.towers.filter((t) => t.owner === si);
+    perSeat.push({
+      id: si,
+      name: s.name,
+      start: Math.round(s.startingBandwidth),
+      earned: Math.round(s.earned),
+      // `spent` on the seat is authoritative: it is incremented by debit(), which
+      // is the only path money leaves a purse. The engine's global `spent` field
+      // predates seats and is not seat-aware, which is why the report reads this.
+      spent: Math.round(s.spent),
+      left: Math.floor(s.bandwidth),
+      towers: owned.length,
+      invested: Math.round(owned.reduce((a, t) => a + (t.invested || 0), 0)),
+      kills: s.kills,
+    });
+  }
+
+  const totalInvested = state.towers.reduce((s, t) => s + (t.invested || 0), 0);
+  const totalGiven = state.seats.reduce((s, x) => s + x.startingBandwidth + x.earned, 0);
+
+  return {
+    seats: seatCount,
+    theme,
+    tier,
+    waves: level.waves.length,
+    won: state.status === 'won',
+    uptime: Math.round(r.uptime),
+    leaks: r.leaks,
+    kills: r.kills,
+    threatTotal: level.waves.reduce((s, w) => s + w.reduce((a, g) => a + g.n, 0), 0),
+    towers: state.towers.length,
+    invested: Math.round(totalInvested),
+    given: Math.round(totalGiven),
+    slack: totalInvested > 0 ? (totalGiven - totalInvested) / totalInvested : 0,
+    seconds: Math.round(simSeconds),
+    timeout: simSeconds >= maxSeconds,
+    perSeat,
+    trace: opts.trace ? trace : undefined,
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * Report
  * ------------------------------------------------------------------ */
 
@@ -522,6 +698,76 @@ function main() {
   const all = W.Levels.all();
 
   const TIER = val('--tier') || 'normal';
+
+  /* --- co-op ------------------------------------------------------ *
+   *
+   * The rule layer is the part that has to be right before any networking is
+   * written, so it gets its own mode rather than being assumed from the fact
+   * that solo still works. `--seats 1` is the control: when one seat cannot
+   * out-clear several seats sharing the same total budget, either the purses are
+   * leaking into each other or the per-seat budget is too small to build with.
+   */
+  if (has('--coop')) {
+    const seatCounts = (val('--seats') || '1,2,3').split(',').map(Number);
+    const themes = val('--theme') ? Number(val('--theme')) : null;
+    const themeList = themes ? [themes] : [1, 100, 120, 240];
+
+    console.log(`\nco-op   tier ${TIER}   ${W.Campaign.DIALS.coopWaves} waves per battle`);
+    console.log('theme  seat  waves  result   uptime  leaks   kills  towers  invested  given  slack');
+    console.log('-'.repeat(88));
+
+    for (const theme of themeList) {
+      for (const n of seatCounts) {
+        const r = playCoop(W, { tier: TIER, seats: n, theme });
+        if (r.error) { console.log(`theme ${theme}: ${r.error}`); continue; }
+        console.log(
+          String(theme).padStart(5) + '  ' + String(n).padStart(4) + '  ' +
+          String(r.waves).padStart(5) + '  ' +
+          (r.won ? 'WON  ' : r.timeout ? 'TIMEOUT' : 'LOST ') + '  ' +
+          (r.uptime + '%').padStart(6) + '  ' + String(r.leaks).padStart(5) + '  ' +
+          (r.kills + '/' + r.threatTotal).padStart(9) + '  ' + String(r.towers).padStart(6) + '  ' +
+          String(r.invested).padStart(8) + '  ' + String(r.given).padStart(5) + '  ' +
+          (Math.round(r.slack * 100) + '%').padStart(5)
+        );
+      }
+    }
+
+    // Per-seat honesty: a seat that ended with most of its money untouched was
+    // never given enough to buy with, and a seat that spent nothing while the
+    // team won is the signature of a purse leak.  Given the shared bounty, no
+    // seat should finish with nothing either.
+    if (has('--detail')) {
+      console.log('\nper seat (theme ' + themeList[0] + ', ' + seatCounts[seatCounts.length - 1] + ' seats)');
+      console.log('seat   given  earned   spent   left  towers  invested');
+      console.log('-'.repeat(56));
+      const r = playCoop(W, { tier: TIER, seats: seatCounts[seatCounts.length - 1], theme: themeList[0] });
+      for (const s of r.perSeat) {
+        console.log(
+          s.name.padStart(4) + '  ' + String(s.start).padStart(6) + '  ' + String(s.earned).padStart(6) + '  ' +
+          String(s.spent).padStart(6) + '  ' + String(s.left).padStart(5) + '  ' + String(s.towers).padStart(6) + '  ' +
+          String(s.invested).padStart(8)
+        );
+      }
+      console.log('\nper-seat sums must equal the battle totals, or money is being created or lost:');
+      const sumStart = r.perSeat.reduce((a, s) => a + s.start, 0);
+      const sumSpent = r.perSeat.reduce((a, s) => a + s.spent, 0);
+      const sumLeft = r.perSeat.reduce((a, s) => a + s.left, 0);
+      const sumInvested = r.perSeat.reduce((a, s) => a + s.invested, 0);
+      console.log('  invested  seats ' + sumInvested + '  battle ' + r.invested + '  ' +
+        (sumInvested === r.invested ? 'ok' : 'MISMATCH'));
+      console.log('  given     seats ' + (sumStart + r.perSeat.reduce((a, s) => a + s.earned, 0)) +
+        '  battle ' + r.given + '  ' +
+        (sumStart + r.perSeat.reduce((a, s) => a + s.earned, 0) === r.given ? 'ok' : 'MISMATCH'));
+      // Every seat must have built something. A seat that spent nothing while the
+      // team won means the shared income never reached it, which is the failure
+      // mode the shared-payout rule exists to prevent.
+      const idle = r.perSeat.filter((s) => s.towers === 0);
+      console.log('  every seat built: ' + (idle.length === 0
+        ? 'yes'
+        : 'NO - ' + idle.map((s) => s.name).join(', ') + ' ended with no towers'));
+    }
+    return;
+  }
 
   /* --- invariants ------------------------------------------------- */
 
