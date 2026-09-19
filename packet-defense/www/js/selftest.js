@@ -150,6 +150,27 @@
     check('levels.js loaded', !!global.Levels, global.Levels ? global.Levels.count() + ' tickets' : 'missing');
     check('map.js loaded', !!global.PDMap);
 
+    /*
+     * The briefing can describe every threat, so it never has to guess.
+     *
+     * The briefing used to hold its own prose, and a threat that added itself to
+     * the roster without adding a line there produced a sentence that did not
+     * parse - on the one screen a player reads before all 240 tickets. The prose
+     * now lives on the threat, and this is what makes forgetting it a failure
+     * rather than a sentence nobody reads closely enough.
+     */
+    (function () {
+      var defs = global.Threats && global.Threats.DEFS;
+      if (!defs) { check('threat definitions are present', false, 'threats.js missing'); return; }
+      var types = Object.keys(defs);
+      var noPlural = types.filter(function (t) { return !defs[t].plural; });
+      var noAdvice = types.filter(function (t) { return !defs[t].advice; });
+      check('every threat has a plural for the briefing', noPlural.length === 0,
+        noPlural.length ? 'missing: ' + noPlural.join(', ') : types.length + ' threats');
+      check('every threat has briefing advice', noAdvice.length === 0,
+        noAdvice.length ? 'missing: ' + noAdvice.join(', ') : types.length + ' threats');
+    })();
+
     if (global.Store) {
       global.Store.set('selftest', 42);
       check('settings round-trip', global.Store.get('selftest') === 42, 'value ' + global.Store.get('selftest'));

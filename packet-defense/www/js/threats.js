@@ -28,35 +28,39 @@
    */
   var DEFS = {
     smell: {
-      id: 'smell', name: 'Code Smell', cls: 'code',
+      id: 'smell', name: 'Code Smell', plural: 'Code Smells', cls: 'code',
       hp: 22, speed: 46, bounty: 1, leak: 4, radius: 7,
       colour: '#84cc16',
       tell: 'Arrives in numbers. Firewall food.',
+      advice: 'Code Smells arrive in numbers and die in numbers, so a Firewall placed early is enough.',
     },
     sqli: {
-      id: 'sqli', name: 'SQL Injection', cls: 'injection',
+      id: 'sqli', name: 'SQL Injection', plural: 'SQL Injections', cls: 'injection',
       hp: 44, speed: 66, bounty: 2, leak: 6, radius: 8,
       colour: '#f97316',
       tell: 'Fast, and Firewalls barely scratch it.',
+      advice: 'SQL Injection is fast and a Firewall barely scratches it, which is what the WAF is for.',
     },
     xss: {
-      id: 'xss', name: 'XSS', cls: 'code',
+      id: 'xss', name: 'XSS', plural: 'XSS', cls: 'code',
       hp: 36, speed: 54, bounty: 3, leak: 6, radius: 8,
       // One generation only. Two generations turned a single XSS into seven
       // payouts, which made this threat a piggy bank rather than a problem.
       splits: { into: 'xss', count: 2, hpFactor: 0.4, minHp: 6, maxGeneration: 1, bountyMul: 0.35 },
       colour: '#e879f9',
       tell: 'Splits in two every time it dies.',
+      advice: 'XSS splits in two every time one dies, so chip damage only makes more of them.',
     },
     zombie: {
-      id: 'zombie', name: 'Zombie Process', cls: 'malware',
+      id: 'zombie', name: 'Zombie Process', plural: 'Zombie Processes', cls: 'malware',
       hp: 60, speed: 40, bounty: 4, leak: 7, radius: 9,
       colour: '#a3a3a3',
       revives: 1,
       tell: 'Gets back up once. Antivirus finishes it properly.',
+      advice: 'Zombie Processes get back up once, so killing them twice is the whole job.',
     },
     ransom: {
-      id: 'ransom', name: 'Ransomware', cls: 'malware',
+      id: 'ransom', name: 'Ransomware', plural: 'Ransomware', cls: 'malware',
       hp: 130, speed: 36, bounty: 9, leak: 10, radius: 11,
       armour: 4,
       /*
@@ -75,21 +79,24 @@
       disables: { seconds: 4, reach: 52, maxTargets: 2 },
       colour: '#ef4444',
       tell: 'Armoured, and shuts down any tower it passes.',
+      advice: 'Ransomware is plated and shuts down the towers it walks past, so keep a row of slack behind the road.',
     },
     botnet: {
-      id: 'botnet', name: 'DDoS Botnet', cls: 'code',
+      id: 'botnet', name: 'DDoS Botnet', plural: 'DDoS Botnets', cls: 'code',
       hp: 7, speed: 74, bounty: 1, leak: 3, radius: 6,
       colour: '#38bdf8',
       tell: 'Harmless alone. There are never just one.',
+      advice: 'DDoS Botnets die to a single hit and arrive in floods, so what they punish is thin coverage, not low damage.',
     },
     zeroday: {
-      id: 'zeroday', name: 'Zero-Day', cls: 'malware',
+      id: 'zeroday', name: 'Zero-Day', plural: 'Zero-Days', cls: 'malware',
       hp: 1400, speed: 28, bounty: 90, leak: 100, radius: 16,
       armour: 8,
       immune: ['firewall', 'waf'],
       boss: true,
       colour: '#f43f5e',
       tell: 'No signature exists. Firewalls and WAFs cannot see it.',
+      advice: 'No signature exists for the Zero-Day: Firewalls and WAFs cannot see it, and only the Antivirus can.',
     },
   };
 

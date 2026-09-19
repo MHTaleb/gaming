@@ -602,7 +602,7 @@ const SHOTS = [
   },
   {
     name: '02-briefing',
-    scene: 'The briefing for the same ticket: what is coming, and why it matters.',
+    scene: "The briefing screen for the ticket in shot one, on the default difficulty. This is the one screen that explains the game, so it is the one the store copy points at.",
     async run(ctx) {
       await ctx.page.eval(openScreen, 'brief', { levelId: BRIEF_LEVEL });
       await ctx.page.eval(frames, 3);

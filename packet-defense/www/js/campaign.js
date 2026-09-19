@@ -1150,15 +1150,40 @@
    * Presentation
    * ------------------------------------------------------------------ */
 
-  var THREAT_LINE = {
-    smell: 'Code Smells arrive in numbers and die in numbers',
-    sqli: 'SQL Injection is fast, and a Firewall barely scratches it',
-    xss: 'XSS splits into two smaller copies every time you kill one',
-    zombie: 'Zombie Processes get back up once, so chip damage will not do',
-    ransom: 'Ransomware is plated, and shuts down whatever it walks past',
-    botnet: 'DDoS Botnets are one hit each and there are never few of them',
-    zeroday: 'the Zero-Day is here, and only the Antivirus can touch it',
-  };
+  /**
+   * How to name a threat, and what to say about it.
+   *
+   * Both come from Threats.DEFS, which is the definition the engine actually
+   * fights with. That is the fix for a real bug rather than tidiness.
+   *
+   * The briefing used to carry its own table of clauses - "Code Smells arrive in
+   * numbers and die in numbers" - and paste them into sentences built for noun
+   * phrases. Every ticket in the campaign therefore opened with a sentence that
+   * did not parse:
+   *
+   *     Expect mostly Code Smells arrive in numbers and die in numbers, with
+   *     DDoS Botnets are one hit each and there are never few of them layered
+   *     in behind.
+   *
+   * It survived because nothing reads the briefing except a player, and because
+   * the table looked reasonable next to the sentence that used it. Keeping the
+   * prose beside the threat means the sentence and the thing it describes are
+   * written by the same person at the same time, and a threat added without a
+   * plural is a threat added without a briefing.
+   */
+  function nameOf(type, n) {
+    var d = deficit(type);
+    if (!d) return type;
+    return n === 1 ? d.name : (d.plural || d.name);
+  }
+
+  function adviceFor(type) {
+    var d = deficit(type);
+    if (!d) return '';
+    // `tell` is the one-line version written for the roster card; it is a
+    // fragment, so it is a fallback rather than the first choice.
+    return d.advice || '';
+  }
 
   /**
    * The briefing text.
@@ -1185,20 +1210,37 @@
     var types = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
     var parts = [];
 
-    parts.push(level.actName + '. ' + waves + ' waves, and the road is a ' +
-      (level.roadFamily || 'straight') + ' shape - ' +
-      (level.geomNote || 'read it before you spend anything'));
+    /*
+     * Two sentences, not one clause welded to another.
+     *
+     * The geometry note was appended after a dash, which read as
+     * "...and the road is a switchback shape - plain The heaviest single push
+     * is wave 3". Every note in the generator is a clause that stands on its
+     * own, so it gets to be its own sentence.
+     */
+    var geometry = level.geomNote || 'read it before you spend anything';
+    parts.push(level.actName + '. ' + waves + ' waves on a ' +
+      (level.roadFamily || 'straight') + '. ' +
+      geometry.charAt(0).toUpperCase() + geometry.slice(1) + '.');
 
     if (biggest) {
+      // The count agrees with the noun: "60 DDoS Botnets", not "60 DDoS Botnet".
       parts.push('The heaviest single push is wave ' + biggest.wave + ': ' + biggest.n + ' ' +
-        (deficit(biggest.t) ? deficit(biggest.t).name : biggest.t) + ' in one go.');
+        nameOf(biggest.t, biggest.n) + ' in one go.');
     }
 
     if (types.length > 1) {
-      parts.push('Expect mostly ' + THREAT_LINE[types[0]] + ', with ' +
-        THREAT_LINE[types[1]] + ' layered in behind.');
+      parts.push('Most of it is ' + nameOf(types[0], 2) + ', with ' +
+        nameOf(types[1], 2) + ' layered in behind.');
     } else if (types.length === 1) {
-      parts.push('This one is all ' + THREAT_LINE[types[0]] + '.');
+      parts.push('This one is all ' + nameOf(types[0], 2) + '.');
+    }
+
+    // One piece of advice, about the threat there is most of. Two would be a
+    // paragraph, and the briefing is read in a hurry.
+    if (types.length) {
+      var advice = adviceFor(types[0]);
+      if (advice) parts.push(advice);
     }
 
     if (level.traits.length) {
@@ -1206,7 +1248,13 @@
         var d = global.Threats && global.Threats.TRAITS ? global.Threats.TRAITS[t] : null;
         return d ? d.name : t;
       });
-      parts.push('They are ' + names.join(' and ') + '. You cannot answer all of it at once.');
+      // A list, joined as a list. The first version ran them together with the
+      // word "and" between every pair, so an act eleven ticket announced that
+      // its threats were "Hardened and Swiftshade and Regenerating and Undying
+      // and Saboteur" - technically a sentence, and not one anybody writes.
+      var last = names.pop();
+      parts.push('They are ' + (names.length ? names.join(', ') + ' and ' + last : last) +
+        '. You cannot answer all of it at once.');
     }
 
     if (level.boss) parts.push('Something is walking behind the last wave that you have not met.');
@@ -1340,7 +1388,7 @@
         : road.twin >= 25
           ? 'generous, with plenty of tiles that see two stretches at once'
           : 'long, which buys you time and forgives a weaker tower')
-      : 'plain';
+      : 'plain, so read it before you spend anything';
 
     level.waves = wavesFor(id);
     level.bandwidth = bandwidthFor(id, road);
