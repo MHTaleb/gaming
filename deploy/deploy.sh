@@ -100,25 +100,29 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ------------------------------------------------------------- app manifest
-APP_NAMES=(); APP_DIRS=(); APP_INTERNAL=(); APP_PUBLIC=(); APP_LABELS=()
+APP_NAMES=(); APP_DIRS=(); APP_INTERNAL=(); APP_PUBLIC=(); APP_LABELS=(); APP_RELAY=()
 SELECTED=()
 
 load_apps() {
   [[ -f "$APPS_CONF" ]] || die "Missing app manifest: $APPS_CONF"
-  local line name dir iport pport label pad
+  local line name dir iport pport label relay pad
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line%%#*}"
     [[ -z "${line//[[:space:]]/}" ]] && continue
-    IFS='|' read -r name dir iport pport label <<< "$line"
+    # The relay port is optional, so an old five-field line must keep working.
+    # Without a placeholder, bash assigns the whole remainder to the last
+    # variable and the label becomes "Packet Defense | 9083".
+    IFS='|' read -r name dir iport pport label relay <<< "$line"
     pad=$' \t'
     name="${name//[$pad]/}"; dir="${dir//[$pad]/}"
     iport="${iport//[$pad]/}"; pport="${pport//[$pad]/}"
+    relay="${relay//[$pad]/}"
     label="${label#"${label%%[![:space:]]*}"}"
     label="${label%"${label##*[![:space:]]}"}"
     [[ -n "$name" && -n "$dir" && -n "$iport" && -n "$pport" ]] || continue
     APP_NAMES+=("$name"); APP_DIRS+=("$dir")
     APP_INTERNAL+=("$iport"); APP_PUBLIC+=("$pport")
-    APP_LABELS+=("${label:-$name}")
+    APP_LABELS+=("${label:-$name}"); APP_RELAY+=("$relay")
   done < "$APPS_CONF"
   ((${#APP_NAMES[@]})) || die "No apps defined in $APPS_CONF"
 }
@@ -190,7 +194,7 @@ resolve_selection() {
 build_spec() {
   local i out=""
   for i in ${SELECTED[@]+"${SELECTED[@]}"}; do
-    out+="${APP_NAMES[$i]}|${APP_DIRS[$i]}|${APP_INTERNAL[$i]}|${APP_PUBLIC[$i]}|${APP_LABELS[$i]}"$'\n'
+    out+="${APP_NAMES[$i]}|${APP_DIRS[$i]}|${APP_INTERNAL[$i]}|${APP_PUBLIC[$i]}|${APP_LABELS[$i]}|${APP_RELAY[$i]}"$'\n'
   done
   printf '%s' "$out"
 }
@@ -323,6 +327,10 @@ remote_restart() {
   local units="" i
   for i in ${SELECTED[@]+"${SELECTED[@]}"}; do
     units+="gaming-${APP_NAMES[$i]}.service "
+    # The relay is restarted too, but only if the app declares one - and a
+    # restart drops every battle in progress, which is why it is its own unit
+    # rather than sharing the static server's lifecycle.
+    [[ -n "${APP_RELAY[$i]}" ]] && units+="gaming-${APP_NAMES[$i]}-relay.service "
   done
   info "remote: restarting ${units}"
   ssh "$DEPLOY_HOST" "bash -s" <<REMOTE_EOF
@@ -388,6 +396,7 @@ remote_stop() {
   local units="" i
   for i in ${SELECTED[@]+"${SELECTED[@]}"}; do
     units+="gaming-${APP_NAMES[$i]}.service "
+    [[ -n "${APP_RELAY[$i]}" ]] && units+="gaming-${APP_NAMES[$i]}-relay.service "
   done
   info "remote: stopping ${units}"
   ssh "$DEPLOY_HOST" "bash -s" <<REMOTE_EOF
@@ -413,6 +422,8 @@ set -u
 for name in $names; do
   systemctl disable --now "gaming-\$name.service" >/dev/null 2>&1 || true
   rm -f "/etc/systemd/system/gaming-\$name.service"
+  systemctl disable --now "gaming-\$name-relay.service" >/dev/null 2>&1 || true
+  rm -f "/etc/systemd/system/gaming-\$name-relay.service"
   rm -f "/etc/nginx/sites-enabled/gaming-\$name" "/etc/nginx/sites-available/gaming-\$name"
   printf '   ✔ removed gaming-%s\n' "\$name"
 done

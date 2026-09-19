@@ -85,8 +85,11 @@ cleanup_on_failure() {
 }
 trap cleanup_on_failure EXIT
 
-while IFS='|' read -r name dir internal_port public_port label; do
+while IFS='|' read -r name dir internal_port public_port label relay_port; do
   [[ -z "${name//[[:space:]]/}" ]] && continue
+  # The manifest is hand-edited, so tolerate padding around a field rather than
+  # producing a unit that fails to start with a port of " 9083".
+  relay_port="${relay_port//[[:space:]]/}"
 
   app_dir="$REMOTE_REPO/$dir"
   unit="gaming-$name.service"
@@ -123,6 +126,70 @@ WantedBy=multi-user.target
 UNIT
   ok "unit   /etc/systemd/system/$unit  (127.0.0.1:${internal_port})"
 
+  # --- co-op relay (optional) ------------------------------------------------
+  #
+  # Its own unit rather than a thread in the static server: a relay holds open
+  # event streams for as long as somebody is playing, and a restart of the game's
+  # server should not drop every battle in progress.
+  relay_block=""
+  if [[ -n "$relay_port" ]]; then
+    relay_unit="gaming-$name-relay.service"
+    [[ -f "$app_dir/server/relay/index.js" ]] || {
+      echo "$dir declares relay port $relay_port but has no server/relay/index.js" >&2
+      exit 1
+    }
+    cat > "/etc/systemd/system/$relay_unit" <<UNIT
+[Unit]
+Description=Gaming staging: ${label} (co-op relay, internal :${relay_port})
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=${app_dir}
+Environment=PORT=${relay_port}
+Environment=HOST=127.0.0.1
+ExecStart=${NODE_BIN} ${app_dir}/server/relay/index.js
+Restart=always
+RestartSec=2
+User=root
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    ok "unit   /etc/systemd/system/$relay_unit  (127.0.0.1:${relay_port})"
+
+    # Proxied at /coop/ on the game's OWN origin, so the game's CSP
+    # (`connect-src 'self'`) is satisfied without a second allowed origin and the
+    # relay needs no public port. Buffering must be off or the event stream sits
+    # in nginx until it has enough to flush, which to a player is a battle that
+    # does not start; the read timeout is long because an idle lobby is normal.
+    relay_block=$(cat <<NGINXRELAY
+
+    # Co-op relay. The trailing slash on proxy_pass strips the /coop prefix, so
+    # /coop/room -> /room on the relay.
+    location /coop/ {
+        proxy_pass http://127.0.0.1:${relay_port}/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        chunked_transfer_encoding on;
+    }
+NGINXRELAY
+    )
+  else
+    # A redeploy must be able to turn a relay OFF. If the manifest stops
+    # declaring one, the unit and the route have to go, or a stale relay keeps
+    # listening and a stale location keeps proxying to it.
+    rm -f "/etc/systemd/system/gaming-$name-relay.service"
+    systemctl disable --now "gaming-$name-relay.service" >/dev/null 2>&1 || true
+  fi
+
   # --- nginx site ------------------------------------------------------------
   cat > "$NGINX_AVAILABLE/$site" <<NGINX
 # Managed by gaming/deploy — do not edit by hand; your changes are overwritten.
@@ -150,6 +217,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_read_timeout 30s;
     }
+${relay_block}
 }
 NGINX
   ln -sfn "$NGINX_AVAILABLE/$site" "$NGINX_ENABLED/$site"
@@ -169,9 +237,13 @@ if ! nginx -t; then
 fi
 
 # --------------------------------------------------------------- enable + start
-while IFS='|' read -r name dir internal_port public_port label; do
+while IFS='|' read -r name dir internal_port public_port label relay_port; do
   [[ -z "${name//[[:space:]]/}" ]] && continue
+  relay_port="${relay_port//[[:space:]]/}"
   systemctl enable --now "gaming-$name.service" >/dev/null 2>&1 || true
+  if [[ -n "$relay_port" ]]; then
+    systemctl enable --now "gaming-$name-relay.service" >/dev/null 2>&1 || true
+  fi
 done <<< "$GAMES_SPEC"
 ok "services enabled (auto-start on boot)"
 
