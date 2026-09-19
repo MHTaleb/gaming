@@ -1,0 +1,580 @@
+{
+  "meta": {
+    "schema": 1,
+    "project": "Packet Defense",
+    "packageId": "com.yourstudio.packetdefense",
+    "release": "1.0.0",
+    "updated": "2026-09-19",
+    "summary": "A tower defense game about holding a production server against everything the internet throws at it. 12 acts, 240 tickets, 5 difficulty tiers, 7 towers, co-op. Zero build step, zero bundled assets: all art and audio are generated at runtime from code.",
+    "howToUse": {
+      "forHumans": "Open backlog/index.html (served at /backlog/) for the interactive board, or read docs/PROJECT.md for the project itself.",
+      "forAI": "This file is the single source of truth for what is planned and what is done. docs/*.md reference these ids. Do not add a status or a plan to a doc that is not in this file.",
+      "editing": "Run `node tools/backlog.js` after any edit. It fails on duplicate ids, unresolvable deps, unknown enums, and a done item with unmet deps."
+    },
+    "enums": {
+      "status": {
+        "done": "Built, verified and committed. Verified means a command was run, not that it looks right.",
+        "doing": "Actively in progress right now.",
+        "next": "Ready to start. Not blocked, and the next thing that should be picked up.",
+        "later": "Real and agreed, but not scheduled. The default resting place.",
+        "blocked": "Cannot start or finish until something outside our control happens (a Play Console step, a human, an account).",
+        "dropped": "Decided against. Kept in the file so the decision is not relitigated."
+      },
+      "priority": {
+        "P0": "Blocks shipping to Google Play, or is a live correctness bug. Do it before anything else.",
+        "P1": "Required for a launch we would be happy with.",
+        "P2": "Improves the game materially; schedule after launch quality is secured.",
+        "P3": "Nice to have. First to be cut."
+      },
+      "size": {
+        "S": "Under half a day.",
+        "M": "About a day.",
+        "L": "Two to four days.",
+        "XL": "A week or more, or needs a spike first."
+      },
+      "type": {
+        "story": "A user-visible capability.",
+        "task": "Work that delivers something without being a feature in itself.",
+        "bug": "Something is wrong. Verified wrong, or measured wrong.",
+        "spike": "Time boxed investigation that ends in a decision, not in shipping code.",
+        "chore": "Maintenance, tooling, housekeeping."
+      },
+      "areas": [
+        "play-compliance", "gameplay", "content", "art-audio", "multiplayer",
+        "monetisation", "liveops", "tech", "infra", "qa", "docs"
+      ]
+    },
+    "scoreNote": "rank = value * 2 - risk * 1.5 + priorityBonus (P0 +9, P1 +5, P2 +2, P3 0). Used to order the board within a column. It is a conversation starter, not a verdict."
+  },
+
+  "epics": [
+    { "id": "E-PLAY",  "title": "Play Store readiness",        "area": "play-compliance", "blurb": "Everything between this build and a live listing that is not rejected." },
+    { "id": "E-FEEL",  "title": "Game feel & player experience", "area": "gameplay",      "blurb": "How it feels to play for five minutes: feedback, clarity, responsiveness, fairness." },
+    { "id": "E-DEPTH", "title": "Strategic depth",              "area": "gameplay",      "blurb": "The decisions the player makes. Genre research says we are missing the genre's signature skill." },
+    { "id": "E-ART",   "title": "Art & audio",                  "area": "art-audio",     "blurb": "Visual and audio fidelity, and the store assets Play requires." },
+    { "id": "E-COOP",  "title": "Co-op & multiplayer",          "area": "multiplayer",   "blurb": "One map, twenty waves, separate purses. Shipped as room codes; the rest is not." },
+    { "id": "E-MONEY", "title": "Monetisation",                 "area": "monetisation",  "blurb": "Ads and purchases. All of it currently runs on test ids and earns nothing." },
+    { "id": "E-OPS",   "title": "Live operations & retention",   "area": "liveops",       "blurb": "Reasons to come back on day two." },
+    { "id": "E-ENG",   "title": "Engineering & reliability",     "area": "tech",          "blurb": "Making failures visible and regressions impossible." },
+    { "id": "E-QA",    "title": "Verification & QA",            "area": "qa",            "blurb": "What proves a change is safe, and what is still trusted on faith." },
+    { "id": "E-DOC",   "title": "Documentation",                "area": "docs",          "blurb": "Keeping the reasoning next to the code." }
+  ],
+
+  "research": [
+    {
+      "id": "R-01",
+      "topic": "Google Play target API level",
+      "finding": "Since 31 August 2026, new apps and app updates must target Android 16 (API level 36) or higher. Existing apps must target API 35+ to stay available to new users on newer devices. An extension to 1 November 2026 can be requested in Play Console.",
+      "impact": "The 31 August 2026 deadline has already passed. docs/PUBLISHING.md claimed Capacitor 7's targetSdk 35 met the requirement, which was true when written and is not true now. Capacitor 8 sets targetSdk/compileSdk 36 and minSdk 24.",
+      "source": "https://developer.android.com/google/play/requirements/target-sdk",
+      "sourceDate": "page last updated 2026-09-16",
+      "readOn": "2026-09-19",
+      "items": ["PD-101", "PD-102"]
+    },
+    {
+      "id": "R-02",
+      "topic": "Google Play Data safety form",
+      "finding": "Every app published on Play must complete the Data safety form, including closed and open test tracks. Only apps exclusively on the internal testing track are exempt. A privacy policy link is required even for an app that collects nothing. The form must also cover data collected by third-party SDKs. Developers are solely responsible for accuracy and can be enforced against for a discrepancy.",
+      "impact": "Co-op connects to a relay and shows another player's chosen name, so the form can no longer say 'no data leaves the device' - which is what docs/PRIVACY.md and the in-game Settings screen currently claim.",
+      "source": "https://support.google.com/googleplay/android-developer/answer/10787469",
+      "sourceDate": "page shows a changelog to 2023-12-05; footer 2026",
+      "readOn": "2026-09-19",
+      "items": ["PD-106", "PD-107"]
+    },
+    {
+      "id": "R-03",
+      "topic": "Play preview assets",
+      "finding": "The store listing supports an app icon, short description, feature graphic, screenshots and a preview video, with explicit Requirements (mandatory - failing them risks removal or suspension) and Highly recommended tiers. Assets are shown across all test tracks once added. Adding assets grants Google a licence to use them for promotion.",
+      "impact": "The project has a 512x512 SVG icon and no raster assets at all. Play requires a PNG icon and a feature graphic, so the store cannot be completed from what is in the repository.",
+      "source": "https://support.google.com/googleplay/android-developer/answer/9866151",
+      "sourceDate": "footer 2026",
+      "readOn": "2026-09-19",
+      "items": ["PD-103", "PD-104", "PD-105"]
+    },
+    {
+      "id": "R-04",
+      "topic": "Capacitor 7 to 8 migration",
+      "finding": "Capacitor 8 requires Node 22+, Android Studio Otter (2025.2.1)+, AGP 8.13.0, Gradle 8.14.3, google-services 4.4.4, Kotlin 2.2.20. Android variables become minSdk 24, compileSdk 36, targetSdk 36. android.adjustMarginsForEdgeToEdge is removed in favour of the System Bars plugin and CSS env() variables; density is added to configChanges. Official plugins move to 8.0.0.",
+      "impact": "The local toolchain was on Node 20, which cannot run Capacitor 8. Node 22.23.2 is now installed and set as the nvm default.",
+      "source": "https://capacitorjs.com/docs/updating/8-0",
+      "sourceDate": "v8 docs",
+      "readOn": "2026-09-19",
+      "items": ["PD-101", "PD-108"]
+    },
+    {
+      "id": "R-05",
+      "topic": "Tower defense genre design",
+      "finding": "The genre's three defining elements are a base to defend, waves of enemies, and player-placed structures on or along the enemies' path. Commonly cited features across successful titles: player-placed obstructions that damage attackers, repair, upgrade, repair-the-upgrade, a currency earned by defeating attackers, enemies that traverse multiple paths, a set number and type of enemy per wave, unlockable maps and levels, and movable towers. 'Mazing' - building a maze out of your own towers to lengthen the path - is named as the essential strategy in Desktop Tower Defense and Flash Element TD. Air units that ignore the board layout are called out as a recurring theme. Tower wars, where you also send enemies at an opponent's board, is named as a related format.",
+      "impact": "Our roads are FIXED and generated. That is a deliberate, defensible choice - but it means the genre's signature skill (mazing) is absent, and so is the counter-play it creates. Anything on air units has no equivalent in the game at all. Kingdom Rush, named in the same article, sold 17M+ copies across the App Store and Play Store.",
+      "source": "https://en.wikipedia.org/wiki/Tower_defense",
+      "sourceDate": "page last edited 2026-09-05",
+      "readOn": "2026-09-19",
+      "items": ["PD-201", "PD-202", "PD-203", "PD-204", "PD-205"]
+    },
+    {
+      "id": "R-06",
+      "topic": "'Tower Defense' is a registered trademark",
+      "finding": "COM2uS was awarded a USPTO trademark for the term 'Tower Defense' (serial 3442002, filed 2007, granted 2008) and began enforcing it in 2010, requiring name changes on the App Store. Apple's submission tool warns on the capitalised phrase; the lowercase phrase 'tower defense' is described as an acceptable descriptive use of a game style.",
+      "impact": "A store listing that uses 'TOWER DEFENSE' capitalised in the title, subtitle or description is a rejection risk and a legal risk. The listing copy has not been written yet, so this is free to get right now and expensive to fix after review.",
+      "source": "https://en.wikipedia.org/wiki/Tower_defense#USPTO_trademark",
+      "sourceDate": "page last edited 2026-09-05",
+      "readOn": "2026-09-19",
+      "items": ["PD-109"]
+    },
+    {
+      "id": "R-07",
+      "topic": "Content rating, ads and target audience",
+      "finding": "Play lists content rating, target audience and app content settings as separate mandatory store-listing topics alongside the Data safety form. The content rating questionnaire covers the ads served in the app as well as the app itself.",
+      "impact": "The game has ads and in-app purchases, both of which are declarations, and the content rating questionnaire has to be completed before the listing can go live.",
+      "source": "https://support.google.com/googleplay/android-developer/answer/9866151 (topic list)",
+      "sourceDate": "footer 2026",
+      "readOn": "2026-09-19",
+      "items": ["PD-110", "PD-111"],
+      "caveat": "Read the content rating article in full before completing the questionnaire; this topic list is not the requirement itself."
+    },
+    {
+      "id": "R-08",
+      "topic": "New personal developer accounts must test before production",
+      "finding": "Not verified in this session.",
+      "impact": "If the Play Console account is a new personal (not organisation) account, production access typically requires a closed test with a minimum number of testers for a continuous number of days first. The numbers have changed over time.",
+      "source": "unverified",
+      "sourceDate": "-",
+      "readOn": "-",
+      "items": ["PD-112"],
+      "caveat": "Confirm the current requirement in Play Console before planning a launch date. This entry exists so the item is not forgotten, not as a citation."
+    }
+  ],
+
+  "items": [
+    { "id": "PD-001", "title": "240-ticket campaign across 12 acts", "epic": "E-DEPTH", "area": "content", "type": "story", "status": "done", "priority": "P1", "size": "XL", "value": 5, "risk": 3,
+      "summary": "A generated campaign: 12 acts of 20 tickets, each with its own road family, threat roster and narration.",
+      "refs": ["www/js/campaign.js", "docs/DIFFICULTY.md"] },
+
+    { "id": "PD-002", "title": "Five difficulty tiers with a monotonic curve", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "done", "priority": "P1", "size": "L", "value": 5, "risk": 2,
+      "summary": "easy / normal / hard / hell / insane. Normal is bit-identical to the pre-tier build and is the reference the invariants are asserted against. Difficulty is proven monotonic per tier by the harness, not asserted by eye.",
+      "refs": ["docs/DIFFICULTY.md", "tools/balance.js"] },
+
+    { "id": "PD-003", "title": "Seven buildable towers with two paid upgrades each", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "done", "priority": "P1", "size": "L", "value": 5, "risk": 2,
+      "summary": "firewall, waf, limiter, av, cdn, honeypot, patch. quarantine is defined and deliberately not sold, because selling a card the HUD then trims out of the palette is worse than not selling it.",
+      "refs": ["docs/TOWERS.md", "www/js/towers.js"] },
+
+    { "id": "PD-004", "title": "Base research tree and PROD hardening", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 1,
+      "summary": "A meta-progression tree spent with earned credits: tower research ranks, tower unlocks, and hardening that reduces what a leak costs.",
+      "refs": ["www/js/base.js"] },
+
+    { "id": "PD-005", "title": "21 runtime-generated music tracks, keyed by act", "epic": "E-ART", "area": "art-audio", "type": "story", "status": "done", "priority": "P2", "size": "L", "value": 3, "risk": 2,
+      "summary": "Generated with Web Audio, with per-act selection, a mood machine that reacts to wave state, and an in-game picker. Previously 21 tracks existed and the game played one hardcoded fallback forever.",
+      "refs": ["www/js/tracks.js", "www/js/music.js"] },
+
+    { "id": "PD-006", "title": "Procedural sound effects", "epic": "E-ART", "area": "art-audio", "type": "story", "status": "done", "priority": "P2", "size": "M", "value": 3, "risk": 1,
+      "summary": "All SFX synthesised at runtime. One AudioContext for the whole app, asserted by the self-test because two contexts is invisible until a device suspends one.",
+      "refs": ["www/js/audio.js", "www/js/selftest.js"] },
+
+    { "id": "PD-007", "title": "Story: 12 acts, opening / middle / closing narration and chat reactions", "epic": "E-FEEL", "area": "content", "type": "story", "status": "done", "priority": "P2", "size": "L", "value": 4, "risk": 1,
+      "summary": "A conference-call framing: each act opens with a premise, has a mid-act exchange, and a closing beat. The chat reacts to first leak, heavy leak, near death, boss incoming, boss wounded, win and loss.",
+      "refs": ["www/js/story.js"] },
+
+    { "id": "PD-008", "title": "Ads: banner, interstitial, rewarded, with consent and a kill switch", "epic": "E-MONEY", "area": "monetisation", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 2,
+      "summary": "AdMob through the Capacitor community plugin, UMP consent, a web mock so the flow is testable in a browser, and an env kill switch. The rewarded placement doubles a payout and is the only rewarded placement in the game.",
+      "refs": ["www/js/ads.js", "docs/PUBLISHING.md"],
+      "note": "Runs on Google's public test ids. Earns exactly $0 until PD-601." },
+
+    { "id": "PD-009", "title": "Purchases: remove-ads and three credit packs", "epic": "E-MONEY", "area": "monetisation", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 3,
+      "summary": "cordova-plugin-purchase, with a server-side receipt validator scaffolded in server/validator. remove_ads is a non-consumable; the credit packs are consumables.",
+      "refs": ["server/validator/README.md", "docs/PUBLISHING.md"],
+      "note": "validator.url is still empty, so purchases are trusted from the local receipt. Fine for development, not fine for money - see PD-603." },
+
+    { "id": "PD-010", "title": "Deterministic simulation with a replayable action log", "epic": "E-ENG", "area": "tech", "type": "story", "status": "done", "priority": "P1", "size": "L", "value": 5, "risk": 2,
+      "summary": "A battle is a pure function of (ticket, tier, actions). Seeded RNG replaced the last two unseeded Math.random calls, and every build, upgrade, sell and wave call is logged with the simulation time it happened at. `--replay-check` proves it on real tickets.",
+      "refs": ["www/js/engine.js", "tools/balance.js"] },
+
+    { "id": "PD-011", "title": "Balance harness with a difficulty metric that means something", "epic": "E-QA", "area": "qa", "type": "story", "status": "done", "priority": "P1", "size": "XL", "value": 5, "risk": 2,
+      "summary": "tools/balance.js plays the campaign headlessly, asserts the curve and playability invariants per tier, and reports the real difficulty metric: `--minimal` binary-searches the smallest tower count that clears a ticket and compares its cost to the budget. Slack, not uptime, is what makes a level easy.",
+      "refs": ["tools/balance.js", "docs/DIFFICULTY.md"] },
+
+    { "id": "PD-012", "title": "In-page self-test, 47 checks", "epic": "E-QA", "area": "qa", "type": "story", "status": "done", "priority": "P2", "size": "M", "value": 4, "risk": 1,
+      "summary": "?selftest=1 runs structural, commerce, gameplay and audio checks in the real page, including that the pointer listeners are bound exactly once and that one AudioContext exists.",
+      "refs": ["www/js/selftest.js"] },
+
+    { "id": "PD-013", "title": "Android hardening and derived version numbers", "epic": "E-PLAY", "area": "play-compliance", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 2,
+      "summary": "Manifest hardening (no backup, no cleartext, no debuggable), a network security config, the AdMob application id injected into the manifest where plugin v7 actually reads it, and versionCode/versionName derived from package.json so the release tag and the uploaded build cannot disagree.",
+      "refs": ["tools/harden-android.js"] },
+
+    { "id": "PD-014", "title": "Co-op rule layer: one map, twenty waves, separate purses", "epic": "E-COOP", "area": "multiplayer", "type": "story", "status": "done", "priority": "P1", "size": "L", "value": 5, "risk": 3,
+      "summary": "Shared map and integrity, per-player purses, equal share of every bounty, and tower ownership that decides whose money a build, an upgrade or a sale touches. state.bandwidth became an accessor onto the active seat so the released solo game did not go through the refactor - proven by the campaign staying byte-identical.",
+      "refs": ["docs/COOP.md", "www/js/engine.js"] },
+
+    { "id": "PD-015", "title": "Co-op relay, session and snapshot codec", "epic": "E-COOP", "area": "multiplayer", "type": "story", "status": "done", "priority": "P1", "size": "XL", "value": 5, "risk": 4,
+      "summary": "A zero-dependency relay using Server-Sent Events downstream and POST upstream, a host-authoritative session in which a peer never simulates, and an array-encoded snapshot with interpolation. Verified with two clients and a real relay: identical wave, uptime, kills, leaks and tower list, and a peer's build landing as owner 1 while the host's purse did not move.",
+      "refs": ["server/relay/index.js", "www/js/net.js", "www/js/coop.js", "docs/COOP.md"] },
+
+    { "id": "PD-016", "title": "Co-op lobby, room codes and invite links", "epic": "E-COOP", "area": "multiplayer", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 2,
+      "summary": "Create a room, get a four-character code from an alphabet with no vowels and no 0 or 1, share it, join, see the roster, start. Plus ?coop=CODE invite links and copy-to-clipboard.",
+      "refs": ["www/js/main.js"] },
+
+    { "id": "PD-017", "title": "Deploy pipeline with the relay, nginx and basic auth", "epic": "E-ENG", "area": "infra", "type": "story", "status": "done", "priority": "P1", "size": "L", "value": 4, "risk": 3,
+      "summary": "One command provisions systemd units, an nginx site per app with its own public port, and a loopback relay proxied at /coop on the game's own origin so the CSP stays connect-src 'self'. The manifest's relay field is optional and removing it removes the unit and the route.",
+      "refs": ["deploy/README.md", "deploy/apps.conf"] },
+
+    { "id": "PD-018", "title": "Relay self-test, 20 assertions", "epic": "E-QA", "area": "qa", "type": "story", "status": "done", "priority": "P2", "size": "M", "value": 4, "risk": 1,
+      "summary": "Seat assignment, forwarding, that a peer CANNOT send battle state, credential checks, reconnect replay, capacity, unknown rooms, malformed JSON and an oversized body. Asserts the security rule rather than eyeballing it.",
+      "refs": ["server/relay/index.js"] },
+
+    { "id": "PD-019", "title": "HUD layout derived rather than hand-placed", "epic": "E-FEEL", "area": "art-audio", "type": "bug", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 2,
+      "summary": "Fixed offsets had collided twice on screen, both times visibly: the wave counter drawn inside the wave button, and the speed/pause pair on top of upgrade/sell. Every row now derives from the one above it and HUD_H is asserted against the required stack.",
+      "refs": ["www/js/engine.js"] },
+
+    { "id": "PD-020", "title": "Responsive canvas across viewports and orientations", "epic": "E-FEEL", "area": "gameplay", "type": "bug", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 2,
+      "summary": "The campaign map rendered as an empty platform on first run and the board was misaligned; both fixed, and the layout is now verified across eight viewports with zero overlaps.",
+      "refs": ["www/js/map.js", "www/js/engine.js"] },
+
+    { "id": "PD-021", "title": "Accessibility: reduced motion, high contrast, adjustable volumes", "epic": "E-FEEL", "area": "gameplay", "type": "story", "status": "done", "priority": "P2", "size": "S", "value": 3, "risk": 1,
+      "summary": "A reduce-motion setting seeded from the OS preference, a high-contrast mode, separate music and effects volumes, and a haptics toggle.",
+      "refs": ["www/js/main.js", "www/styles.css"] },
+
+    { "id": "PD-022", "title": "Save integrity checksum with tamper detection", "epic": "E-ENG", "area": "tech", "type": "story", "status": "done", "priority": "P3", "size": "S", "value": 2, "risk": 1,
+      "summary": "A keyed checksum over the save makes casual save editing detectable. Deterrence, not security: the key ships in the bundle and the file says so.",
+      "refs": ["www/js/progress.js", "SECURITY.md"] },
+
+    { "id": "PD-023", "title": "Documentation: publishing, privacy, towers, difficulty, co-op, security", "epic": "E-DOC", "area": "docs", "type": "story", "status": "done", "priority": "P2", "size": "M", "value": 3, "risk": 1,
+      "summary": "Six documents, each recording the reasoning and the measurements behind a part of the game, including what each one does NOT prove.",
+      "refs": ["docs/PUBLISHING.md", "docs/PRIVACY.md", "docs/TOWERS.md", "docs/DIFFICULTY.md", "docs/COOP.md", "SECURITY.md"] },
+
+    { "id": "PD-024", "title": "Release 1.0.0 tagged and pushed", "epic": "E-ENG", "area": "infra", "type": "chore", "status": "done", "priority": "P1", "size": "S", "value": 3, "risk": 1,
+      "summary": "v1.0.0 on main, live on the staging host, with versionCode derived from the package version so the tag and the uploaded build agree.",
+      "refs": ["package.json"] },
+
+    { "id": "PD-101", "title": "Upgrade to Capacitor 8 so the app targets API 36", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P0", "size": "L", "value": 5, "risk": 4,
+      "summary": "Capacitor 7 targets API 35. Play has required API 36 for new apps and updates since 31 August 2026, so an upload today is rejected. Move @capacitor/core, /android and /cli to 8.x, the AdMob plugin to 8.x, and set minSdk 24 / compileSdk 36 / targetSdk 36.",
+      "why": "Nothing else on this board can reach a store listing until this is done. It is the single blocking item.",
+      "dod": ["npx cap sync succeeds with Capacitor 8", "variables.gradle reads compileSdk 36 / targetSdk 36 / minSdk 24", "AGP 8.13.0 and Gradle 8.14.3", "a release AAB builds and installs on an API 36 device or emulator", "?selftest=1 still passes on device", "docs/PUBLISHING.md updated"],
+      "deps": [], "refs": ["docs/PUBLISHING.md", "capacitor.config.json"], "sources": ["R-01", "R-04"],
+      "tags": ["blocker", "android"] },
+
+    { "id": "PD-102", "title": "Fix the stale targetSdk claim in the publishing doc", "epic": "E-PLAY", "area": "docs", "type": "bug", "status": "done", "priority": "P0", "size": "S", "value": 4, "risk": 1,
+      "summary": "docs/PUBLISHING.md stated that Capacitor 7's targetSdk 35 meets Play's requirement and that no action is needed. That was true when it was written and it became false on 31 August 2026 in a way that costs a rejected upload.",
+      "why": "A doc that is confidently wrong is worse than no doc: it is the reason nobody checked.",
+      "dod": ["the claim is replaced with the actual deadline and the API 36 requirement", "a date is attached so the next reader can judge staleness"],
+      "deps": [], "refs": ["docs/PUBLISHING.md"], "sources": ["R-01"], "tags": ["docs", "stale"] },
+
+    { "id": "PD-103", "title": "Generate the 512x512 PNG store icon", "epic": "E-PLAY", "area": "art-audio", "type": "task", "status": "done", "priority": "P0", "size": "S", "value": 5, "risk": 1,
+      "summary": "The repository has a designed 512x512 SVG and no raster assets. Play requires a PNG icon for the listing, so the store cannot be completed from what is checked in.",
+      "why": "It is required, it is small, and it is already drawn - only the format is wrong.",
+      "dod": ["a 512x512 PNG is produced from www/icon.svg by a committed script, not by hand", "the PNG is validated (signature and dimensions) after generation", "the source of truth for the artwork stays the SVG"],
+      "deps": [], "refs": ["www/icon.svg", "tools/store-assets.js"], "sources": ["R-03"], "tags": ["assets", "store"] },
+
+    { "id": "PD-104", "title": "Feature graphic 1024x500", "epic": "E-PLAY", "area": "art-audio", "type": "task", "status": "done", "priority": "P0", "size": "M", "value": 4, "risk": 2,
+      "summary": "Required for the store listing. It is the image used in search results, category pages and promotional placements, so it is the single highest-leverage piece of art in the project - and the game had no artwork pipeline at all.",
+      "dod": ["1024x500 PNG generated from the same visual language as the icon", "legible as a thumbnail", "no text smaller than readable at 1/4 scale"],
+      "deps": ["PD-103"], "refs": ["tools/store-assets.js"], "sources": ["R-03"], "tags": ["assets", "store"],
+      "note": "The mark and the wordmark read at thumbnail size, which is what the criterion is for. The tagline underneath is decoration at that scale and is meant to be." },
+
+    { "id": "PD-105", "title": "Store screenshots captured from the real game", "epic": "E-PLAY", "area": "art-audio", "type": "task", "status": "next", "priority": "P0", "size": "M", "value": 5, "risk": 2,
+      "summary": "Play requires screenshots, and they are what a browsing player actually judges. They must show the real game, in landscape, at a legible size.",
+      "why": "The first two screenshots decide the install. This is marketing that happens to be a build step.",
+      "dod": ["at least four, captured from a running build not mocked up", "one shows a late-game board with a full tower set", "one shows the co-op lobby", "one shows the briefing screen, because it is the clearest explanation of the game", "no debug text or placeholder ids visible"],
+      "deps": [], "refs": [], "sources": ["R-03"], "tags": ["assets", "store", "marketing"] },
+
+    { "id": "PD-106", "title": "Update the privacy policy for co-op networking", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P1", "size": "S", "value": 4, "risk": 3,
+      "summary": "docs/PRIVACY.md and the in-game Settings screen both state that no network calls happen during play. Co-op connects to a relay and shows another player's chosen display name, so both statements are now false.",
+      "why": "The Data safety form has to agree with the app's behaviour, and the developer is the only party responsible for that agreement.",
+      "dod": ["settlement-free and co-op paths described separately", "what the relay receives, what it keeps and for how long are stated", "the Settings screen text is corrected too, not only the policy"],
+      "deps": [], "refs": ["docs/PRIVACY.md"], "sources": ["R-02"], "tags": ["legal", "policy"] },
+
+    { "id": "PD-107", "title": "Complete the Data safety form", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "blocked", "priority": "P1", "size": "S", "value": 4, "risk": 3,
+      "summary": "Required for every published app including test tracks. Must cover the relay connection, the display name, and everything the AdMob and purchase SDKs collect. Internal-testing-only apps are exempt, which is useful for early testing.",
+      "dod": ["a privacy policy is hosted at a public URL", "the relay and SDK collections are declared", "the declaration matches PD-106"],
+      "deps": ["PD-106"], "refs": [], "sources": ["R-02"], "tags": ["legal", "console"],
+      "blockedBy": "Requires Play Console access." },
+
+    { "id": "PD-108", "title": "Document the Node 22 requirement and pin it", "epic": "E-ENG", "area": "infra", "type": "chore", "status": "done", "priority": "P1", "size": "S", "value": 3, "risk": 2,
+      "summary": "Capacitor 8 requires Node 22+, and the local toolchain was on Node 20. Every script in the repo runs on both, but the Android build does not. Node 22.23.2 is now installed as the nvm default and pinned in .nvmrc.",
+      "dod": ["the requirement is stated where someone setting up would look", "an .nvmrc pins it", "both harnesses are confirmed green under Node 22"],
+      "deps": [], "refs": ["docs/PROJECT.md", ".nvmrc"], "sources": ["R-04"], "tags": ["tooling"] },
+
+    { "id": "PD-109", "title": "Write the store listing copy and avoid the registered trademark", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 4, "risk": 3,
+      "summary": "Title, short description and full description. 'Tower Defense' is a registered trademark owned by COM2uS, which has enforced it against apps before; the lowercase phrase is treated as a descriptive use of a game style, the capitalised one is a rejection risk.",
+      "why": "Free to get right before review, expensive after.",
+      "dod": ["title and short description within Play's character limits", "no capitalised use of the trademarked phrase anywhere in the listing", "the description leads with the hook rather than the feature list"],
+      "deps": [], "refs": ["docs/PUBLISHING.md"], "sources": ["R-06"], "tags": ["legal", "marketing"] },
+
+    { "id": "PD-110", "title": "Content rating questionnaire", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "blocked", "priority": "P1", "size": "S", "value": 3, "risk": 2,
+      "summary": "Mandatory for all apps and games, and it covers the ads served as well as the app. The answers determine the rating shown on the listing.",
+      "dod": ["questionnaire completed", "the declared rating matches what the game actually contains"],
+      "deps": [], "refs": [], "sources": ["R-07"], "tags": ["console"],
+      "blockedBy": "Requires Play Console access." },
+
+    { "id": "PD-111", "title": "Declare ads, in-app purchases and target audience", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "blocked", "priority": "P1", "size": "S", "value": 3, "risk": 3,
+      "summary": "The game shows ads and sells purchases, and both are declarations. The target audience answer decides whether the Families policy applies, which would restrict ad behaviour and require additional compliance.",
+      "why": "Declaring the wrong target audience is one of the most common causes of a rejection.",
+      "dod": ["ads and IAP declared", "target audience chosen deliberately, with the Families consequences understood", "the decision recorded in docs/PUBLISHING.md"],
+      "deps": [], "refs": ["docs/PUBLISHING.md"], "sources": ["R-07"], "tags": ["console", "legal"],
+      "blockedBy": "Requires Play Console access." },
+
+    { "id": "PD-112", "title": "Confirm the pre-production testing requirement for new developer accounts", "epic": "E-PLAY", "area": "play-compliance", "type": "spike", "status": "blocked", "priority": "P1", "size": "S", "value": 3, "risk": 4,
+      "summary": "New personal developer accounts have historically been required to run a closed test with a minimum number of testers for a continuous period before production access is granted. The numbers change, and this was not verified in this research pass.",
+      "why": "If it applies, it sets a floor of weeks on the launch date and dictates that recruitment starts now rather than at submit time.",
+      "dod": ["the current requirement is read in Play Console and written down with a date"],
+      "deps": [], "refs": ["docs/PUBLISHING.md"], "sources": ["R-08"], "tags": ["console", "verify"],
+      "blockedBy": "Requires Play Console access to read the requirement." },
+
+    { "id": "PD-113", "title": "Play App Signing and a real upload keystore", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "blocked", "priority": "P1", "size": "S", "value": 4, "risk": 3,
+      "summary": "tools/configure-signing.js exists, but there is no real keystore and Play App Signing is not enrolled. Losing the upload key locks the app out of future updates, so this is a one-way door worth doing carefully.",
+      "dod": ["a keystore exists outside the repository", "its location and backup are documented", "Play App Signing is enrolled", "the release AAB is signed with it"],
+      "deps": ["PD-101"], "refs": ["tools/configure-signing.js", "docs/PUBLISHING.md"], "sources": [], "tags": ["console", "irreversible"],
+      "blockedBy": "Requires Play Console access." },
+
+    { "id": "PD-114", "title": "Build and verify a release AAB", "epic": "E-PLAY", "area": "play-compliance", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 4, "risk": 2,
+      "summary": "Play takes an Android App Bundle for new apps. The android/ directory is gitignored and generated, so the whole path from a fresh clone to a signed AAB needs to be exercised and written down.",
+      "dod": ["npx cap add android && npx cap sync && the harden script && a signed AAB, from a fresh clone", "the AAB installs on a device", "the steps are in docs/PUBLISHING.md"],
+      "deps": ["PD-101", "PD-113"], "refs": ["docs/PUBLISHING.md"], "sources": [], "tags": ["android"] },
+
+    { "id": "PD-201", "title": "Let players shape the path: mazing", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "later", "priority": "P2", "size": "XL", "value": 5, "risk": 5,
+      "summary": "Our roads are fixed and generated. Genre research names mazing - building a maze out of your own towers to lengthen the path - as the essential strategy of Desktop Tower Defense and Flash Element TD, and it is the source of that genre's deepest play. We do not have it at all.",
+      "why": "This is the largest single gameplay gap between what we have and what the genre's best-known titles offer. It is also the largest change: every ticket's measured difficulty, the bot, the road generator and the briefing all assume a fixed path.",
+      "riskNote": "It invalidates the entire difficulty calibration - 240 tickets re-measured, and every doc that quotes those numbers. It must be a spike first, and possibly a second mode rather than a replacement.",
+      "dod": ["a spike answers whether buildable walls can coexist with generated roads", "if it ships, the harness can measure maze tickets too", "the campaign's measured difficulty is re-established rather than assumed"],
+      "deps": [], "refs": ["docs/DIFFICULTY.md", "www/js/roads.js"], "sources": ["R-05"], "tags": ["big-bet"] },
+
+    { "id": "PD-202", "title": "Threats that ignore the road", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "later", "priority": "P2", "size": "L", "value": 4, "risk": 3,
+      "summary": "Air units that fly straight to the base, bypassing the road and everything built along it, are named as a recurring device in the genre. Every tower in our game is placed relative to a single path, so nothing in the current design answers a threat that ignores it.",
+      "why": "It creates a second axis of tower value and a second thing to worry about on the briefing screen, without adding a new tower type.",
+      "dod": ["a threat type that pathfinds to the base directly", "at least one tower that is good against it and one that is useless, so the choice is real", "the briefing screen warns about it"],
+      "deps": [], "refs": ["www/js/threats.js", "www/js/roads.js"], "sources": ["R-05"], "tags": ["content"] },
+
+    { "id": "PD-203", "title": "Tower targeting modes", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "later", "priority": "P3", "size": "M", "value": 3, "risk": 2,
+      "summary": "First, last, strongest, weakest, closest. Genre reference calls out letting players modify a tower's attack strategy as a way to get more decisions out of the towers they already have.",
+      "why": "Cheap depth: it multiplies the usefulness of the existing seven towers instead of adding an eighth.",
+      "dod": ["a per-tower target mode, reachable from the selected-tower panel", "the deterministic replay still reproduces with modes set", "the bot uses a sane default so balance measurements stay meaningful"],
+      "deps": [], "refs": ["www/js/towers.js", "www/js/engine.js"], "sources": ["R-05"], "tags": ["depth"] },
+
+    { "id": "PD-204", "title": "Repair, as distinct from upgrade", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "later", "priority": "P3", "size": "M", "value": 3, "risk": 3,
+      "summary": "The genre lists repair and repairing-the-upgrade alongside upgrading. We have upgrade and sell, and no concept of a damaged structure that can be brought back.",
+      "why": "It adds a money sink that competes with building, which is the interesting kind of pressure - but only if towers can be damaged, and currently they cannot.",
+      "dod": ["towers can be damaged by something", "damage is visible without reading a number", "repair competes with building for the same money"],
+      "deps": [], "refs": ["www/js/towers.js"], "sources": ["R-05"], "tags": ["depth"],
+      "note": "Requires a decision: sabotage already disables towers temporarily. Extending that to persistent damage is a different game feel." },
+
+    { "id": "PD-205", "title": "Endless mode and a survival leaderboard", "epic": "E-OPS", "area": "gameplay", "type": "story", "status": "later", "priority": "P2", "size": "L", "value": 4, "risk": 3,
+      "summary": "A wave-based mode that never ends, scored by waves survived, reported to a leaderboard. The genre's most durable mobile titles pair a campaign with a mode that has no ceiling.",
+      "why": "The campaign has an end. Players who finish ticket 240 currently have nothing to do and no reason to open the app again.",
+      "dod": ["waves continue past the campaign's ceiling with a rising curve", "the score is the wave reached", "the board is Play Games Services or nothing, decided deliberately"],
+      "deps": [], "refs": ["www/js/campaign.js"], "sources": ["R-05"], "tags": ["retention"] },
+
+    { "id": "PD-206", "title": "Daily challenge", "epic": "E-OPS", "area": "liveops", "type": "story", "status": "later", "priority": "P2", "size": "M", "value": 4, "risk": 2,
+      "summary": "One seeded ticket per day, the same for everyone, with a small reward for clearing it. The sibling project in this repository already has a daily module to borrow from.",
+      "why": "The cheapest honest retention mechanic there is: it needs no backend, since the seed is the date, and it gives a lapsed player one specific reason to return.",
+      "dod": ["the same date produces the same ticket for every device", "the reward cannot be farmed by changing the clock", "the streak is visible"],
+      "deps": [], "refs": ["neon-stack/www/js/daily.js"], "sources": [], "tags": ["retention", "cheap-win"] },
+
+    { "id": "PD-207", "title": "A co-op boss finale", "epic": "E-COOP", "area": "multiplayer", "type": "story", "status": "later", "priority": "P2", "size": "M", "value": 4, "risk": 2,
+      "summary": "A co-op battle is twenty waves of trash with no Zero-Day. Every campaign act finale has one, and it is the set piece that makes a ticket feel finished.",
+      "why": "Twenty waves that simply stop is an anticlimax, and the boss is the moment the mode's central question - who is paying for the antivirus - becomes a conversation.",
+      "dod": ["wave twenty is a boss wave", "the boss forces the Antivirus bill in a way that requires the seats to agree", "the harness can still play it"],
+      "deps": [], "refs": ["www/js/campaign.js", "docs/COOP.md"], "sources": [], "tags": ["coop"] },
+
+    { "id": "PD-208", "title": "Decide the co-op seat ceiling: cap at two, or grow the map", "epic": "E-COOP", "area": "multiplayer", "type": "spike", "status": "next", "priority": "P1", "size": "M", "value": 4, "risk": 3,
+      "summary": "The board holds about seventy-three towers and one player saturates it. Measured at three seats on a late-game theme, the team finished with 45% of its money unspent because there was nowhere to put a tower. Co-op currently offers up to four seats that the map cannot support.",
+      "why": "Shipping a mode where a third player is decoration is worse than shipping a two-player mode that works. The decision also blocks seat-aware theme selection.",
+      "dod": ["measure the same three themes at two, three and four seats with --coop --detail", "either a larger co-op map or a seat cap, chosen with the numbers in hand", "the lobby offers only what the map can carry"],
+      "deps": [], "refs": ["docs/COOP.md", "tools/balance.js"], "sources": [], "tags": ["decision"] },
+
+    { "id": "PD-209", "title": "Seat-aware theme selection in the lobby", "epic": "E-COOP", "area": "multiplayer", "type": "task", "status": "later", "priority": "P2", "size": "S", "value": 3, "risk": 1,
+      "summary": "The theme matters more than any other co-op dial: mid-campaign themes measure 0-2% slack, theme 1 measures 12-46%, and theme 240 cannot host three seats at all. The lobby currently offers the same list to everyone.",
+      "why": "It moves a broken combination out of the player's hands without writing a single line of balance code.",
+      "dod": ["the offered themes depend on the seat count", "the ones already measured as broken are not offered"],
+      "deps": ["PD-208"], "refs": ["docs/COOP.md"], "sources": [], "tags": ["coop"] },
+
+    { "id": "PD-210", "title": "Rejoin an in-progress battle from a cold start", "epic": "E-COOP", "area": "multiplayer", "type": "task", "status": "later", "priority": "P2", "size": "M", "value": 3, "risk": 3,
+      "summary": "The relay replays missed events on reconnect, which covers a brief drop. A player who closes the app and reopens it has no snapshot and the resync path is only exercised by a reconnect.",
+      "why": "Mobile players background and kill apps constantly. Losing a fifteen-minute run to that is the kind of thing that gets an app uninstalled.",
+      "dod": ["a relaunch into a live room receives a full snapshot", "the seat is reclaimed rather than a new one taken", "the case is covered by the two-client test"],
+      "deps": [], "refs": ["docs/COOP.md", "www/js/coop.js"], "sources": [], "tags": ["coop", "robustness"] },
+
+    { "id": "PD-211", "title": "Put shots and effects in the snapshot", "epic": "E-COOP", "area": "multiplayer", "type": "task", "status": "later", "priority": "P3", "size": "S", "value": 2, "risk": 1,
+      "summary": "Threats, towers, purses and the wave counter cross the wire; shots, impacts and the chat feed do not. A peer sees the battle but not the sparks.",
+      "why": "Legible without it, but a battle with no impacts reads as less alive than it is, and the other player's hits are exactly the feedback that makes co-op feel shared.",
+      "dod": ["shots and bursts are transmitted or cheaply predicted", "the snapshot stays inside the bandwidth budget at ten per second"],
+      "deps": [], "refs": ["www/js/engine.js", "docs/COOP.md"], "sources": [], "tags": ["coop", "polish"] },
+
+    { "id": "PD-212", "title": "Host migration when the host leaves", "epic": "E-COOP", "area": "multiplayer", "type": "story", "status": "later", "priority": "P3", "size": "L", "value": 3, "risk": 4,
+      "summary": "The host is the only authority. If the host drops, the battle ends for everyone, and there is no way to promote another seat.",
+      "why": "Real cost, real complexity, and the simplest honest answer may be to tell the remaining players clearly rather than to build migration.",
+      "dod": ["either a seat is promoted and resumes from the last snapshot, or the remaining players are told the battle ended and why, deliberately"],
+      "deps": [], "refs": ["docs/COOP.md"], "sources": [], "tags": ["coop"] },
+
+    { "id": "PD-213", "title": "Public matchmaking with strangers", "epic": "E-COOP", "area": "multiplayer", "type": "story", "status": "dropped", "priority": "P3", "size": "XL", "value": 3, "risk": 5,
+      "summary": "Random opponents rather than a code you share. Needs a lobby service, a queue, region selection, backfill and abuse handling.",
+      "why": "Dropped deliberately: room codes are what playing with a friend actually requires, and this is a different product with a different support burden. Recorded so it is not re-proposed as if it were free.",
+      "dod": [], "deps": [], "refs": ["docs/COOP.md"], "sources": [], "tags": ["scope"] },
+
+    { "id": "PD-301", "title": "Frame-rate and GC budget on low-end devices", "epic": "E-ENG", "area": "tech", "type": "task", "status": "later", "priority": "P1", "size": "L", "value": 4, "risk": 4,
+      "summary": "The board is drawn procedurally every frame with no object pooling, and a late insane ticket holds over five hundred threats. Nothing has ever been profiled on a real low-end phone; the only evidence of frame cost is that a group cap of 220 was added to prevent a frame-rate failure.",
+      "why": "A tower defense that stutters when the screen is busiest is unplayable at exactly the moments it is most interesting.",
+      "dod": ["a measured profile on a representative low-end device", "a frame-time budget with a pass or a fail, not an impression", "pooling or batching where the profile says it is needed"],
+      "deps": [], "refs": ["www/js/engine.js"], "sources": [], "tags": ["performance"] },
+
+    { "id": "PD-302", "title": "Make a crash visible instead of silent", "epic": "E-ENG", "area": "tech", "type": "bug", "status": "next", "priority": "P0", "size": "S", "value": 5, "risk": 1,
+      "summary": "A co-op battle recently failed to start because a music lookup threw on an undefined ticket id, and the exception aborted the rest of startBattle - so the render loop never started and the host broadcast nothing at all. Nothing on screen said anything was wrong. It was found by reading a console log during a manual two-client test.",
+      "why": "This is the highest-value item on the board by cost against benefit. A silent failure in a startup path is indistinguishable from a broken game, and the only reason we found this one is that we happened to be looking.",
+      "dod": ["a global error handler catches uncaught exceptions and unhandled rejections", "the failure is shown to the player, briefly and in plain words", "it is logged with enough context to reproduce", "the self-test asserts the handler is installed"],
+      "deps": [], "refs": ["www/js/engine.js", "www/js/main.js"], "sources": [], "tags": ["robustness", "lesson"] },
+
+    { "id": "PD-303", "title": "Continuous integration that runs the verification we already have", "epic": "E-QA", "area": "qa", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 5, "risk": 2,
+      "summary": "Every check in this project is run by hand, by whoever remembers to run it. The campaign invariant sweep, the replay check, the relay self-test and the backlog validator are all one command each and none of them run on a push.",
+      "why": "The single most likely way this project regresses is somebody changing one dial and not noticing that 240 measured tickets moved. That is a machine's job.",
+      "dod": ["a workflow runs the relay self-test, the backlog validator and the campaign invariants on push", "a regression in any of them fails the build", "the balance sweep is either fast enough for CI or explicitly excluded with a reason"],
+      "deps": [], "refs": ["tools/balance.js"], "sources": [], "tags": ["ci", "cheap-win"] },
+
+    { "id": "PD-304", "title": "Automate the two-client co-op test", "epic": "E-QA", "area": "qa", "type": "task", "status": "next", "priority": "P1", "size": "L", "value": 5, "risk": 3,
+      "summary": "Co-op was verified by driving two browser pages through a real relay, by hand, with a script. It found three bugs that no single-client test could have found - a stale-snapshot interpolation error, the silent startup failure, and an infinite reconnect loop on a dead room - and none of them are covered by anything that runs now.",
+      "why": "The bugs that matter most in this feature are exactly the ones only a second client can see, and the only way to keep finding them is to keep two clients in the loop.",
+      "dod": ["a node test starts a relay, runs two clients of the real engine, and asserts they agree on wave, uptime, kills and towers", "it asserts a peer's build lands as its own seat and does not touch the host's purse", "it runs in CI"],
+      "deps": ["PD-303"], "refs": ["docs/COOP.md", "server/relay/index.js"], "sources": [], "tags": ["coop", "ci"] },
+
+    { "id": "PD-305", "title": "Screenshot and asset generation in the build", "epic": "E-ENG", "area": "infra", "type": "task", "status": "later", "priority": "P3", "size": "M", "value": 3, "risk": 2,
+      "summary": "The store assets are generated by a script, so they can be regenerated whenever the game's look changes instead of going stale the way a hand-exported PNG does.",
+      "why": "Cheap once the generator exists, and it removes the 'nobody remembers how the icon was made' problem before it starts.",
+      "dod": ["one command regenerates every store asset", "the assets are checked in so a release does not depend on the generator running"],
+      "deps": ["PD-103", "PD-104"], "refs": ["tools/store-assets.js"], "sources": [], "tags": ["assets"] },
+
+    { "id": "PD-401", "title": "Damage numbers, hit feedback and death animations", "epic": "E-FEEL", "area": "art-audio", "type": "story", "status": "later", "priority": "P2", "size": "M", "value": 4, "risk": 2,
+      "summary": "The game already draws a great deal procedurally, but the moment-to-moment feedback of a hit landing, damage accumulating and a threat dying is thin: a burst effect and a white flash.",
+      "why": "This is the cheapest available improvement to how the game feels, and it needs no asset pipeline because everything is already drawn in code.",
+      "dod": ["a hit is legible without reading the health bar", "a kill has a distinct shape from a leak", "reduce-motion still honoured"],
+      "deps": [], "refs": ["www/js/threats.js"], "sources": [], "tags": ["juice", "cheap-win"] },
+
+    { "id": "PD-402", "title": "Colour-blind-safe palettes", "epic": "E-FEEL", "area": "art-audio", "type": "story", "status": "later", "priority": "P2", "size": "M", "value": 3, "risk": 2,
+      "summary": "Threats are distinguished by colour, towers by colour, and in co-op the owner of a tower is shown by a coloured ring. A player with deuteranopia loses the co-op ownership signal entirely and much of the threat read.",
+      "why": "It is an accessibility requirement in spirit and it is also simply a legibility problem: four of the six seat colours are in the same warm or cool band.",
+      "dod": ["owner is distinguishable without colour", "threat classes are distinguishable without colour", "verified against a simulation, not by eye"],
+      "deps": [], "refs": ["docs/COOP.md", "www/styles.css"], "sources": [], "tags": ["accessibility"] },
+
+    { "id": "PD-403", "title": "Distinct tower silhouettes at palette size", "epic": "E-FEEL", "area": "art-audio", "type": "story", "status": "later", "priority": "P3", "size": "M", "value": 3, "risk": 2,
+      "summary": "docs/TOWERS.md records that the palette cannot exceed seven cards at the narrowest width, of which seven are sold. That is a hard ceiling on the roster and it is a layout constraint, not a design decision.",
+      "why": "Any future tower has to displace one, so the ceiling should be raised deliberately - a scrollable or two-row palette - rather than by accident when someone wants an eighth tower.",
+      "dod": ["the palette supports more than seven without overlapping ", "the change is measured across the same eight viewports as the original fix"],
+      "deps": [], "refs": ["docs/TOWERS.md", "www/js/engine.js"], "sources": [], "tags": ["ui"] },
+
+    { "id": "PD-404", "title": "Adaptive music layers driven by threat density", "epic": "E-ART", "area": "art-audio", "type": "story", "status": "later", "priority": "P3", "size": "M", "value": 3, "risk": 2,
+      "summary": "The mood machine already reacts to wave state and intensity. The music is generated, so the layers can be driven by what is actually on the board rather than by a wave index.",
+      "why": "Generated audio makes this unusually cheap: a stem is a few lines of synthesis, not a licensed recording.",
+      "dod": ["layer count tracks live threat pressure, not just the wave counter", "a boss pushes it to a distinct statement"],
+      "deps": [], "refs": ["www/js/music.js"], "sources": [], "tags": ["audio"] },
+
+    { "id": "PD-405", "title": "Store asset generator for the icon and feature graphic", "epic": "E-ART", "area": "art-audio", "type": "task", "status": "done", "priority": "P0", "size": "S", "value": 4, "risk": 1,
+      "summary": "The tooling that turns the designed SVG into the PNGs Play requires, with the output validated rather than assumed. Uses @resvg/resvg-js, the repository's only dependency and a devDependency.",
+      "dod": ["tools/store-assets.js generates every required asset from the repository's own artwork", "output dimensions and format are asserted after writing"],
+      "deps": [], "refs": ["tools/store-assets.js"], "sources": ["R-03", "R-04"], "tags": ["assets", "tooling"] },
+
+    { "id": "PD-601", "title": "Replace the AdMob test ids with real ones", "epic": "E-MONEY", "area": "monetisation", "type": "task", "status": "next", "priority": "P1", "size": "S", "value": 5, "risk": 2,
+      "summary": "Every ad unit id in config.js is Google's public test id. They serve test ads and earn exactly $0, by design, and shipping with them means shipping a game that shows no real ads.",
+      "why": "This is the difference between a game that has ads and a game that has revenue.",
+      "dod": ["real banner, interstitial and rewarded unit ids in config.js", "the real AdMob application id in the manifest, not the test one", "test ids retained for development builds", "an ad actually serves on a device"],
+      "deps": [], "refs": ["www/js/config.js", "docs/PUBLISHING.md"], "sources": [], "tags": ["money", "blocker-for-revenue"] },
+
+    { "id": "PD-602", "title": "Deploy the purchase validator and require it", "epic": "E-MONEY", "area": "monetisation", "type": "task", "status": "next", "priority": "P1", "size": "M", "value": 5, "risk": 4,
+      "summary": "server/validator exists and is not deployed, and config.validator.url is empty, so a purchase is trusted from the local receipt. That is a locally-editable receipt on a device the player controls.",
+      "why": "Unverified purchases mean every credit pack is free to anyone who looks. This is the one place where being wrong costs real money.",
+      "dod": ["the validator is deployed and reachable over HTTPS", "its url and public key are in config.js", "validator.required is true", "a purchase on a device is verified end to end", "a tampered receipt is rejected and the rejection is visible"],
+      "deps": [], "refs": ["server/validator/README.md"], "sources": [], "tags": ["money", "security"] },
+
+    { "id": "PD-603", "title": "Audit the ad cadence and the rewarded placement", "epic": "E-MONEY", "area": "monetisation", "type": "spike", "status": "later", "priority": "P2", "size": "S", "value": 3, "risk": 2,
+      "summary": "Ads show on every third clear, never on a loss and never on a first clear. That was reasoned from first principles and never measured against anything, and the rewarded placement is a single offer to double one payout.",
+      "why": "Ad load is the most common reason a mobile game is uninstalled and the most common reason a Play listing collects one-star reviews that say 'too many ads'.",
+      "dod": ["the cap and the cadence are decided against an explicit policy rather than a preference", "the policy is written down so a later change is a decision, not a drift"],
+      "deps": [], "refs": ["www/js/ads.js"], "sources": [], "tags": ["money", "review-risk"] },
+
+    { "id": "PD-604", "title": "Decide whether to add Play Games Services", "epic": "E-OPS", "area": "liveops", "type": "spike", "status": "later", "priority": "P2", "size": "M", "value": 3, "risk": 3,
+      "summary": "Achievements, leaderboards and cloud save all come from Play Games Services. Any of them affects the Data safety declaration and adds a dependency and an account to the sign-in flow.",
+      "why": "Endpoint mode needs a leaderboard to mean anything, and cloud save is the difference between losing progress on a new phone and not. Both are decisions with compliance cost, so they should be taken together rather than one at a time.",
+      "dod": ["a decision, with the Data safety consequences stated for each option", "if taken, the sign-in is optional so nothing is gated behind it"],
+      "deps": [], "refs": ["docs/PRIVACY.md"], "sources": [], "tags": ["decision", "compliance"] },
+
+    { "id": "PD-605", "title": "Analytics that would survive a privacy review", "epic": "E-OPS", "area": "liveops", "type": "spike", "status": "later", "priority": "P3", "size": "M", "value": 3, "risk": 4,
+      "summary": "There is no instrumentation at all. Nobody knows where players quit, which act is the wall, or whether anyone finishes. Every balance decision so far has been made with the harness bot, which is a lower bound and not a person.",
+      "why": "The single biggest blind spot in this project is real player behaviour. The sibling project has a small analytics module to learn from.",
+      "dod": ["either a deliberately privacy-preserving design with its declarations, or a written decision not to collect anything and why"],
+      "deps": [], "refs": ["neon-stack/www/js/analytics.js"], "sources": [], "tags": ["data", "privacy"] },
+
+    { "id": "PD-606", "title": "Difficulty feedback path for real players", "epic": "E-OPS", "area": "liveops", "type": "story", "status": "later", "priority": "P2", "size": "S", "value": 3, "risk": 2,
+      "summary": "Insane was shipped with three tickets that are unwinnable by design, at 48 towers, as a progression gate. A player who hits one currently has no way to know that it is deliberate rather than broken.",
+      "why": "An intentional wall that looks like a bug generates support requests and one-star reviews. The fix is a sentence on the briefing screen.",
+      "dod": ["a ticket that is a gate says so", "it points at what would make it passable - credits, tower research, base hardening"],
+      "deps": [], "refs": ["docs/DIFFICULTY.md"], "sources": [], "tags": ["ux", "cheap-win"] },
+
+    { "id": "PD-607", "title": "Raise the campaign opening so ticket 1 is not a single tower", "epic": "E-DEPTH", "area": "gameplay", "type": "story", "status": "later", "priority": "P2", "size": "M", "value": 3, "risk": 4,
+      "summary": "Measured: tickets 1 to 10 need exactly one tower on easy, normal, hard and hell. The base campaign opens at bodyPower 300 against roughly 20,000 at ticket 240, so the first ten minutes teach nothing because there is nothing to choose.",
+      "why": "The opening is where a player decides whether the game has decisions in it.",
+      "riskNote": "Any change to the opening shifts all five tiers and invalidates every measurement in docs/DIFFICULTY.md. It has been deferred twice for exactly this reason, which is a reason and not an excuse.",
+      "dod": ["tickets 1 to 10 need more than one tower on normal", "every tier is re-measured and the docs are updated in the same change"],
+      "deps": ["PD-303"], "refs": ["docs/DIFFICULTY.md"], "sources": [], "tags": ["balance", "expensive"] },
+
+    { "id": "PD-608", "title": "Act 7's double spike", "epic": "E-DEPTH", "area": "gameplay", "type": "bug", "status": "later", "priority": "P2", "size": "M", "value": 3, "risk": 4,
+      "summary": "Twelve tickets fail at hell as well as insane - tickets 124 to 131 in act 7, plus 190, 201 and 221 to 224. Those are not tier-scaling casualties: the base ticket is the problem. In act 7 the within-act road walk reaches its hardest geometry at the same moment the fourth trait enters, so two dials peak together instead of in sequence.",
+      "why": "Act 7 is a wall in the middle of the campaign on the two hardest tiers, and it is a generator artefact rather than a decision.",
+      "riskNote": "The same as PD-607: a curve change invalidates every measurement.",
+      "dod": ["the two dials no longer peak on the same ticket", "all five tiers re-measured"],
+      "deps": ["PD-303"], "refs": ["docs/DIFFICULTY.md"], "sources": [], "tags": ["balance", "expensive"] },
+
+    { "id": "PD-701", "title": "Project documentation: one place that explains the whole thing", "epic": "E-DOC", "area": "docs", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 1,
+      "summary": "Six subsystem documents existed and each covered one area well. Nothing explained the project: what it is, how the architecture fits together, how to run it, how to verify a change, and the conventions that were load-bearing but written down nowhere.",
+      "dod": ["docs/PROJECT.md covers architecture, commands, conventions and the verification gates", "it points at the backlog for state and at the subsystem docs for depth"],
+      "deps": [], "refs": ["docs/PROJECT.md"], "sources": [], "tags": ["docs"] },
+
+    { "id": "PD-702", "title": "Research findings recorded with sources and dates", "epic": "E-DOC", "area": "docs", "type": "story", "status": "done", "priority": "P1", "size": "S", "value": 4, "risk": 1,
+      "summary": "The Play requirements, the genre analysis and the tooling decisions all rest on reading, and reading decays. Each finding now carries its source, the date the source was published, the date it was read, and the backlog items it produced.",
+      "why": "The stale targetSdk claim in PUBLISHING.md is exactly what happens without this: a true statement that quietly became false, and nobody could tell because nothing recorded when it was checked.",
+      "dod": ["docs/RESEARCH.md records each finding with source, read date and the backlog items it produced", "unverified findings are labelled as such rather than stated as fact"],
+      "deps": [], "refs": ["docs/RESEARCH.md"], "sources": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07", "R-08"], "tags": ["docs"] },
+
+    { "id": "PD-703", "title": "Backlog as data, with a validator", "epic": "E-DOC", "area": "docs", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 1,
+      "summary": "The backlog lives in one JSON file that the docs reference by id and the board renders. A validator fails on duplicate ids, unresolvable dependencies, unknown enum values, and an item marked done whose dependencies are not.",
+      "why": "A backlog that lives in a document goes stale in a week. One that is data can be checked, and one that is checked can be trusted. The validator found three real errors the first time it was run.",
+      "dod": ["backlog/backlog.json is the single source of truth", "node tools/backlog.js validates it and exits non-zero on a problem", "the board and the docs read from it rather than duplicating it"],
+      "deps": [], "refs": ["backlog/README.md", "tools/backlog.js"], "sources": [], "tags": ["docs", "tooling"],
+      "note": "Wiring it into CI is PD-303, deliberately a separate item: the data being valid and the check being automatic are different jobs." },
+
+    { "id": "PD-704", "title": "Interactive board over the backlog data", "epic": "E-DOC", "area": "docs", "type": "story", "status": "done", "priority": "P1", "size": "M", "value": 4, "risk": 1,
+      "summary": "A kanban board rendered from the JSON, served at /backlog/, filterable by priority, epic, area, tag and free text, with a detail panel that shows what an item depends on and what it blocks.",
+      "why": "A roadmap nobody opens is a roadmap nobody follows. It is also the fastest way to explain the project to somebody new.",
+      "dod": ["a page that reads backlog.json and renders columns", "filter and search", "progress summary", "it is not shipped to players"],
+      "deps": ["PD-703"], "refs": ["backlog/index.html", "backlog/board.js", "backlog/board.css"], "sources": [], "tags": ["docs", "tooling"],
+      "note": "Served from outside www/ because www/ is the Capacitor webDir and everything in it ships inside the APK." },
+
+    { "id": "PD-801", "title": "Per-frame allocation in the threat and shot loops", "epic": "E-ENG", "area": "tech", "type": "chore", "status": "later", "priority": "P3", "size": "M", "value": 2, "risk": 2,
+      "summary": "The engine allocates objects inside the update loop. It has never been a measured problem, which is precisely why it will be introduced as one by somebody adding a feature in a hot path.",
+      "why": "Low value on its own, high value as a rule: the repository already has a culture of writing down invariants so they cannot drift. This is one that is not written down.",
+      "dod": ["either pooling in the hot loops, or a comment stating the budget and why it is met"],
+      "deps": ["PD-301"], "refs": ["www/js/engine.js"], "sources": [], "tags": ["performance"] },
+
+    { "id": "PD-802", "title": "Offline and no-network behaviour", "epic": "E-ENG", "area": "tech", "type": "task", "status": "later", "priority": "P2", "size": "S", "value": 3, "risk": 2,
+      "summary": "The game is entirely local except for co-op. Nothing has been decided about what happens when the relay is unreachable, the store is unreachable, or the device is in aeroplane mode.",
+      "why": "Config already has a coop.enabled switch so the co-op button hides when the relay is down, which is the right shape - but the failure paths have never been exercised.",
+      "dod": ["solo play is unaffected with no network", "co-op degrades with a clear message rather than a spinner", "a purchase attempt offline is handled and explained"],
+      "deps": [], "refs": ["www/js/config.js"], "sources": [], "tags": ["robustness"] },
+
+    { "id": "PD-803", "title": "Long-session and memory-leak check", "epic": "E-QA", "area": "qa", "type": "task", "status": "later", "priority": "P3", "size": "M", "value": 2, "risk": 3,
+      "summary": "Nobody has run the game for an hour. Effects, chat lines and listeners all accumulate, and the co-op event buffer grows. A phone is usually left open longer than a desktop session.",
+      "dod": ["an hour of play with a flat memory profile", "the co-op buffer is bounded on both ends"],
+      "deps": [], "refs": ["www/js/engine.js"], "sources": [], "tags": ["robustness"] },
+
+    { "id": "PD-804", "title": "Device and OS matrix", "epic": "E-QA", "area": "qa", "type": "task", "status": "later", "priority": "P2", "size": "L", "value": 3, "risk": 3,
+      "summary": "Everything so far has been verified in a desktop browser and through a headless harness. There is no record of the game being played on a real Android device at all.",
+      "why": "It is a Capacitor app whose Android path has never been run end to end: not the manifest hardening, not the AdMob id injection, not the in-app purchase flow, not the touch input under a real finger.",
+      "dod": ["at least a low-end and a mid-range Android device, one of them on API 36", "touch, rotation, safe areas, audio unlock and the purchase flow exercised", "results recorded"],
+      "deps": ["PD-101"], "refs": ["docs/PUBLISHING.md"], "sources": [], "tags": ["device"] },
+
+    { "id": "PD-805", "title": "Battery, thermal and data usage", "epic": "E-QA", "area": "qa", "type": "task", "status": "later", "priority": "P3", "size": "M", "value": 2, "risk": 3,
+      "summary": "Co-op streams state at ten snapshots a second and the game runs a full simulation every frame. Neither has been measured for battery drain, heat or mobile data cost.",
+      "why": "The snapshot rate is a deliberate choice justified by an estimate of 20-40 KB/s, not by a measurement. A choice justified by arithmetic is worth checking with a meter once.",
+      "dod": ["measured drain over a thirty-minute session", "measured data per thirty-minute co-op battle, compared to the estimate"],
+      "deps": ["PD-804"], "refs": ["docs/COOP.md"], "sources": [], "tags": ["device", "verify"] },
+
+    { "id": "PD-806", "title": "Colour, contrast and legibility audit on a real screen in daylight", "epic": "E-QA", "area": "qa", "type": "task", "status": "later", "priority": "P3", "size": "S", "value": 3, "risk": 2,
+      "summary": "The palette was designed for a dark room on a good monitor. Towers, threats and HUD text are small and the whole interface is dark-on-dark by design.",
+      "why": "A phone is used on a train in the afternoon, and the same review that catches this catches a lot of small legibility problems at once.",
+      "dod": ["reviewed outdoors on a phone", "any change re-checked against the eight-viewport overlap test"],
+      "deps": ["PD-804"], "refs": ["www/styles.css"], "sources": [], "tags": ["accessibility", "device"] }
+  ]
+}

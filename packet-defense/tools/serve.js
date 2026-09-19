@@ -23,6 +23,16 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..', 'www');
+/**
+ * The backlog board, served from outside www/ on purpose.
+ *
+ * www/ is the Capacitor webDir: everything in it ships inside the APK. The
+ * backlog is a development artefact - a plan, a list of things that are broken,
+ * and a record of what the game does not do yet - and none of that belongs in a
+ * file a player downloads. Serving it from the project root keeps it out of the
+ * bundle by construction rather than by remembering to exclude it.
+ */
+const BACKLOG = path.join(__dirname, '..', 'backlog');
 const PORT = Number(process.env.PORT || 8080);
 // Bind interface. Defaults to all interfaces for local dev; the staging
 // deploy sets HOST=127.0.0.1 so only nginx can reach the app directly.
@@ -89,6 +99,36 @@ http
     }
 
     const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+
+    // The backlog board, and nothing else outside www/.
+    if (urlPath === '/backlog' || urlPath.startsWith('/backlog/')) {
+      const rel = urlPath.replace(/^\/backlog\/?/, '') || 'index.html';
+      let file = path.join(BACKLOG, rel);
+      if (!file.startsWith(BACKLOG)) {
+        res.writeHead(403).end('Forbidden');
+        return;
+      }
+      fs.stat(file, (err, stat) => {
+        if (err) {
+          res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
+          return;
+        }
+        if (stat.isDirectory()) file = path.join(file, 'index.html');
+        fs.readFile(file, (err2, data) => {
+          if (err2) {
+            res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
+            return;
+          }
+          res.writeHead(200, {
+            'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream',
+            'Cache-Control': 'no-store',
+          });
+          res.end(data);
+        });
+      });
+      return;
+    }
+
     let filePath = path.join(ROOT, urlPath === '/' ? 'index.html' : urlPath);
 
     if (!filePath.startsWith(ROOT)) {
