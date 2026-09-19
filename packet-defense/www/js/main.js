@@ -1498,7 +1498,18 @@
 
     body.appendChild(h('h3', { class: 'section-title', text: 'ABOUT' }));
     body.appendChild(h('p', { class: 'about', text: 'Packet Defense · ' + global.NeonConfig.appId }));
-    body.appendChild(h('p', { class: 'about', text: 'No network calls during play. No analytics. No accounts. Progress and settings live on this device only.' }));
+    /*
+     * Two paths, said separately.
+     *
+     * This used to read "No network calls during play", which was true and
+     * stopped being true when co-op shipped: a co-op room is a connection to a
+     * relay. The old sentence was not vague, it was wrong, and an app whose
+     * settings screen contradicts its Data safety form is a review failure
+     * waiting to happen. Single player still makes no network calls at all, so
+     * that is what it says now - and the co-op path says what it does.
+     */
+    body.appendChild(h('p', { class: 'about', text: 'Playing solo makes no network calls at all. No analytics, no accounts. Progress and settings live on this device only.' }));
+    body.appendChild(h('p', { class: 'about', text: 'Co-op connects to our relay. It carries your chosen display name and the state of the room, keeps them in memory for the life of the room, and forgets them fifteen minutes after the last player leaves.' }));
     body.appendChild(h('p', { class: 'about', text: 'Music and all artwork are generated at runtime from code. Nothing is streamed or downloaded.' }));
 
     host.appendChild(body);
