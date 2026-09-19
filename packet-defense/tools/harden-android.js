@@ -31,6 +31,10 @@ const NET_CONFIG = path.join(XML_DIR, 'network_security_config.xml');
 const MAIN_ACTIVITY = path.join(ROOT, 'app', 'src', 'main', 'java');
 const BUILD_GRADLE = path.join(ROOT, 'app', 'build.gradle');
 const VARIABLES_GRADLE = path.join(ROOT, 'variables.gradle');
+const CAP_CONFIG = path.join(__dirname, '..', 'capacitor.config.json');
+
+/** The id every new Capacitor project starts with, and nobody should ship. */
+const PLACEHOLDER_APP_ID = 'com.yourstudio.packetdefense';
 
 /**
  * The target API level Play requires, and the deadline that makes it blocking.
@@ -117,6 +121,70 @@ function checkTargetApi() {
   }
 
   return { compileSdk: compileSdk, targetSdk: targetSdk, minSdk: minSdk };
+}
+
+/* ------------------------------------------------------------------ *
+ * 0. The package id, which is permanent at the first upload
+ * ------------------------------------------------------------------ */
+
+/**
+ * Refuse to prepare an Android project still wearing the placeholder id.
+ *
+ * capacitor.config.json's appId becomes the Android applicationId, and Play does
+ * not allow that to change after the first upload - not by an update, not by a
+ * support ticket, not by republishing. Everything else on this list can be fixed
+ * in a later release. This one cannot be fixed at all.
+ *
+ * A hard failure rather than a warning, for the same reason the target API check
+ * is one: the cost of choosing is five minutes and the cost of not choosing is
+ * permanent, and a warning printed above a successful build is a warning that
+ * gets built past. It is deliberately checked here rather than in tools/verify.js
+ * so that CI stays green on a repository that has not made the decision yet -
+ * a gate that is red until a person acts teaches people to ignore gates.
+ */
+function checkAppId() {
+  const raw = readIfExists(CAP_CONFIG);
+  if (raw === null) fail('capacitor.config.json not found.');
+
+  let appId;
+  try {
+    appId = JSON.parse(raw).appId;
+  } catch (e) {
+    fail('capacitor.config.json is not valid JSON: ' + e.message);
+  }
+  if (!appId) fail('capacitor.config.json has no appId.');
+
+  if (appId === PLACEHOLDER_APP_ID || /yourstudio|com\.example/i.test(appId)) {
+    fail('the package id is still the placeholder "' + appId + '".\n' +
+      '  It becomes the Android applicationId, and Play will not let it be changed\n' +
+      '  after the first upload - ever. Choosing it takes a minute:\n\n' +
+      '      1. edit appId in capacitor.config.json\n' +
+      '      2. npx cap add android && npm run android:prepare\n\n' +
+      '  See PD-115. If you change it after installing on a device you are testing,\n' +
+      '  the new id installs as a second app and the old one has to be removed.');
+  }
+
+  // Segments must be valid Java identifiers: a reserved word anywhere in the
+  // path makes the generated R class unbuildable, and the error Gradle gives for
+  // it does not mention the app id.
+  const reserved = ['abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char',
+    'class', 'const', 'continue', 'default', 'do', 'double', 'else', 'enum', 'extends',
+    'final', 'finally', 'float', 'for', 'goto', 'if', 'implements', 'import', 'instanceof',
+    'int', 'interface', 'long', 'native', 'new', 'package', 'private', 'protected', 'public',
+    'return', 'short', 'static', 'strictfp', 'super', 'switch', 'synchronized', 'this',
+    'throw', 'throws', 'transient', 'try', 'void', 'volatile', 'while'];
+  const bad = appId.split('.').filter(function (s) { return reserved.indexOf(s) !== -1; });
+  if (bad.length) {
+    fail('the package id "' + appId + '" contains a Java reserved word (' + bad.join(', ') +
+      '), which makes the generated code unbuildable.');
+  }
+  if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(appId)) {
+    fail('the package id "' + appId + '" does not look like a reverse-domain id.\n' +
+      '  Segments must start with a letter and contain only lower-case letters,\n' +
+      '  digits and underscores.');
+  }
+
+  return appId;
 }
 
 /* ------------------------------------------------------------------ *
@@ -408,6 +476,7 @@ if (!fs.existsSync(ROOT)) {
   fail('no android/ directory. Run "npm install && npx cap add android" first.');
 }
 
+const appId = checkAppId();
 const api = checkTargetApi();
 hardenManifest();
 writeNetworkConfig();
@@ -416,7 +485,7 @@ writeAdMobAppId();
 writeVersion();
 maybeMinify();
 
-console.log('harden-android: API ' + api.targetSdk + ' (compileSdk ' + api.compileSdk +
+console.log('harden-android: ' + appId + ', API ' + api.targetSdk + ' (compileSdk ' + api.compileSdk +
   ', minSdk ' + api.minSdk + ') - meets Play\'s requirement.');
 
 if (changed.length) {
