@@ -1,0 +1,1493 @@
+{
+  "meta": {
+    "schema": 2,
+    "project": "Runtime Zero",
+    "release": "specification / pre-prototype",
+    "updated": "2026-09-20",
+    "summary": "Independent Godot RPG. Only Kanban UI/validator reused from Packet Defense. Installation, runtime, simulation and local AI studio are future implementation tasks.",
+    "howToUse": {
+      "forAI": "Read AGENTS.md and START_HERE.md. Execute one dependency-ready ticket. Install missing tools by phase. Record actual evidence before marking done.",
+      "forHumans": "Serve this project with node tools/serve.js and open /backlog/. Board reads only; edit JSON to update.",
+      "editing": "node tools/verify.js after edits. Never mark a specification as an implemented capability."
+    },
+    "enums": {
+      "status": {
+        "done": "Implemented, verified with evidence and committed.",
+        "doing": "Owned active work, prerequisites complete.",
+        "next": "Eligible now; prerequisites complete.",
+        "later": "Planned; prerequisites or phase gate not yet met.",
+        "blocked": "External blocker; blockedBy required.",
+        "dropped": "Explicitly rejected; rationale retained."
+      },
+      "priority": {
+        "P0": "Unblocks current phase.",
+        "P1": "Required vertical-slice outcome.",
+        "P2": "Production improvement.",
+        "P3": "Optional owner-authorized scope."
+      },
+      "size": {
+        "S": "Small verifiable task.",
+        "M": "Several related steps.",
+        "L": "Substantial; split if it cannot be verified in one session.",
+        "XL": "Must split before implementation."
+      },
+      "type": {
+        "story": "Playable behavior.",
+        "task": "Implementation outcome.",
+        "bug": "Reproduced defect.",
+        "spike": "Investigation with recorded result.",
+        "chore": "Maintenance."
+      },
+      "areas": [
+        "setup",
+        "design",
+        "gameplay",
+        "content",
+        "qa",
+        "graphics",
+        "studio",
+        "audio",
+        "android"
+      ]
+    },
+    "scoreNote": "value * 2 - risk * 1.5 + priorityBonus (9,5,2,0). Dependencies and phase gates take precedence."
+  },
+  "epics": [
+    {
+      "id": "E-ENV",
+      "title": "Local environment",
+      "area": "setup",
+      "blurb": "Local environment"
+    },
+    {
+      "id": "E-GAME",
+      "title": "Independent RPG prototype",
+      "area": "gameplay",
+      "blurb": "Independent RPG prototype"
+    },
+    {
+      "id": "E-LAB",
+      "title": "Level laboratory",
+      "area": "qa",
+      "blurb": "Level laboratory"
+    },
+    {
+      "id": "E-ART",
+      "title": "Local graphics",
+      "area": "graphics",
+      "blurb": "Local graphics"
+    },
+    {
+      "id": "E-MCP",
+      "title": "Studio orchestration",
+      "area": "studio",
+      "blurb": "Studio orchestration"
+    },
+    {
+      "id": "E-AUDIO",
+      "title": "Local audio",
+      "area": "audio",
+      "blurb": "Local audio"
+    },
+    {
+      "id": "E-ANDROID",
+      "title": "Android vertical slice",
+      "area": "android",
+      "blurb": "Android vertical slice"
+    },
+    {
+      "id": "E-LATER",
+      "title": "Optional expansion",
+      "area": "design",
+      "blurb": "Optional expansion"
+    }
+  ],
+  "research": [],
+  "items": [
+    {
+      "id": "RZ-001",
+      "title": "Measure the actual Lenovo environment",
+      "epic": "E-ENV",
+      "area": "setup",
+      "type": "spike",
+      "status": "next",
+      "priority": "P0",
+      "size": "S",
+      "value": 5,
+      "risk": 2,
+      "phase": "P0",
+      "summary": "Identify local/remote context, GPU/VRAM, RAM, storage and installed tools before changes.",
+      "why": "Deliver the prerequisite and evidence needed for measure the actual lenovo environment.",
+      "steps": [
+        "Run the documented Windows/WSL inventory and read-only doctor where available.",
+        "Record missing tools, required host actions and per-phase storage budget.",
+        "Distinguish user-reported GPU from measured GPU and cloud environment."
+      ],
+      "outputs": [
+        "reports/environment.md"
+      ],
+      "checks": [
+        "python3 tools/doctor.py",
+        "Windows/WSL inventory commands in docs/SETUP.md"
+      ],
+      "dod": [
+        "Actual Lenovo inventory recorded, with command results and unknowns explicit.",
+        "GPU/RAM/disk limits and installation route documented; no model downloads yet."
+      ],
+      "deps": [],
+      "refs": [
+        "docs/SETUP.md",
+        "START_HERE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P0",
+        "setup"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-002",
+      "title": "Install and verify the minimum development tools",
+      "epic": "E-ENV",
+      "area": "setup",
+      "type": "task",
+      "status": "later",
+      "priority": "P0",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P0",
+      "summary": "Install the missing Windows/WSL/editor/Node/Python/Godot tools and probe the coding client.",
+      "why": "Deliver the prerequisite and evidence needed for install and verify the minimum development tools.",
+      "steps": [
+        "Follow SETUP minimal environment sequence; handle real elevation/restart/auth steps.",
+        "Verify official sources and pin successful versions.",
+        "Verify Node board checks, Python venv, Godot version and coding-agent tool call."
+      ],
+      "outputs": [
+        "config/toolchain.lock.json",
+        "reports/environment.md"
+      ],
+      "checks": [
+        "node tools/verify.js",
+        "godot --version",
+        "git --version",
+        "python3 --version",
+        "Client benign file/terminal tool probe"
+      ],
+      "dod": [
+        "Required development tools work in the selected local environment.",
+        "Exact versions and source/revision evidence recorded.",
+        "Copilot/DeepSeek capability result is honest; unavailable model is recorded without blocking independent engine work."
+      ],
+      "deps": [
+        "RZ-001"
+      ],
+      "refs": [
+        "docs/SETUP.md",
+        "docs/SOURCES.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P0",
+        "setup"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-003",
+      "title": "Reconcile missing RPG design and record prototype choices",
+      "epic": "E-GAME",
+      "area": "design",
+      "type": "spike",
+      "status": "later",
+      "priority": "P0",
+      "size": "S",
+      "value": 5,
+      "risk": 2,
+      "phase": "P0",
+      "summary": "Recover earlier design if supplied; otherwise record the explicit provisional scope.",
+      "why": "Deliver the prerequisite and evidence needed for reconcile missing rpg design and record prototype choices.",
+      "steps": [
+        "Ask once for any missing earlier RPG design while continuing available setup.",
+        "Reconcile owner input or record provisional defaults without claiming approval.",
+        "Update affected tickets/specs and retain RZ-012 review gate."
+      ],
+      "outputs": [
+        "docs/DECISIONS.md",
+        "reports/design-reconciliation.md"
+      ],
+      "checks": [
+        "node tools/verify.js",
+        "Review decision register against available owner input"
+      ],
+      "dod": [
+        "Confirmed/provisional/unresolved choices are separated.",
+        "No sibling game mechanics imported; prototype scope is bounded."
+      ],
+      "deps": [
+        "RZ-002"
+      ],
+      "refs": [
+        "docs/DECISIONS.md",
+        "docs/GAME_DESIGN.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P0",
+        "design"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-004",
+      "title": "Create the independent Godot project and launch it",
+      "epic": "E-GAME",
+      "area": "gameplay",
+      "type": "task",
+      "status": "later",
+      "priority": "P0",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Create game/project.godot and a minimal scalable title scene.",
+      "why": "Deliver the prerequisite and evidence needed for create the independent godot project and launch it.",
+      "steps": [
+        "Create domain/application/presentation/infrastructure directories.",
+        "Configure GDScript project, entry scene and provisional landscape viewport.",
+        "Launch GUI and headless import; record engine version."
+      ],
+      "outputs": [
+        "game/project.godot",
+        "game/src/",
+        "game/scenes/title.tscn"
+      ],
+      "checks": [
+        "godot --headless --path game --editor --quit",
+        "godot --path game"
+      ],
+      "dod": [
+        "GUI displays title; headless import has no parse errors.",
+        "Only game/ is the runtime export root."
+      ],
+      "deps": [
+        "RZ-003"
+      ],
+      "refs": [
+        "docs/ARCHITECTURE.md",
+        "docs/GAME_DESIGN.md",
+        "docs/TESTING.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-005",
+      "title": "Implement deterministic combat commands and events",
+      "epic": "E-GAME",
+      "area": "gameplay",
+      "type": "task",
+      "status": "later",
+      "priority": "P0",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Implement the exact provisional turn/action rules in a scene-independent core.",
+      "why": "Deliver the prerequisite and evidence needed for implement deterministic combat commands and events.",
+      "steps": [
+        "Create typed state/command/event classes.",
+        "Implement Attack/Guard/Skill, stable enemy turns, boss telegraph and terminal rules.",
+        "Add meaningful tests for invalid input, death, resource bounds and ordering."
+      ],
+      "outputs": [
+        "game/src/domain/",
+        "game/tests/run_tests.gd"
+      ],
+      "checks": [
+        "godot --headless --path game --script res://tests/run_tests.gd"
+      ],
+      "dod": [
+        "Same initial state and commands produce the same events/state.",
+        "Invalid actions consume neither time nor RNG; dead actors cannot act."
+      ],
+      "deps": [
+        "RZ-004"
+      ],
+      "refs": [
+        "docs/GAME_DESIGN.md",
+        "docs/ARCHITECTURE.md",
+        "docs/DATA_CONTRACTS.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-006",
+      "title": "Validate and load RPG content data",
+      "epic": "E-GAME",
+      "area": "content",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Create versioned enemy, encounter and equipment data with validation.",
+      "why": "Deliver the prerequisite and evidence needed for validate and load rpg content data.",
+      "steps": [
+        "Implement schema/reference checks and clear diagnostics.",
+        "Create the three prototype encounters and three equipment choices.",
+        "Add malformed-content fixtures and no arbitrary script evaluation."
+      ],
+      "outputs": [
+        "game/content/",
+        "game/src/infrastructure/content_repository.gd",
+        "game/tests/content_tests.gd"
+      ],
+      "checks": [
+        "Headless content validation test suite"
+      ],
+      "dod": [
+        "Missing IDs, duplicate IDs, bad stats and invalid progression links fail.",
+        "Valid prototype data loads independently of scene rendering."
+      ],
+      "deps": [
+        "RZ-005"
+      ],
+      "refs": [
+        "docs/DATA_CONTRACTS.md",
+        "docs/GAME_DESIGN.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "content"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-007",
+      "title": "Build playable combat UI and intent feedback",
+      "epic": "E-GAME",
+      "area": "gameplay",
+      "type": "story",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Connect input and presentation to domain events with readable controls.",
+      "why": "Deliver the prerequisite and evidence needed for build playable combat ui and intent feedback.",
+      "steps": [
+        "Create HUD/actions, target selection, enemy intent and event log.",
+        "Animate events without affecting combat timing.",
+        "Support keyboard/mouse/touch and reject duplicate action input."
+      ],
+      "outputs": [
+        "game/scenes/combat.tscn",
+        "game/src/presentation/"
+      ],
+      "checks": [
+        "Desktop combat smoke with Attack/Guard/Skill",
+        "Double-click/tap rejection and keyboard focus checks"
+      ],
+      "dod": [
+        "A user can win/lose without a debug console.",
+        "HP, energy, costs, intent and terminal state are visible."
+      ],
+      "deps": [
+        "RZ-006"
+      ],
+      "refs": [
+        "docs/GAME_DESIGN.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-008",
+      "title": "Connect loadout, encounters, rewards and retry",
+      "epic": "E-GAME",
+      "area": "gameplay",
+      "type": "story",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Complete the three-encounter run loop with one selected equipment bonus.",
+      "why": "Deliver the prerequisite and evidence needed for connect loadout, encounters, rewards and retry.",
+      "steps": [
+        "Implement loadout selection and run state.",
+        "Advance encounters, heal/refill between them and grant completion once.",
+        "Add retry/title flows and run reset."
+      ],
+      "outputs": [
+        "game/src/application/run_service.gd",
+        "game/scenes/loadout.tscn",
+        "game/scenes/result.tscn"
+      ],
+      "checks": [
+        "Play through each loadout; verify victory/defeat/retry paths",
+        "Automated duplicate-reward and progression tests"
+      ],
+      "dod": [
+        "All three encounters connect and reset correctly.",
+        "No duplicate rewards or progression on defeat."
+      ],
+      "deps": [
+        "RZ-007"
+      ],
+      "refs": [
+        "docs/GAME_DESIGN.md",
+        "docs/DATA_CONTRACTS.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-009",
+      "title": "Persist settings and unlocks with recovery",
+      "epic": "E-GAME",
+      "area": "gameplay",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Implement versioned local saves and usable recovery from corruption.",
+      "why": "Deliver the prerequisite and evidence needed for persist settings and unlocks with recovery.",
+      "steps": [
+        "Serialize required progress/settings to user://.",
+        "Implement atomic replacement, backup and supported migrations.",
+        "Test malformed/truncated saves and background/resume behavior."
+      ],
+      "outputs": [
+        "game/src/infrastructure/save_repository.gd",
+        "game/tests/save_tests.gd"
+      ],
+      "checks": [
+        "Save round-trip/migration/corruption tests",
+        "Restart and background/resume smoke"
+      ],
+      "dod": [
+        "Progress survives restart.",
+        "Corrupt save does not prevent reaching title; no secrets or network dependency."
+      ],
+      "deps": [
+        "RZ-008"
+      ],
+      "refs": [
+        "docs/DATA_CONTRACTS.md",
+        "docs/TESTING.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-010",
+      "title": "Polish prototype accessibility and game feedback",
+      "epic": "E-GAME",
+      "area": "gameplay",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Make the placeholder slice understandable before investing in generated art.",
+      "why": "Deliver the prerequisite and evidence needed for polish prototype accessibility and game feedback.",
+      "steps": [
+        "Add mute, reduced motion, focus states and scalable text.",
+        "Use readable placeholders and distinct intent/hit/defeat cues.",
+        "Inspect at desktop and a narrow target viewport."
+      ],
+      "outputs": [
+        "game/src/presentation/",
+        "reports/prototype-accessibility.md"
+      ],
+      "checks": [
+        "Keyboard-only and touch-size review",
+        "Settings/reduced-motion/mute checks"
+      ],
+      "dod": [
+        "Information is not color/audio-only.",
+        "Controls remain readable and usable across tested viewports."
+      ],
+      "deps": [
+        "RZ-009"
+      ],
+      "refs": [
+        "docs/GAME_DESIGN.md",
+        "docs/ART_BIBLE.md",
+        "docs/TESTING.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-011",
+      "title": "Add replay fixtures and automated game gates",
+      "epic": "E-GAME",
+      "area": "qa",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Verify the prototype core and CI without GPU dependencies.",
+      "why": "Deliver the prerequisite and evidence needed for add replay fixtures and automated game gates.",
+      "steps": [
+        "Implement canonical replay serialization and fixed fixtures.",
+        "Verify actual UI and headless paths call the same core.",
+        "Add root Godot CI job using exact pinned engine and content tests."
+      ],
+      "outputs": [
+        "game/tests/replay_tests.gd",
+        "game/tests/fixtures/",
+        ".github/workflows/runtime-zero-game.yml (repository root)"
+      ],
+      "checks": [
+        "Headless test suite and replay fixture comparison",
+        "Fresh CI run without model downloads"
+      ],
+      "dod": [
+        "Replay hashes/events match pinned fixtures.",
+        "CI fails on incorrect core/content behavior and needs no GPU/secrets."
+      ],
+      "deps": [
+        "RZ-010"
+      ],
+      "refs": [
+        "docs/TESTING.md",
+        "docs/BALANCING.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "qa"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-012",
+      "title": "Obtain owner review of the playable RPG direction",
+      "epic": "E-GAME",
+      "area": "design",
+      "type": "spike",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Have Housseyn play the slice and approve or revise its production direction.",
+      "why": "Deliver the prerequisite and evidence needed for obtain owner review of the playable rpg direction.",
+      "steps": [
+        "Provide launch command/build and a short playtest checklist.",
+        "Record actual feedback on combat, view, loop, art and scope.",
+        "Create corrective tasks and revise dependencies if the direction changes."
+      ],
+      "outputs": [
+        "reports/owner-prototype-review.md",
+        "docs/DECISIONS.md"
+      ],
+      "checks": [
+        "Human playtest on the actual prototype build"
+      ],
+      "dod": [
+        "Actual owner feedback and build identity recorded.",
+        "Critical requested corrections are linked and resolved before expansion."
+      ],
+      "deps": [
+        "RZ-011"
+      ],
+      "refs": [
+        "docs/DECISIONS.md",
+        "docs/GAME_DESIGN.md",
+        "docs/ROADMAP.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "design"
+      ],
+      "evidence": [],
+      "gate": "Requires Housseyn review; never synthesize approval.",
+      "note": "Requires Housseyn review; never synthesize approval."
+    },
+    {
+      "id": "RZ-013",
+      "title": "Implement approved benchmark build mechanics",
+      "epic": "E-LAB",
+      "area": "gameplay",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P2",
+      "summary": "Create tank/crit/DoT/speed/starter builds only with real approved mechanics.",
+      "why": "Deliver the prerequisite and evidence needed for implement approved benchmark build mechanics.",
+      "steps": [
+        "Specify timing, stacking, expiry, RNG and equipment interactions.",
+        "Implement mechanics in the shared combat core.",
+        "Add behavior-specific fixtures and policy baselines."
+      ],
+      "outputs": [
+        "game/content/builds/",
+        "game/src/domain/",
+        "game/tests/build_tests.gd"
+      ],
+      "checks": [
+        "Mechanic interaction and policy tests"
+      ],
+      "dod": [
+        "Each named build exercises its actual defining mechanic.",
+        "Rules and RNG versions updated with regression coverage."
+      ],
+      "deps": [
+        "RZ-012"
+      ],
+      "refs": [
+        "docs/BALANCING.md",
+        "docs/DATA_CONTRACTS.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P2",
+        "gameplay"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-014",
+      "title": "Implement shared-core headless simulation",
+      "epic": "E-LAB",
+      "area": "qa",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P2",
+      "summary": "Run bounded encounters/policies and produce reproducible JSONL records.",
+      "why": "Deliver the prerequisite and evidence needed for implement shared-core headless simulation.",
+      "steps": [
+        "Implement simulate.gd CLI validation and output manifest.",
+        "Add round caps, error/stall outcomes and stable seed ranges.",
+        "Run deterministic replay comparison and stochastic batches where meaningful."
+      ],
+      "outputs": [
+        "game/tests/simulate.gd",
+        "reports/local/simulation/"
+      ],
+      "checks": [
+        "CLI contract in docs/BALANCING.md",
+        "Repeat identical batch and compare state hashes"
+      ],
+      "dod": [
+        "Requested/completed/error counts reconcile.",
+        "No duplicate Python combat implementation; invalid/stalled outcomes remain visible."
+      ],
+      "deps": [
+        "RZ-013"
+      ],
+      "refs": [
+        "docs/BALANCING.md",
+        "docs/DATA_CONTRACTS.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P2",
+        "qa"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-015",
+      "title": "Evaluate per-build balance and held-out seeds",
+      "epic": "E-LAB",
+      "area": "qa",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P2",
+      "summary": "Implement statistics and explicitly approved encounter gate configurations.",
+      "why": "Deliver the prerequisite and evidence needed for evaluate per-build balance and held-out seeds.",
+      "steps": [
+        "Implement Python analysis with independent Wilson interval fixtures.",
+        "Record owner-approved per-tier targets and confidence policy.",
+        "Compare before/after plus held-out seeds and retain failures."
+      ],
+      "outputs": [
+        "tools/balance/",
+        "config/balance-gates.json",
+        "reports/balance-baseline.md"
+      ],
+      "checks": [
+        "Analysis unit tests",
+        "Configured per-build gate run",
+        "Owner review of threshold configuration"
+      ],
+      "dod": [
+        "No aggregate hides a failing build.",
+        "Repeated deterministic runs are not mislabeled independent samples.",
+        "Report records hashes, seed/policy coverage, intervals and human-playtest limitations."
+      ],
+      "deps": [
+        "RZ-014"
+      ],
+      "refs": [
+        "docs/BALANCING.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P2",
+        "qa"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-016",
+      "title": "Create asset provenance and promotion validation",
+      "epic": "E-ART",
+      "area": "graphics",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 3,
+      "phase": "P3",
+      "summary": "Create candidate registry, license provenance and exact-candidate promotion.",
+      "why": "Deliver the prerequisite and evidence needed for create asset provenance and promotion validation.",
+      "steps": [
+        "Implement manifest schema and file checks.",
+        "Set external candidate/model directories through private config.",
+        "Require exact hash, license metadata and review before promotion."
+      ],
+      "outputs": [
+        "tools/assets/",
+        "config/asset-manifest.json",
+        "reports/asset-validation.md"
+      ],
+      "checks": [
+        "Invalid file/path/provenance/promotion tests"
+      ],
+      "dod": [
+        "Candidates stay out of runtime assets until approved.",
+        "Missing license, hash mismatch and path escape reject promotion."
+      ],
+      "deps": [
+        "RZ-012"
+      ],
+      "refs": [
+        "docs/DATA_CONTRACTS.md",
+        "docs/ASSET_PIPELINE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P3",
+        "graphics"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-017",
+      "title": "Install ComfyUI and generate one local SDXL icon",
+      "epic": "E-ART",
+      "area": "graphics",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P3",
+      "summary": "Install a measured compatible image backend and produce one genuine local PNG.",
+      "why": "Deliver the prerequisite and evidence needed for install comfyui and generate one local sdxl icon.",
+      "steps": [
+        "Resolve/pin ComfyUI, Torch and one model after license/disk checks.",
+        "Export/test API workflow and bind prompt/seed/dimensions.",
+        "Run one generation, inspect file and record memory/time/provenance."
+      ],
+      "outputs": [
+        "workflows/item_icon.json",
+        "workflows/item_icon.bindings.json",
+        "config/model-manifest.json",
+        "reports/image-smoke.md"
+      ],
+      "checks": [
+        "Local CUDA probe",
+        "Actual workflow submission and PNG validation"
+      ],
+      "dod": [
+        "A genuine local generated PNG exists and validates.",
+        "No cloud API used; measured memory fits the available profile."
+      ],
+      "deps": [
+        "RZ-016"
+      ],
+      "refs": [
+        "docs/SETUP.md",
+        "docs/ASSET_PIPELINE.md",
+        "docs/ART_BIBLE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P3",
+        "graphics"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-018",
+      "title": "Add reference control and establish approved visual identity",
+      "epic": "E-ART",
+      "area": "graphics",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P3",
+      "summary": "Add compatible reference/pose controls incrementally and review a small candidate set.",
+      "why": "Deliver the prerequisite and evidence needed for add reference control and establish approved visual identity.",
+      "steps": [
+        "Add IP-Adapter/encoder and ControlNet independently as needed.",
+        "Compare reference fidelity, silhouette and pose at gameplay scale.",
+        "Obtain owner approval of reference/style and record versions."
+      ],
+      "outputs": [
+        "workflows/character.json",
+        "reports/art-review.md",
+        "docs/ART_BIBLE.md"
+      ],
+      "checks": [
+        "Each controlled workflow smoke and peak-VRAM measurement",
+        "Human candidate/reference review"
+      ],
+      "dod": [
+        "Approved visual reference is identified by hash.",
+        "Control configuration is reproducible and no identity guarantee is overstated."
+      ],
+      "deps": [
+        "RZ-017"
+      ],
+      "refs": [
+        "docs/ART_BIBLE.md",
+        "docs/ASSET_PIPELINE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P3",
+        "graphics"
+      ],
+      "evidence": [],
+      "gate": "Owner visual review is required before production promotion.",
+      "note": "Owner visual review is required before production promotion."
+    },
+    {
+      "id": "RZ-019",
+      "title": "Integrate reviewed art and deterministic animation",
+      "epic": "E-ART",
+      "area": "graphics",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P3",
+      "summary": "Promote approved images into the prototype and animate consistent parts.",
+      "why": "Deliver the prerequisite and evidence needed for integrate reviewed art and deterministic animation.",
+      "steps": [
+        "Install Krita/optional plugin when cleanup requires it.",
+        "Prepare transparent sprites/layers and optional Skeleton2D rig.",
+        "Promote, import and inspect in-game at actual display scale."
+      ],
+      "outputs": [
+        "game/assets/",
+        "game/scenes/",
+        "reports/art-integration.md"
+      ],
+      "checks": [
+        "Godot import and in-game visual review",
+        "Reduced-motion and animation/combat separation check"
+      ],
+      "dod": [
+        "Approved assets import with complete provenance.",
+        "Animation does not mutate domain timing; no bulk candidates/weights ship."
+      ],
+      "deps": [
+        "RZ-018"
+      ],
+      "refs": [
+        "docs/ART_BIBLE.md",
+        "docs/ASSET_PIPELINE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P3",
+        "graphics"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-020",
+      "title": "Implement studio services and bounded backend adapters",
+      "epic": "E-MCP",
+      "area": "studio",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P4",
+      "summary": "Create independently testable Python services around verified image/Godot interfaces.",
+      "why": "Deliver the prerequisite and evidence needed for implement studio services and bounded backend adapters.",
+      "steps": [
+        "Create isolated Python project, pin dependencies and commit lock.",
+        "Implement typed job registry, idempotency and bounded adapter calls.",
+        "Cover timeout, invalid input/path and failed backend behavior."
+      ],
+      "outputs": [
+        "tools/studio_mcp/pyproject.toml",
+        "tools/studio_mcp/uv.lock",
+        "tools/studio_mcp/src/studio_mcp/"
+      ],
+      "checks": [
+        "Locked clean-environment install",
+        "Python adapter/job tests",
+        "Real image and Godot adapter smoke"
+      ],
+      "dod": [
+        "CLI/application services work before MCP exposure.",
+        "Structured failures and job identity survive errors."
+      ],
+      "deps": [
+        "RZ-015",
+        "RZ-019"
+      ],
+      "refs": [
+        "docs/STUDIO_MCP.md",
+        "docs/ARCHITECTURE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P4",
+        "studio"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-021",
+      "title": "Expose and verify Studio MCP in the coding client",
+      "epic": "E-MCP",
+      "area": "studio",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P4",
+      "summary": "Expose the verified services through local stdio MCP and test the client.",
+      "why": "Deliver the prerequisite and evidence needed for expose and verify studio mcp in the coding client.",
+      "steps": [
+        "Implement SDK transport with stderr logs and typed schemas.",
+        "Create working workspace mcp.json only after package exists.",
+        "Probe initialization/list/status/error and actual invocation in Copilot; test DeepSeek if available."
+      ],
+      "outputs": [
+        "tools/studio_mcp/src/studio_mcp/server.py",
+        ".vscode/mcp.json",
+        "reports/mcp-client-smoke.md"
+      ],
+      "checks": [
+        "Protocol integration tests",
+        "Actual coding-client tool call with artifact evidence"
+      ],
+      "dod": [
+        "Copilot can invoke the server and receive real results.",
+        "DeepSeek support is either tested or explicitly reported unavailable; no fabricated compatibility."
+      ],
+      "deps": [
+        "RZ-020"
+      ],
+      "refs": [
+        "docs/STUDIO_MCP.md",
+        "docs/SETUP.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P4",
+        "studio"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-022",
+      "title": "Serialize GPU jobs and recover interrupted work",
+      "epic": "E-MCP",
+      "area": "studio",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P4",
+      "summary": "Coordinate project-owned GPU services across processes with bounded recovery.",
+      "why": "Deliver the prerequisite and evidence needed for serialize gpu jobs and recover interrupted work.",
+      "steps": [
+        "Implement shared lease and queue, cancellation and restart recovery.",
+        "Test two clients/processes and stale-owner recovery.",
+        "Verify switching/release for an installed backend and retain failures."
+      ],
+      "outputs": [
+        "tools/studio_mcp/src/studio_mcp/scheduler.py",
+        "reports/gpu-scheduler.md"
+      ],
+      "checks": [
+        "Multi-process concurrency/crash/cancel tests",
+        "Real service stop/unload and memory observation"
+      ],
+      "dod": [
+        "Only one project GPU generation executes at a time.",
+        "No unrelated process is killed; lost jobs are explicit and leases recover."
+      ],
+      "deps": [
+        "RZ-021"
+      ],
+      "refs": [
+        "docs/STUDIO_MCP.md",
+        "docs/ASSET_PIPELINE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P4",
+        "studio"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-023",
+      "title": "Install ACE-Step and generate local music",
+      "epic": "E-AUDIO",
+      "area": "audio",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P5",
+      "summary": "Install the primary upstream backend and implement bounded local music jobs.",
+      "why": "Deliver the prerequisite and evidence needed for install ace-step and generate local music.",
+      "steps": [
+        "Verify model/code license and actual low-memory profile.",
+        "Install isolated backend and discover pinned API schema.",
+        "Generate a short instrumental candidate through the adapter/MCP."
+      ],
+      "outputs": [
+        "tools/studio_mcp/src/studio_mcp/adapters/music.py",
+        "reports/music-smoke.md",
+        "config/model-manifest.json"
+      ],
+      "checks": [
+        "Actual local async API job and audio decode",
+        "OOM/timeout and queue-switch checks"
+      ],
+      "dod": [
+        "Genuine music candidate with provenance exists.",
+        "Memory/time measured; no parallel model residency or paid fallback."
+      ],
+      "deps": [
+        "RZ-022"
+      ],
+      "refs": [
+        "docs/SETUP.md",
+        "docs/ASSET_PIPELINE.md",
+        "docs/STUDIO_MCP.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P5",
+        "audio"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-024",
+      "title": "Install Stable Audio and generate local SFX",
+      "epic": "E-AUDIO",
+      "area": "audio",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P5",
+      "summary": "Implement a separate local SFX worker using a reviewed model.",
+      "why": "Deliver the prerequisite and evidence needed for install stable audio and generate local sfx.",
+      "steps": [
+        "Verify selected weight license and supported inference parameters.",
+        "Install isolated worker and generate one short effect.",
+        "Expose bounded SFX tool and exercise GPU switching."
+      ],
+      "outputs": [
+        "tools/studio_mcp/src/studio_mcp/adapters/sfx.py",
+        "reports/sfx-smoke.md",
+        "config/model-manifest.json"
+      ],
+      "checks": [
+        "Actual local SFX job and ffprobe/decode check",
+        "Cross-backend lease/memory-switch observation"
+      ],
+      "dod": [
+        "SFX candidate exists with exact provenance.",
+        "Unavailable/failed generation remains an error, not placeholder success."
+      ],
+      "deps": [
+        "RZ-023"
+      ],
+      "refs": [
+        "docs/SETUP.md",
+        "docs/ASSET_PIPELINE.md",
+        "docs/STUDIO_MCP.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P5",
+        "audio"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-025",
+      "title": "Process and integrate reviewed loops and effects",
+      "epic": "E-AUDIO",
+      "area": "audio",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P5",
+      "summary": "Use FFmpeg and optional Audacity to prepare reviewed game-ready audio.",
+      "why": "Deliver the prerequisite and evidence needed for process and integrate reviewed loops and effects.",
+      "steps": [
+        "Install missing FFmpeg/ffprobe and optional editor.",
+        "Normalize/trim/fade and verify loop boundaries; record parameters.",
+        "Review and promote audio; integrate playback, buses and mute."
+      ],
+      "outputs": [
+        "game/assets/audio/",
+        "game/src/presentation/",
+        "reports/audio-review.md"
+      ],
+      "checks": [
+        "ffprobe plus decode checks",
+        "Audible loop/artifact review and in-game mix/mute tests"
+      ],
+      "dod": [
+        "Loop requests pass actual boundary listening checks.",
+        "Approved audio is audible, unclipped, appropriately balanced and has provenance."
+      ],
+      "deps": [
+        "RZ-024"
+      ],
+      "refs": [
+        "docs/ASSET_PIPELINE.md",
+        "docs/ART_BIBLE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P5",
+        "audio"
+      ],
+      "evidence": [],
+      "gate": "Human audible review required; do not invent listening results.",
+      "note": "Human audible review required; do not invent listening results."
+    },
+    {
+      "id": "RZ-026",
+      "title": "Install Android export tooling and build a debug APK",
+      "epic": "E-ANDROID",
+      "area": "android",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P6",
+      "summary": "Install verified SDK/JDK/templates and create a real debug build.",
+      "why": "Deliver the prerequisite and evidence needed for install android export tooling and build a debug apk.",
+      "steps": [
+        "Follow exact pinned Godot export requirements.",
+        "Create debug preset and bounded export wrapper.",
+        "Build, hash and inspect export contents."
+      ],
+      "outputs": [
+        "game/export_presets.cfg",
+        "tools/build_android.py",
+        "builds/runtime-zero-debug.apk",
+        "reports/android-build.md"
+      ],
+      "checks": [
+        "Godot debug export wrapper",
+        "APK contents check for excluded studio/backlog/models"
+      ],
+      "dod": [
+        "Debug APK is produced by the actual exporter.",
+        "No credentials/model weights/development board included."
+      ],
+      "deps": [
+        "RZ-025"
+      ],
+      "refs": [
+        "docs/ANDROID.md",
+        "docs/SETUP.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P6",
+        "android"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "RZ-027",
+      "title": "Verify the RPG on a physical Android device",
+      "epic": "E-ANDROID",
+      "area": "android",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 3,
+      "phase": "P6",
+      "summary": "Install the exact debug APK and measure the real mobile experience.",
+      "why": "Deliver the prerequisite and evidence needed for verify the rpg on a physical android device.",
+      "steps": [
+        "Select authorized device and handle USB debugging approval.",
+        "Run launch/combat/save/background/touch/audio checklist.",
+        "Measure frame-time/memory and fix blocking defects."
+      ],
+      "outputs": [
+        "reports/android-device-qa.md"
+      ],
+      "checks": [
+        "adb device/install/launch checks",
+        "Physical-device acceptance scenarios"
+      ],
+      "dod": [
+        "Device/build hash and observed results recorded.",
+        "Required scenarios pass; no claimed performance without measurements."
+      ],
+      "deps": [
+        "RZ-026"
+      ],
+      "refs": [
+        "docs/ANDROID.md",
+        "docs/TESTING.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P6",
+        "android"
+      ],
+      "evidence": [],
+      "gate": "Needs authorized physical device and actual QA.",
+      "note": "Needs authorized physical device and actual QA."
+    },
+    {
+      "id": "RZ-028",
+      "title": "Deliver the reviewed vertical slice and next backlog",
+      "epic": "E-ANDROID",
+      "area": "design",
+      "type": "task",
+      "status": "later",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 3,
+      "phase": "P6",
+      "summary": "Hand off the playable RPG, repeatable setup and honest remaining work.",
+      "why": "Deliver the prerequisite and evidence needed for deliver the reviewed vertical slice and next backlog.",
+      "steps": [
+        "Re-run applicable gates and reconcile backlog/evidence.",
+        "Provide launch/debug install commands and reports.",
+        "Obtain owner feedback and create prioritized expansion/correction tasks."
+      ],
+      "outputs": [
+        "reports/vertical-slice-handoff.md",
+        "backlog/backlog.json",
+        "README.md"
+      ],
+      "checks": [
+        "All relevant game/studio/device gates",
+        "Human vertical-slice review"
+      ],
+      "dod": [
+        "Owner can run the delivered slice using tested instructions.",
+        "No claim of store publication or fully finished game; blockers remain explicit."
+      ],
+      "deps": [
+        "RZ-027"
+      ],
+      "refs": [
+        "docs/ROADMAP.md",
+        "docs/AGENT_HANDOFF.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P6",
+        "design"
+      ],
+      "evidence": [],
+      "gate": "Owner review; publication remains separate scope.",
+      "note": "Owner review; publication remains separate scope."
+    },
+    {
+      "id": "RZ-029",
+      "title": "Expand campaign only after scope approval",
+      "epic": "E-LATER",
+      "area": "content",
+      "type": "task",
+      "status": "later",
+      "priority": "P3",
+      "size": "M",
+      "value": 2,
+      "risk": 3,
+      "phase": "P7",
+      "summary": "Define additional RPG encounters and content only from approved scope.",
+      "why": "Deliver the prerequisite and evidence needed for expand campaign only after scope approval.",
+      "steps": [
+        "Obtain owner direction on campaign size, narrative and progression.",
+        "Split expansion into small data/mechanic/art tasks.",
+        "Require held-out balance and human playtests for new encounters."
+      ],
+      "outputs": [
+        "docs/DECISIONS.md",
+        "backlog/backlog.json"
+      ],
+      "checks": [
+        "Owner scope review",
+        "Backlog validation"
+      ],
+      "dod": [
+        "New scope has explicit owner approval and dependency-linked acceptance criteria."
+      ],
+      "deps": [
+        "RZ-028"
+      ],
+      "refs": [
+        "docs/DECISIONS.md",
+        "docs/ROADMAP.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P7",
+        "content"
+      ],
+      "evidence": [],
+      "gate": "Optional: do not promote without explicit owner authorization.",
+      "note": "Optional: do not promote without explicit owner authorization."
+    },
+    {
+      "id": "RZ-030",
+      "title": "Evaluate style LoRA only after dataset approval",
+      "epic": "E-LATER",
+      "area": "graphics",
+      "type": "spike",
+      "status": "later",
+      "priority": "P3",
+      "size": "M",
+      "value": 2,
+      "risk": 3,
+      "phase": "P7",
+      "summary": "Investigate training only when approved style data and actual hardware justify it.",
+      "why": "Deliver the prerequisite and evidence needed for evaluate style lora only after dataset approval.",
+      "steps": [
+        "Verify rights and consistency of the approved dataset.",
+        "Measure feasibility and storage/VRAM using supported training tooling.",
+        "Propose a bounded experiment with validation split before training."
+      ],
+      "outputs": [
+        "reports/lora-feasibility.md"
+      ],
+      "checks": [
+        "Dataset/license review and measured feasibility spike"
+      ],
+      "dod": [
+        "No training starts without owner-approved dataset and scope."
+      ],
+      "deps": [
+        "RZ-028"
+      ],
+      "refs": [
+        "docs/ART_BIBLE.md",
+        "docs/ASSET_PIPELINE.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P7",
+        "graphics"
+      ],
+      "evidence": [],
+      "gate": "Optional: no automatic model training or downloads.",
+      "note": "Optional: no automatic model training or downloads."
+    }
+  ]
+}

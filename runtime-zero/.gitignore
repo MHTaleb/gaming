@@ -1,0 +1,25 @@
+# Local machine configuration and credentials
+.env
+.env.*
+!.env.example
+config/local.*
+**/export_credentials.cfg
+*.keystore
+*.jks
+# Environments and generated state
+.venv/
+**/.venv/
+**/__pycache__/
+**/*.pyc
+node_modules/
+**/.godot/
+builds/
+reports/local/
+# Models and bulk candidate generation stay outside Git
+models/
+candidates/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
