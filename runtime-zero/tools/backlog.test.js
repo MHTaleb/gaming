@@ -5,14 +5,18 @@ const {validate, load, readyItems} = require('./backlog');
 const http = require('node:http');
 const {handler} = require('./serve');
 const fixture = () => JSON.parse(JSON.stringify(load()));
-test('only inventory is initially executable', () => {
+test('backlog is valid and only dependency-satisfied tickets are ready', () => {
   const d = fixture();
   assert.deepEqual(validate(d).problems, []);
-  assert.deepEqual(readyItems(d.items).map((i) => i.id), ['RZ-001']);
+  const byId = new Map(d.items.map((i) => [i.id, i]));
+  assert(readyItems(d.items).every((i) => i.status === 'next' && i.deps.every((dep) => byId.get(dep).status === 'done')),
+    'ready rows must be next tickets whose dependencies are done');
 });
 test('unmet prerequisites cannot be ready or doing', () => {
   for (const status of ['next','doing']) {
-    const d = fixture(); d.items[1].status = status; d.items[1].owner = 'test';
+    const d = fixture();
+    d.items[0].status = 'later';
+    d.items[1].status = status; d.items[1].owner = 'test';
     assert(validate(d).problems.some((p) => p.includes('unmet dependency')));
     assert(!readyItems(d.items).some((i) => i.id === 'RZ-002'));
   }
@@ -25,9 +29,9 @@ test('long and self dependency cycles fail', () => {
   assert(validate(d).problems.some((p) => p.includes('dependency cycle')));
 });
 test('done needs evidence and doing needs ownership', () => {
-  const d = fixture(); d.items[0].status = 'done';
+  const d = fixture(); d.items[0].status = 'done'; d.items[0].evidence = [];
   assert(validate(d).problems.some((p) => p.includes('without evidence')));
-  d.items[0].status = 'doing';
+  d.items[0].status = 'doing'; delete d.items[0].owner;
   assert(validate(d).problems.some((p) => p.includes('without owner')));
 });
 test('unknown dependencies and malformed instruction arrays fail', () => {
@@ -39,7 +43,7 @@ test('unknown dependencies and malformed instruction arrays fail', () => {
 test('blocked reason and completion dependencies are enforced', () => {
   const d = fixture(); d.items[0].status = 'blocked';
   assert(validate(d).problems.some((p) => p.includes('does not say')));
-  d.items[1].status = 'done';
+  d.items[0].status = 'later'; d.items[1].status = 'done';
   d.items[1].evidence = [{command:'test',result:'passed',artifact:'reports/example.md',environment:'test'}];
   assert(validate(d).problems.some((p) => p.includes('done but its dependency')));
 });

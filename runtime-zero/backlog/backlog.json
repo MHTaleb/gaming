@@ -110,7 +110,7 @@
       "epic": "E-ENV",
       "area": "setup",
       "type": "spike",
-      "status": "next",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "value": 5,
@@ -144,7 +144,26 @@
         "P0",
         "setup"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "python3 tools/doctor.py",
+          "result": "passed",
+          "artifact": "reports/environment.md",
+          "environment": "WSL2 Ubuntu 20.04.6 on Lenovo 83GS; read-only inventory, exit 0"
+        },
+        {
+          "command": "powershell.exe Get-CimInstance Win32_ComputerSystem/Win32_OperatingSystem/Win32_VideoController; Get-Volume; wsl --status; wsl --list --verbose",
+          "result": "passed",
+          "artifact": "reports/environment.md",
+          "environment": "Windows 11 build 26200 on the same physical Lenovo 83GS; measured 23.7 GiB RAM, 94.4 GB free on C:, WSL2 Ubuntu-20.04 default distro"
+        },
+        {
+          "command": "nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv",
+          "result": "passed",
+          "artifact": "reports/environment.md",
+          "environment": "WSL2 GPU passthrough; measured RTX 4050 Laptop GPU 6141 MiB / driver 581.86; no Linux NVIDIA driver installed"
+        }
+      ]
     },
     {
       "id": "RZ-002",
@@ -152,7 +171,8 @@
       "epic": "E-ENV",
       "area": "setup",
       "type": "task",
-      "status": "later",
+      "status": "doing",
+      "owner": "copilot-session-2026-09-20 (DeepSeek V4.1 Flash selected in Copilot)",
       "priority": "P0",
       "size": "L",
       "value": 5,
