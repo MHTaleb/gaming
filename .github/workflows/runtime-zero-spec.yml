@@ -1,0 +1,27 @@
+name: runtime-zero specification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runtime-zero/**'
+      - '.github/instructions/runtime-zero.instructions.md'
+      - '.github/workflows/runtime-zero-spec.yml'
+  pull_request:
+    paths:
+      - 'runtime-zero/**'
+      - '.github/instructions/runtime-zero.instructions.md'
+      - '.github/workflows/runtime-zero-spec.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Check backlog, references and board tooling
+        working-directory: runtime-zero
+        run: node tools/verify.js
