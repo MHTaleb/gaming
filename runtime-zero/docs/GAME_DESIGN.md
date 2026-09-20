@@ -11,7 +11,7 @@ Use turn-based combat for this prototype because it makes decisions, replay and 
 ## Combat rules to implement and test
 
 - Player chooses Attack, Guard, or Skill and a valid living target; one valid command advances the round. Invalid input consumes neither resources nor RNG.
-- Attack deals `max(1, attack - defense)` physical damage. Guard halves the next incoming damage with integer floor and minimum 1, then expires at the hero's next turn. Skill costs 3 energy and deals `max(1, 2*attack - defense)`; insufficient energy rejects the action without advancing time.
+- Attack deals `max(1, attack - defense)` physical damage. Guard halves only the next incoming hit — that hit consumes the Guard — with integer floor and a minimum of 1 damage; an unused Guard expires when the hero's next turn begins (rules v2, RV-001). Guard never stacks. Skill costs 3 energy and deals `max(1, 2*attack - defense)`; insufficient energy rejects the action without advancing time.
 - Resolve the player's action, then living enemies in stable actor-ID order. Remove defeated actors before their turn. At round end regenerate 1 hero energy up to the cap. Evaluate terminal state after each action; never let a dead actor act.
 - Prototype baseline hero: HP 100, attack 12, defense 3, energy cap 6, starting energy 6. Normal enemy: HP 35, attack 9, defense 1. These are starting tuning fixtures, not proven balance values.
 - Guard equipment: +25 maximum HP; Power equipment: +3 attack; Battery equipment: +3 energy cap. Choose exactly one. Explain the effect in the loadout UI and retain the choice for the run.

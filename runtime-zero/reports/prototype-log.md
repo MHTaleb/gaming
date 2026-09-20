@@ -66,10 +66,9 @@ to cap; boss telegraphs after every third normal attack and then hits for double
 victory/defeat evaluated after every action; round cap → STALLED (never a win); HP/energy
 clamped; rejected commands change no state, consume no sequence number and emit no events.
 
-Pinned interpretation for owner review (RZ-012): "guard expires at the hero's next turn"
-is implemented as *every* incoming hit while active is halved (floor, min 1), and the flag
-clears when the hero's next turn begins — not as a single-use shield. One line to change
-if the owner prefers single-hit semantics.
+**Superseded by RV-001 V-001 (2026-09-20):** the paragraph below recorded a full-round reading of Guard; the validator demonstrated that the specification requires single-use semantics ("the next incoming damage" = one hit). The corrected contract is rules v2 in `game/src/domain/rules.gd`: Guard halves only the next incoming hit, that hit consumes the Guard, and an unused Guard expires at the hero's next turn. The independent regression `validation/guard_contract.gd` passes (hits [3, 6], hero HP 91, input state unchanged).
+
+> Historical (RZ-005 as committed): "guard expires at the hero's next turn" was implemented as *every* incoming hit while active being halved (floor, min 1), with the flag clearing when the hero's next turn begins — not as a single-use shield.
 
 ### Checks actually run
 
@@ -80,3 +79,20 @@ if the owner prefers single-hit semantics.
 
 Note for CI (RZ-011): a fresh checkout must run the headless editor import once before
 `--script` tests, so the GDScript global class cache exists in `.godot/`.
+
+## RV-001 corrections (2026-09-20)
+
+- **V-001 (Guard, high)**: rules v2 — single-use. `game/src/domain/combat_resolver.gd`
+  consumes `guard_active` on the first incoming hit (`guard_halved` carries
+  `consumed: true`); unused guards still expire at the hero's next turn; minimum-1 floor
+  and no stacking preserved. `docs/GAME_DESIGN.md` wording made explicit. Combat suite is
+  now **96 checks**; the validator's independent `validation/guard_contract.gd` passes
+  (hits [3, 6], hero HP 91, input immutable).
+- **V-002 (toolchain)**: `tools/env.sh` activates Node 22+, uv and the pinned Godot from
+  a fresh terminal without editing global shell config.
+- **V-003 (evidence)**: sanitized logs and the title PNG live under
+  `validation/evidence/001-response/`; exact commands, exits and hashes are in
+  `reviews/RV-001/response.json`.
+- **V-004 (docs)**: README, START_HERE, reports index and the decision register updated
+  to describe the implemented scaffold/core and the still-pending game, studio and
+  device work.

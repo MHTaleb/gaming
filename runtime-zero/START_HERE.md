@@ -2,10 +2,10 @@
 
 Execute in order. Paths and commands below are relative to `runtime-zero/` unless stated otherwise.
 
-1. Read reviews/README.md, then run `node tools/reviews.js --next` (or read reviews/index.json and its records if Node is missing). Address blocking review requests before affected implementation. Establish whether the terminal is on Housseyn's Lenovo, WSL on that Lenovo, a container, or a remote machine. Record the distinction. His reported GPU is an RTX 4060 laptop GPU; actual VRAM, RAM and SSD availability are still unmeasured.
+1. Read reviews/README.md, then run `node tools/reviews.js --next` (or read reviews/index.json and its records if Node is missing). Address blocking review requests before affected implementation. Establish whether the terminal is on Housseyn's Lenovo, WSL on that Lenovo, a container, or a remote machine. Record the distinction. Housseyn confirmed on 2026-09-20 that the GPU is an RTX 4050 Laptop with 6 GB VRAM (the earlier RTX 4060 statement was a mistake); local measurements and remaining unknowns are recorded in reports/environment.md.
 2. Follow docs/SETUP.md, RZ-001 then RZ-002. Do not start GPU/model downloads during machine inventory. Missing Node does not block reading the JSON manually or installing Node.
 3. Read docs/DECISIONS.md. RPG theme examples survived the earlier discussion, but a complete gameplay design did not. Use the explicitly provisional prototype only. RZ-003 records/reconciles design; RZ-012 is the owner review gate before expanding content.
-4. Run `node tools/verify.js`. This verifies only the specification package and board. It is not a game test. Launch `node tools/serve.js` and verify the board reads this project's JSON.
+4. In a fresh terminal, activate the project toolchain first: `source tools/env.sh` (makes Node 22+, uv and the pinned Godot resolve; the launcher is the documented route for every command below). Then run `node tools/verify.js`. This verifies only the specification package and board. It is not a game test. Launch `node tools/serve.js` and verify the board reads this project's JSON.
 5. Run `node tools/reviews.js --next`, then `node tools/backlog.js --ready`; claim one eligible unheld ticket. Install needed tooling as part of each phase. A dependency is complete only if the recorded evidence supports it.
 6. Implement the Godot prototype before custom image/audio tooling. Use simple geometric placeholder art and silence or locally synthesized placeholder cues.
 7. Add MCP after the runtime and command-line adapters are independently testable. Confirm the selected coding model actually supports tools in the installed client. DeepSeek availability in Copilot is a capability probe, not an assumption.
@@ -13,6 +13,6 @@ Execute in order. Paths and commands below are relative to `runtime-zero/` unles
 
 ## Available now versus future
 
-Available now: backlog validator, ready query, read-only board server, specification verification, specification documents, and a safe read-only machine doctor.
+Available now: backlog validator, ready query, review inbox (`node tools/reviews.js`), read-only board server, specification verification, specification documents, a safe read-only machine doctor, the project toolchain launcher (`tools/env.sh` — Node 22+, uv, pinned Godot 4.7.2), the launchable Godot project (`game/project.godot` with the provisional title scene) and the deterministic combat core with its headless test entry point (`game/tests/run_tests.gd`).
 
-Future contracts, NOT executable yet: `game/project.godot`, the Godot test/simulation scripts, Studio MCP Python package, ComfyUI workflows, asset promotion commands, and Android exports. Their implementing tickets must create them before invoking them. Do not mistake a command shown in a specification for an installed tool.
+Future contracts, NOT executable yet: `game/content/` data and validators, combat UI scenes, loadout/result scenes, the run loop and saves, the headless simulation and balance tooling, Studio MCP Python package, ComfyUI workflows, asset promotion commands, audio backends and Android exports. Their implementing tickets must create them before invoking them. Do not mistake a command shown in a specification for an installed tool.

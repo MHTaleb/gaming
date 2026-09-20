@@ -125,3 +125,13 @@ until Housseyn opts in to a PATH change (line 2 of `.zshrc` is commented out).
 - A `node tools/serve.js` from **2026-09-19** with cwd `packet-defense/` was left untouched (not this
   project's process, not on this project's port). If it is unwanted, Housseyn can stop it.
 - This session's board server was stopped after verification; port 8090 is free.
+
+## RV-001 V-002 correction (2026-09-20)
+
+The RZ-002 entry above recorded bare `uv`/`godot` commands while also documenting that
+`~/.local/bin` was absent from PATH; that was an inexact replay route. The documented route is
+now `source tools/env.sh` — a project-local launcher that edits no global shell config.
+Through it, `node`, `uv`, `godot` and the managed Python resolve from a fresh terminal,
+including the VS Code case that inherits `NVM_BIN=v20.20.0`. Exact commands and transcripts:
+`validation/evidence/001-response/tools.log`; see also `reviews/RV-001/response.json`.
+The system `python3.8-venv` limitation stands and is not required by this route.

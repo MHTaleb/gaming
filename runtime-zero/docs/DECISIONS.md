@@ -13,7 +13,7 @@ Treat status as part of every requirement. Record new decisions with date, autho
 | D-007 | Provisional | Small single-player 2D encounter RPG, turn-based prototype, landscape presentation, desktop development then Android. | RZ-003 / RZ-012 |
 | D-008 | Provisional | One hero, three encounters, three initial equipment choices; expand benchmark builds later. | RZ-012 |
 | D-009 | Unresolved | Final combat model, movement/exploration, campaign size, narrative, monetization, final art style and target Android device range. | RZ-012 before content expansion |
-| D-010 | Capability unverified | Exact Copilot/DeepSeek integration and tool calling on the user's installed versions/account. | RZ-002 and RZ-021 |
+| D-010 | Partially probed, 2026-09-20 | The installed client executed real file/terminal/edit tool calls in the implementation session (evidence: `validation/evidence/001-response/client-tool.log`). Which backend served individual responses is user-stated (DeepSeek V4.1 Flash selected), not independently verifiable from inside a session; ordinary terminal access is not MCP functionality. | RZ-021 for MCP exposure; validator review of the probe evidence |
 | D-011 | Deferred | Multiplayer, backend, ads, purchases, LoRA training, offline local coding model, store release. | Separate owner-authorized scope |
 
 ## Missing context rule

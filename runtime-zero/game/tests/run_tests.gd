@@ -67,6 +67,12 @@ func _all_sequence_numbers(events: Array) -> Array:
 		out.append(event.sequence)
 	return out
 
+func _find_event(events: Array, type: String) -> RZCombatEvent:
+	for event in events:
+		if event.type == type:
+			return event
+	return null
+
 # ---------------------------------------------------------------- tests
 
 func _test_attack_mitigation_and_clamps() -> void:
@@ -91,6 +97,17 @@ func _test_attack_mitigation_and_clamps() -> void:
 	_expect(kill_types.has("defeated"), "defeated event emitted")
 	_expect_eq(kill_types[kill_types.size() - 1], "victory", "victory evaluated after the action")
 
+	# Damage floor with extreme defense, and immutability of the accepted input.
+	var tanky := _basic_state()
+	tanky.actor_by_id("memory_leak").defense = 50
+	var chip := _resolve(tanky, "attack", "memory_leak")
+	_expect_eq(chip.state.actor_by_id("memory_leak").hp, 34, "attack floor keeps minimum 1 damage")
+
+	var immut := _basic_state()
+	var immut_hash := immut.state_hash()
+	_resolve(immut, "attack", "memory_leak")
+	_expect_eq(immut.state_hash(), immut_hash, "accepted input state is not mutated")
+
 func _test_skill_cost_and_bounds() -> void:
 	var state := _basic_state()
 	var result := _resolve(state, "skill", "memory_leak")
@@ -109,6 +126,15 @@ func _test_skill_cost_and_bounds() -> void:
 	_expect_eq(rejected.reason, RZCombatResolver.REASON_INSUFFICIENT_ENERGY, "rejection reason is insufficient_energy")
 	_expect_eq(rejected.state.state_hash(), before, "rejected skill consumes nothing")
 	_expect_eq(rejected.events.size(), 0, "rejected skill emits no events")
+
+	# Exact energy boundary: 3 accepted, 2 rejected.
+	var exactly := _basic_state()
+	exactly.actor_by_id("hero").energy = 3
+	_expect(_resolve(exactly, "skill", "memory_leak").accepted, "skill at exactly 3 energy is accepted")
+	var not_enough := _basic_state()
+	not_enough.actor_by_id("hero").energy = 2
+	_expect_eq(_resolve(not_enough, "skill", "memory_leak").reason,
+		RZCombatResolver.REASON_INSUFFICIENT_ENERGY, "skill at 2 energy is rejected")
 
 func _test_invalid_commands_consume_nothing() -> void:
 	var state := _basic_state()
@@ -145,28 +171,41 @@ func _test_invalid_commands_consume_nothing() -> void:
 	_expect_eq(replayed.reason, RZCombatResolver.REASON_STALE_TURN, "duplicate input is stale, not re-executed")
 
 func _test_guard_halves_and_expires() -> void:
+	# Single enemy: the one incoming hit is halved (6 -> 3) and consumes the guard.
 	var state := _basic_state()
 	var first := _resolve(state, "guard")
 	_expect(first.accepted, "guard accepts an empty target")
 	var after_first: RZCombatState = first.state
 	_expect_eq(after_first.actor_by_id("hero").hp, 97, "6 damage halved to 3 (floor, min 1)")
-	_expect(after_first.actor_by_id("hero").guard_active, "guard stays active until the hero's next turn")
-	var halved: RZCombatEvent = null
-	for event in first.events:
-		if event.type == "guard_halved":
-			halved = event
-			break
+	_expect(not after_first.actor_by_id("hero").guard_active, "guard is consumed by the first incoming hit")
+	var halved := _find_event(first.events, "guard_halved")
 	_expect(halved != null, "guard_halved event emitted")
 	if halved != null:
 		_expect_eq(halved.payload.before, 6, "halving records the before value")
 		_expect_eq(halved.payload.after, 3, "halving records the after value")
+		_expect_eq(halved.payload.consumed, true, "halving records consumption")
 
-	var second := _resolve(after_first, "guard")
-	var after_second: RZCombatState = second.state
-	var guard_events := _types(second.events)
-	_expect(guard_events.has("guard_expired"), "previous guard expires at the hero's next turn")
-	_expect_eq(after_second.actor_by_id("hero").hp, 94, "second guard halves again (no stacking, no quartering)")
-	_expect(after_second.actor_by_id("hero").guard_active, "re-guarding starts fresh")
+	# The next round is unguarded: full 6 damage.
+	var second_hit := _resolve(after_first, "attack", "memory_leak")
+	_expect_eq(second_hit.state.actor_by_id("hero").hp, 91, "consumed guard does not reduce the next round")
+
+	# Re-guarding starts a fresh single-use guard (no stacking).
+	var reguard := _resolve(second_hit.state, "guard")
+	_expect_eq(reguard.state.actor_by_id("hero").hp, 88, "re-guard halves exactly one hit again")
+
+	# Unused guard expiry (constructed state: current rules always attack, so the
+	# unused-expiry path is pinned directly for future rule changes).
+	var unused := _basic_state()
+	unused.actor_by_id("hero").guard_active = true
+	var expired := _resolve(unused, "attack", "memory_leak")
+	_expect(_types(expired.events).has("guard_expired"), "an unused guard expires at the hero's next turn")
+	_expect_eq(expired.state.actor_by_id("hero").hp, 94, "expired guard no longer halves the hit")
+
+	# Minimum damage under guard: 1 stays 1.
+	var weak := _basic_state()
+	weak.actor_by_id("memory_leak").attack = 1
+	var weak_guard := _resolve(weak, "guard")
+	_expect_eq(weak_guard.state.actor_by_id("hero").hp, 99, "guard floor keeps minimum 1 damage")
 
 func _test_enemy_order_and_dead_skip() -> void:
 	var state := _two_enemy_state()
@@ -183,14 +222,18 @@ func _test_enemy_order_and_dead_skip() -> void:
 	_expect_eq(result.events[0].actor_id, "hero", "hero acts before the enemy phase")
 	_expect_eq(next.actor_by_id("hero").hp, 94, "only one enemy attack landed (6 damage)")
 
-	# Stable ID order with both alive.
+	# Stable ID order with both alive; single-use guard: first hit halved, second full.
 	var both := _two_enemy_state()
 	var second_result := _resolve(both, "guard")
 	var order: Array = []
+	var amounts: Array = []
 	for event in second_result.events:
 		if event.type == "damage":
 			order.append(event.actor_id)
+			amounts.append(event.payload.amount)
 	_expect_eq(order, ["enemy_a", "enemy_b"], "enemies resolve in stable actor-ID order")
+	_expect_eq(amounts, [3, 6], "guard halves only the first incoming hit (RV-001 acceptance)")
+	_expect_eq(second_result.state.actor_by_id("hero").hp, 91, "two-enemy guard leaves hero at 91 HP")
 
 func _test_terminal_states() -> void:
 	var finish_state := _basic_state()
@@ -234,6 +277,7 @@ func _test_boss_telegraph_and_heavy() -> void:
 		# raw 24 - defense 3 = 21; guard floor(21/2) = 10.
 		_expect_eq(heavy_event.payload.amount, 10, "heavy damage is doubled attack, guarded with floor")
 	_expect_eq(heavy_state.actor_by_id("hero").hp, 78, "heavy hit applied exactly once")
+	_expect(not heavy_state.actor_by_id("hero").guard_active, "the heavy hit consumed the active guard")
 
 func _test_round_cap_stall() -> void:
 	_expect_eq(RZRules.ROUND_CAP, 50, "default round cap pinned at 50")

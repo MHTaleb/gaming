@@ -129,6 +129,17 @@
       "result": "passed",
       "checked_at": "2026-09-20",
       "note": "Presence recorded. Session tool-calling evidence lives in reports/environment.md; backend identity per response is not independently verifiable from inside a session."
+    },
+    {
+      "tool": "runtime-zero project toolchain launcher (tools/env.sh)",
+      "version": "1 (RV-001 V-002)",
+      "source_url": "repository file; resolves nvm-managed Node >=22 and the ~/.local/bin user-space tools",
+      "checksum_or_commit": "git-tracked; transcript in validation/evidence/001-response/tools.log",
+      "installed_environment": "runtime-zero/ checkout on WSL2 (Lenovo 83GS)",
+      "verification_command": "zsh -ic 'source tools/env.sh && command -v node uv godot && node --version && uv --version && godot --version'",
+      "result": "passed",
+      "checked_at": "2026-09-20",
+      "note": "Documented activation route for every command in this project: makes Node 22 win over VS Code's inherited NVM_BIN=v20 and puts uv/godot on PATH from a fresh terminal; no global shell config is edited."
     }
   ],
   "unavailable_deferred": [

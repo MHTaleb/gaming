@@ -2,7 +2,7 @@
 
 Housseyn is the product owner. Copilot and DeepSeek are implementation agents. The project is a local-first, technology-fantasy RPG built with Godot and a staged local asset studio.
 
-**Current deliverable: specifications, installation orders, and a working development ticket board. The game, simulator, and Studio MCP have not been implemented. Nothing has been installed on Housseyn's laptop by this change.**
+**Current deliverable: the installed, verified local toolchain with a project-local launcher (`source tools/env.sh` — Node 22+, uv, managed Python, pinned Godot 4.7.2), the working review inbox and Kanban board, a launchable Godot project with a provisional title screen (`game/`), and the deterministic combat core behind `game/tests/run_tests.gd`. Content data, combat UI, loadout/run loop, saves, the headless simulator, the local asset studio, audio and Android are still pending.** Current code status and the open validation request are tracked in `reviews/RV-001/`; see `reports/prototype-log.md` and `reports/environment.md` for executed evidence. This is a scaffold and core, not a playable slice.
 
 ## Execute
 

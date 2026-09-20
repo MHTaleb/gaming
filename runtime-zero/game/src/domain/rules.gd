@@ -1,15 +1,18 @@
 class_name RZRules
 extends RefCounted
-## Versioned combat rules contract (prototype v1).
+## Versioned combat rules contract (prototype v2).
 ##
 ## Values mirror the provisional fixtures in docs/GAME_DESIGN.md. Changing a value
 ## or a resolution rule means bumping RULES_VERSION: replays pin it (DATA_CONTRACTS).
-## v1 resolution is fully integer-based and deterministic. No v1 rule consumes
-## randomness; rng_state exists so approved later mechanics (RZ-013, crit/DoT/speed)
-## can use an explicit, engine-independent stream instead of implicit engine RNG.
+## v2 (RV-001): Guard is single-use - it halves only the next incoming hit and is
+## consumed by it; an unused Guard expires at the hero's next turn. v1 guarded the
+## whole enemy phase.
+## Resolution is fully integer-based and deterministic. No rule consumes randomness;
+## rng_state exists so approved later mechanics (RZ-013, crit/DoT/speed) can use an
+## explicit, engine-independent stream instead of implicit engine RNG.
 
 const SCHEMA_VERSION := 1
-const RULES_VERSION := 1
+const RULES_VERSION := 2
 
 ## One valid command resolves the hero action, the enemy phase and round end.
 const ROUND_CAP := 50
@@ -33,6 +36,6 @@ const KIND_BOSS := "boss"
 static func mitigate(attack_value: int, defense_value: int) -> int:
 	return maxi(1, attack_value - defense_value)
 
-## Guard halves damage with integer floor and minimum 1.
+## Guard halves one incoming hit with integer floor and minimum 1 (single-use, rules v2).
 static func halve_with_floor(damage: int) -> int:
 	return maxi(1, int(floor(float(damage) / 2.0)))

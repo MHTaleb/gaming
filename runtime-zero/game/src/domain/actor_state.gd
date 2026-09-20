@@ -11,7 +11,8 @@ var attack: int = 0
 var defense: int = 0
 var energy: int = 0
 var energy_cap: int = 0
-## Hero only: incoming damage is halved until the hero's next turn begins.
+## Hero only, single-use (rules v2 / RV-001): halves the next incoming hit and is
+## consumed by it; an unused guard expires when the hero's next turn begins.
 var guard_active: bool = false
 ## Boss only: heavy attack is telegraphed for the next boss turn.
 var telegraph_pending: bool = false

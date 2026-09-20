@@ -5,12 +5,17 @@ const {validate, load, readyItems} = require('./backlog');
 const http = require('node:http');
 const {handler} = require('./serve');
 const fixture = () => JSON.parse(JSON.stringify(load()));
-test('backlog is valid and only dependency-satisfied tickets are ready', () => {
+test('backlog is valid and ready rows respect dependencies', () => {
   const d = fixture();
   assert.deepEqual(validate(d).problems, []);
-  const byId = new Map(d.items.map((i) => [i.id, i]));
-  assert(readyItems(d.items).every((i) => i.status === 'next' && i.deps.every((dep) => byId.get(dep).status === 'done')),
-    'ready rows must be next tickets whose dependencies are done');
+  // Isolated fixture: an eligible task is included and an unmet-dependency
+  // task is excluded, without depending on the live backlog's progress state.
+  const items = [
+    {id: 'RZ-901', status: 'done', deps: [], priority: 'P1', value: 3, risk: 2},
+    {id: 'RZ-902', status: 'next', deps: ['RZ-901'], priority: 'P1', value: 3, risk: 2},
+    {id: 'RZ-903', status: 'next', deps: ['RZ-904'], priority: 'P1', value: 3, risk: 2},
+  ];
+  assert.deepEqual(readyItems(items).map((i) => i.id), ['RZ-902']);
 });
 test('unmet prerequisites cannot be ready or doing', () => {
   for (const status of ['next','doing']) {

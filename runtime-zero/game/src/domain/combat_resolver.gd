@@ -20,9 +20,10 @@ const REASON_TARGET_DEAD := "target_dead"
 const REASON_INSUFFICIENT_ENERGY := "insufficient_energy"
 const REASON_TERMINAL := "combat_over"
 
-## Guard expiry interpretation (pinned, provisional): while guard_active, every
-## incoming hit against the hero is halved (floor, min 1); the flag expires when
-## the hero's next turn begins. Recorded in the RZ-005 report for owner review.
+## Guard contract (rules v2, RV-001 V-001): Guard halves only the NEXT incoming hit
+## (integer floor, minimum 1) and that hit consumes it; an unused Guard expires when
+## the hero's next turn begins. Guard never stacks. docs/GAME_DESIGN.md states this
+## contract and validation/guard_contract.gd pins it independently.
 static func resolve(state: RZCombatState, command: RZCombatCommand) -> Dictionary:
 	if state.terminal():
 		return _reject(state, REASON_TERMINAL)
@@ -135,8 +136,9 @@ static func _enemy_turn(working: RZCombatState, events: Array[RZCombatEvent],
 	if hero.guard_active:
 		var before := damage
 		damage = RZRules.halve_with_floor(damage)
+		hero.guard_active = false  # single-use: the first incoming hit consumes the guard (RV-001)
 		_emit(working, events, "guard_halved", enemy.id, hero.id,
-			{"before": before, "after": damage})
+			{"before": before, "after": damage, "consumed": true})
 	hero.hp -= damage
 	hero.clamp_resources()
 	_emit(working, events, "damage", enemy.id, hero.id,

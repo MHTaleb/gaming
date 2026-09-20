@@ -1,5 +1,5 @@
 # Evidence reports
 
-Commit sanitized setup, test, review and session summaries here. Keep large raw logs, generated analysis and private machine output in ignored `reports/local/` or outside the repository. A report must state its actual environment; this cloud workspace cannot certify installation on Housseyn's Lenovo.
+Commit sanitized setup, test, review and session summaries here. Keep large raw logs, generated analysis and private machine output in ignored `reports/local/` or outside the repository. A report must state its actual environment; a cloud workspace cannot certify installation on Housseyn's Lenovo.
 
-No local-machine setup, game implementation, GPU generation or owner playtest evidence exists yet. See docs/REPOSITORY_AUDIT.md for the actual checks performed while creating this specification package.
+Current reports: `environment.md` (measured machine, toolchain lock context), `design-reconciliation.md` (RZ-003 provisional adoption), `prototype-log.md` (RZ-004/RZ-005 build and test log, RV-001 corrections), `session-20260920-1340-copilot.md` (first session handoff), `validation-001.md` (validator's review of `caf1cce` — findings V-001..V-004). The executor response to that review lives in `reviews/RV-001/response.json` with the sanitized evidence bundle under `validation/evidence/001-response/`. GPU generation, audio, Android and owner playtest evidence still do not exist.
