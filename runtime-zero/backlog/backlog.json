@@ -388,7 +388,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "task",
-      "status": "next",
+      "status": "done",
       "priority": "P0",
       "size": "L",
       "value": 5,
@@ -425,7 +425,20 @@
         "P1",
         "gameplay"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "~/.local/bin/godot --headless --path game --script res://tests/run_tests.gd",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "Godot 4.7.2.stable.official.ed1daf0bf headless on WSL2/Lenovo; ALL TESTS PASSED (86 checks); exit 0"
+        },
+        {
+          "command": "~/.local/bin/godot --headless --path game --editor --quit",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "class-name rescan after adding domain scripts; exit 0; needed once per fresh checkout before --script tests"
+        }
+      ]
     },
     {
       "id": "RZ-006",
@@ -433,7 +446,7 @@
       "epic": "E-GAME",
       "area": "content",
       "type": "task",
-      "status": "later",
+      "status": "next",
       "priority": "P1",
       "size": "M",
       "value": 5,
