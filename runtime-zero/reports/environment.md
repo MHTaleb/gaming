@@ -98,3 +98,30 @@ access; **no Linux display driver was installed inside WSL and none should be.**
 
 - Windows username, full private inventory and raw logs: kept out of Git (`/tmp` during session).
 - No secrets or tokens were read, printed, or stored. Nothing was installed by RZ-001 (read-only, by design).
+
+## RZ-002 verification results (2026-09-20)
+
+Installs performed this session (user-space only; sudo requires a password, so nothing was forced through it).
+Full evidence table: `config/toolchain.lock.json`.
+
+| Check | Command | Outcome |
+|---|---|---|
+| Node on the machine | `zsh -ic 'node -v'` (clean env) | **v22.23.2** (nvm default; board minimum met). VS Code terminals still inherit `NVM_BIN=v20.20.0` — restart the window or `nvm use default`. |
+| uv | sha256-verified release tarball → `~/.local/bin/uv` | **0.12.17**; archive inspected (only `uv`, `uvx`); `.sha256` matched |
+| Python environments | `uv python install 3.12` + `uv venv` | **3.12.14** venv created and ran; system `python3.8-venv` is broken (missing ensurepip → needs `sudo apt install python3.8-venv`, not required since uv is the project route) |
+| Godot | sha512-verified 4.7.2 archive → `~/.local/godot/` | **4.7.2.stable.official.ed1daf0bf** via `~/.local/bin/godot`; checksum matched the official `SHA512-SUMS.txt`; 4.1.3/4.2.2 binaries preserved |
+| Board (specification package) | `node tools/verify.js` | **passed** — 30 tickets valid, all 8 validator/board tests pass |
+| Board server, live | `node reports/local/board-probe.mjs` against a real server on 8090 | `/backlog/` 200, `/backlog/backlog.json` 200 (`"project": "Runtime Zero"`), `board.js` 200, POST **405** (writes rejected), out-of-scope paths 404. Server stopped after the check. |
+| Editor tooling | `code --install-extension …` | `geequlim.godot-tools` 2.7.1 and `ms-python.python` 2026.4.0 installed in the WSL remote (`godotengine.godot-tools` does not resolve in this marketplace) |
+| Client tool-calling probe | this session | The agent (Copilot with DeepSeek V4.1 Flash per the user's model selection) read files, ran terminal commands, edited files and queried HTTPS APIs — real tool calls, all visible in the session log. The `vizards.deepseek-v4-for-copilot-0.9.2` extension is installed. **Not verifiable from inside the session:** which backend served any given response; ask Housseyn to confirm the model picker while a tool call runs. One agent, one writer at a time — Copilot and DeepSeek are not two independent workers. |
+
+Deliberately **not** installed yet: ffmpeg (P5), ComfyUI/PyTorch/SDXL and audio backends (phase-gated),
+Krita/Audacity (when cleanup work exists), Android SDK/JDK/templates (P6). No model weights or bulk
+downloads happened during setup. `~/.local/bin` is still not on PATH; the tools are invoked by path
+until Housseyn opts in to a PATH change (line 2 of `.zshrc` is commented out).
+
+### Still-running / leftover processes
+
+- A `node tools/serve.js` from **2026-09-19** with cwd `packet-defense/` was left untouched (not this
+  project's process, not on this project's port). If it is unwanted, Housseyn can stop it.
+- This session's board server was stopped after verification; port 8090 is free.
