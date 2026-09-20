@@ -1,0 +1,25 @@
+{
+  "reviewed_commit": "caf1cce1b7c57b6e88a9b65c52e6000ba25d736f",
+  "environment": "independent remote Linux validator; not Lenovo",
+  "godot_version": "4.7.2.stable.official.ed1daf0bf",
+  "node_version": "v24.19.0",
+  "files": {
+    "combat.log": {
+      "sha256": "e112034928bb07f69d07f10db2074514607f0538aece88c0457aae7ec35e92ed",
+      "exit_code": 0
+    },
+    "guard-contract.log": {
+      "sha256": "f7ff54d58998a7ecce4a506f645d71201d3881b67a27a4ee352ee62208993137",
+      "exit_code": 1
+    },
+    "import.log": {
+      "sha256": "e86627b41452087374f2a1c96fb872f338e874e4666f3ecaa24778ead8a0f5c9",
+      "exit_code": 0
+    },
+    "spec.log": {
+      "sha256": "4f839a4f7e61e6e64716e7cff0361cf463467be7be2b2089bf0c1ea053ce004a",
+      "exit_code": 0
+    }
+  },
+  "log_normalization": "ANSI formatting and trailing whitespace removed; substantive command output preserved."
+}

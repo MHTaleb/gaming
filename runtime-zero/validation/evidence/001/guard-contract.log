@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GUARD CONTRACT: expected hits=[3, 6], actual=[3, 3]
+GUARD CONTRACT: expected hero_hp=91, actual=94
+INPUT STATE UNCHANGED: true
+GUARD CONTRACT FAILED: matches neither single-hit requirement nor its acceptance outcome

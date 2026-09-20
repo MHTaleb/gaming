@@ -1,0 +1,18 @@
+✔ backlog is valid and only dependency-satisfied tickets are ready (3.154729ms)
+✔ unmet prerequisites cannot be ready or doing (2.188538ms)
+✔ long and self dependency cycles fail (0.911398ms)
+✔ done needs evidence and doing needs ownership (0.814591ms)
+✔ unknown dependencies and malformed instruction arrays fail (1.415681ms)
+✔ blocked reason and completion dependencies are enforced (0.685076ms)
+✔ duplicate epic/research IDs and failed evidence are rejected (0.731926ms)
+✔ board server reads its own data and rejects writes and non-board paths (44.176139ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.16888
+doctor Python syntax: passed
+Specification verification passed (30 implementation tickets; game/GPU checks not run).
