@@ -1,0 +1,10 @@
+start=2026-09-20T18:45:07Z
+command: client_probe 
+---
+RZ-RV-001-EVIDENCE client-tool probe executed by this Copilot/DeepSeek agent session
+implementation commit: 1aef2d92efb68a368649119cfc4a0df183e12257
+utc=2026-09-20T18:45:07Z
+
+---
+exit_code=0
+end=2026-09-20T18:45:07Z

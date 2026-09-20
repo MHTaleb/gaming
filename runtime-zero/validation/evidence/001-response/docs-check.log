@@ -1,0 +1,26 @@
+start=2026-09-20T18:46:14Z
+command: docs_check (grep-only observation, V-004)
+---
+== README.md current-deliverable paragraph ==
+5:**Current deliverable: the installed, verified local toolchain with a project-local launcher (`source tools/env.sh` — Node 22+, uv, managed Python, pinned Godot 4.7.2), the working review inbox and Kanban board, a launchable Godot project with a provisional title screen (`game/`), and the deterministic combat core behind `game/tests/run_tests.gd`. Content data, combat UI, loadout/run loop, saves, the headless simulator, the local asset studio, audio and Android are still pending.** Current code status and the open validation request are tracked in `reviews/RV-001/`; see `reports/prototype-log.md` and `reports/environment.md` for executed evidence. This is a scaffold and core, not a playable slice.
+
+== START_HERE.md toolchain + availability ==
+8:4. In a fresh terminal, activate the project toolchain first: `source tools/env.sh` (makes Node 22+, uv and the pinned Godot resolve; the launcher is the documented route for every command below). Then run `node tools/verify.js`. This verifies only the specification package and board. It is not a game test. Launch `node tools/serve.js` and verify the board reads this project's JSON.
+16:Available now: backlog validator, ready query, review inbox (`node tools/reviews.js`), read-only board server, specification verification, specification documents, a safe read-only machine doctor, the project toolchain launcher (`tools/env.sh` — Node 22+, uv, pinned Godot 4.7.2), the launchable Godot project (`game/project.godot` with the provisional title scene) and the deterministic combat core with its headless test entry point (`game/tests/run_tests.gd`).
+14:## Available now versus future
+16:Available now: backlog validator, ready query, review inbox (`node tools/reviews.js`), read-only board server, specification verification, specification documents, a safe read-only machine doctor, the project toolchain launcher (`tools/env.sh` — Node 22+, uv, pinned Godot 4.7.2), the launchable Godot project (`game/project.godot` with the provisional title scene) and the deterministic combat core with its headless test entry point (`game/tests/run_tests.gd`).
+
+== reports/README.md index ==
+5:Current reports: `environment.md` (measured machine, toolchain lock context), `design-reconciliation.md` (RZ-003 provisional adoption), `prototype-log.md` (RZ-004/RZ-005 build and test log, RV-001 corrections), `session-20260920-1340-copilot.md` (first session handoff), `validation-001.md` (validator's review of `caf1cce` — findings V-001..V-004). The executor response to that review lives in `reviews/RV-001/response.json` with the sanitized evidence bundle under `validation/evidence/001-response/`. GPU generation, audio, Android and owner playtest evidence still do not exist.
+
+== docs/DECISIONS.md D-010 ==
+16:| D-010 | Partially probed, 2026-09-20 | The installed client executed real file/terminal/edit tool calls in the implementation session (evidence: `validation/evidence/001-response/client-tool.log`). Which backend served individual responses is user-stated (DeepSeek V4.1 Flash selected), not independently verifiable from inside a session; ordinary terminal access is not MCP functionality. | RZ-021 for MCP exposure; validator review of the probe evidence |
+
+== stale claims check (expect only '(none found)') ==
+(none found)
+(none found)
+(none found)
+
+---
+exit_code=0
+end=2026-09-20T18:46:14Z

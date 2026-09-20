@@ -1,0 +1,10 @@
+start=2026-09-20T18:44:51Z
+command: godot_provenance 
+---
+resolved: $HOME/.local/godot/Godot_v4.7.2-stable_linux.x86_64
+4.7.2.stable.official.ed1daf0bf
+8d106cbe6144c2dc7e881d61d2429c1a8a76e6b22ef48bd5e48dcf934953f71e  $HOME/.local/godot/Godot_v4.7.2-stable_linux.x86_64
+
+---
+exit_code=0
+end=2026-09-20T18:44:52Z

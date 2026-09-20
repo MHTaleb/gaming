@@ -1,0 +1,13 @@
+start=2026-09-20T18:44:59Z
+command: godot_guard_contract 
+---
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GUARD CONTRACT: expected hits=[3, 6], actual=[3, 6]
+GUARD CONTRACT: expected hero_hp=91, actual=91
+INPUT STATE UNCHANGED: true
+GUARD CONTRACT PASSED
+
+---
+exit_code=0
+end=2026-09-20T18:44:59Z

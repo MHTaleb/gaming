@@ -1,0 +1,16 @@
+start=2026-09-20T18:44:59Z
+command: gui_smoke 
+---
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+/lib/x86_64-linux-gnu/libX11.so.6: undefined symbol: XSetIOErrorExitHandler
+/lib/x86_64-linux-gnu/libxkbcommon.so.0: undefined symbol: xkb_utf32_to_keysym
+/lib/x86_64-linux-gnu/libxkbcommon.so.0: undefined symbol: xkb_keymap_key_get_mods_for_level
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 3.3 (Core Profile) Mesa 21.2.6 - Compatibility - Using Device: Microsoft - D3D12 (NVIDIA GeForce RTX 4050 Laptop GPU)
+
+smoke shot saved: $HOME/.local/share/godot/app_userdata/Runtime Zero/title_smoke.png
+
+---
+exit_code=0
+end=2026-09-20T18:45:07Z

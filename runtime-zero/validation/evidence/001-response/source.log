@@ -1,0 +1,11 @@
+start=2026-09-20T18:44:48Z
+command: source_identity 
+---
+branch: codex/runtime-zero-impl
+head: 1aef2d92efb68a368649119cfc4a0df183e12257
+status: (empty below = clean tree at capture time)
+cwd: $HOME/workspace/gaming/runtime-zero
+
+---
+exit_code=0
+end=2026-09-20T18:44:48Z

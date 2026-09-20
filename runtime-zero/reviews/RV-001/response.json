@@ -3,37 +3,296 @@
   "review_id": "RV-001",
   "author_role": "executor",
   "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
-  "state": "draft",
-  "implementation_commit": null,
-  "summary": "Awaiting executor response. No correction or local evidence is claimed yet.",
+  "state": "ready_for_review",
+  "implementation_commit": "1aef2d92efb68a368649119cfc4a0df183e12257",
+  "summary": "V-001 Guard corrected to the specified single-use contract (rules v2) with explicit consumption/unused-expiry wording and an expanded suite; the validator-owned guard_contract regression passes unmodified. V-002 adds tools/env.sh, a project-local launcher verified from a simulated fresh VS Code WSL terminal (Node 22+, uv, pinned Godot, managed Python), no global shell edits. V-003 supplies the sanitized evidence bundle under validation/evidence/001-response/ (source identity, WSL/GPU, provenance, spec/import/combat/guard/GUI logs, with title PNG and client tool probe) tied to commit 1aef2d9. V-004 updates README, START_HERE, reports index and D-010. RZ-006 remains held pending the validator verdict; no self-approval is claimed.",
+  "service_status": [
+    {
+      "component": "Studio MCP server",
+      "phase_ticket": "RZ-020..RZ-022 (P4)",
+      "installed": false,
+      "configured": false,
+      "running": false,
+      "health_tested": "not tested",
+      "actual_tool_call_tested": "not tested",
+      "evidence": "specification docs/STUDIO_MCP.md only",
+      "blocker_next_action": "deferred to P4; not installed for this review"
+    },
+    {
+      "component": "Copilot/DeepSeek client (ordinary file/terminal tools)",
+      "phase_ticket": "RZ-002 / RZ-021",
+      "installed": true,
+      "configured": true,
+      "running": true,
+      "health_tested": "ordinary terminal/file/edit tool calls executed in this session",
+      "actual_tool_call_tested": "real terminal call recorded with review marker and commit",
+      "evidence": "validation/evidence/001-response/client-tool.log",
+      "blocker_next_action": "MCP transport not implemented (RZ-021); model-picker identity is user-stated, not independently verified from inside a session"
+    },
+    {
+      "component": "ComfyUI + PyTorch + SDXL",
+      "phase_ticket": "RZ-017 (P3)",
+      "installed": false,
+      "configured": false,
+      "running": false,
+      "health_tested": "not tested",
+      "actual_tool_call_tested": "not tested",
+      "evidence": "reports/environment.md records the deferred plan",
+      "blocker_next_action": "deferred to P3; no model downloads were made for this review"
+    },
+    {
+      "component": "ACE-Step (music backend)",
+      "phase_ticket": "RZ-023 (P5)",
+      "installed": false,
+      "configured": false,
+      "running": false,
+      "health_tested": "not tested",
+      "actual_tool_call_tested": "not tested",
+      "evidence": "none",
+      "blocker_next_action": "deferred to P5"
+    },
+    {
+      "component": "Stable Audio (SFX backend)",
+      "phase_ticket": "RZ-024 (P5)",
+      "installed": false,
+      "configured": false,
+      "running": false,
+      "health_tested": "not tested",
+      "actual_tool_call_tested": "not tested",
+      "evidence": "none",
+      "blocker_next_action": "deferred to P5"
+    },
+    {
+      "component": "FFmpeg/ffprobe",
+      "phase_ticket": "P5 audio",
+      "installed": false,
+      "configured": false,
+      "running": false,
+      "health_tested": "not tested",
+      "actual_tool_call_tested": "not tested",
+      "evidence": "reports/environment.md",
+      "blocker_next_action": "deferred; not required for the prototype phase"
+    },
+    {
+      "component": "Android export tooling (JDK/SDK/templates)",
+      "phase_ticket": "RZ-026 (P6)",
+      "installed": false,
+      "configured": false,
+      "running": false,
+      "health_tested": "not tested",
+      "actual_tool_call_tested": "not tested",
+      "evidence": "reports/environment.md",
+      "blocker_next_action": "deferred to P6"
+    },
+    {
+      "component": "Godot runtime (game project)",
+      "phase_ticket": "RZ-004/RZ-005",
+      "installed": true,
+      "configured": true,
+      "running": false,
+      "health_tested": "headless import, 96-check combat suite, guard contract and WSLg GUI render all exit 0",
+      "actual_tool_call_tested": "engine invoked through the tools/env.sh route",
+      "evidence": "validation/evidence/001-response/{import,combat,guard-contract,gui}.log",
+      "blocker_next_action": "none for this phase; content/UI work pending RZ-006+"
+    },
+    {
+      "component": "RPG board server (read-only)",
+      "phase_ticket": "specification infrastructure",
+      "installed": true,
+      "configured": true,
+      "running": false,
+      "health_tested": "HTTP isolation tests included in the specification suite",
+      "actual_tool_call_tested": "served and stopped during the earlier session; not an MCP server",
+      "evidence": "tools/serve.js + reports/prototype-log.md",
+      "blocker_next_action": "none; start with node tools/serve.js when needed"
+    }
+  ],
   "findings": [
     {
       "id": "V-001",
-      "status": "pending",
-      "summary": "",
-      "changed_paths": [],
-      "evidence": []
+      "status": "addressed",
+      "summary": "Guard is single-use (rules v2): it halves only the next incoming hit and consumes itself (guard_halved carries consumed:true); an unused Guard expires when the hero's next turn begins; integer floor/minimum-1 and no stacking preserved. GAME_DESIGN.md now states consumption and unused-expiry explicitly. The suite grew from 86 to 96 checks, including the two-enemy acceptance case ([3,6] hits, hero HP 91), single-hit consumption, unused expiry, re-guard, minimum damage and boss interaction. The validator-owned guard_contract.gd passes unmodified (exit 0), so the regression was not rewritten to fit the code.",
+      "changed_paths": [
+        "game/src/domain/rules.gd",
+        "game/src/domain/combat_resolver.gd",
+        "game/src/domain/actor_state.gd",
+        "game/tests/run_tests.gd",
+        "docs/GAME_DESIGN.md",
+        "reports/prototype-log.md"
+      ],
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/run_tests.gd",
+          "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6 (local laptop); Godot 4.7.2.stable.official.ed1daf0bf; Node v22.23.2 via launcher",
+          "checked_at": "2026-09-20T18:44:59Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/combat.log",
+          "sha256": "dd963f4438e682b427dd9c2225f6504257a70e7628182d20a9babad8f566653a"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script \"$PWD/validation/guard_contract.gd\" (validator-owned file unmodified)",
+          "environment": "same host; expected hits [3,6], hero HP 91, input state unchanged",
+          "checked_at": "2026-09-20T18:44:59Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/guard-contract.log",
+          "sha256": "5d69a1e0459fde43661339367a487406605262199a718071dde493c990714a6a"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --editor --quit",
+          "environment": "same host; class cache and resource import after the rules change",
+          "checked_at": "2026-09-20T18:44:58Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/import.log",
+          "sha256": "5803eff5f85e347c853175ceeb7ef102c16bc3e89dda964218207ea5434828b7"
+        }
+      ]
     },
     {
       "id": "V-002",
-      "status": "pending",
-      "summary": "",
-      "changed_paths": [],
-      "evidence": []
+      "status": "addressed",
+      "summary": "Added tools/env.sh: a project-local activation script that makes the newest nvm-managed Node >=22, uv and the pinned Godot win from a fresh terminal, without editing global shell configuration. Verified by simulating the documented VS Code WSL inheritance (NVM_BIN=v20.20.0 with v20 first on PATH): before sourcing, node resolves v20.20.0 and uv/godot do not; after sourcing, node v22.23.2, uv 0.12.17, godot 4.7.2 and managed CPython 3.12.14 all resolve, and node tools/verify.js passes through that route. The system python3.8 venv limitation is unchanged and not needed by this route.",
+      "changed_paths": [
+        "tools/env.sh",
+        "config/toolchain.lock.json",
+        "reports/environment.md",
+        "START_HERE.md"
+      ],
+      "evidence": [
+        {
+          "command": "env NVM_BIN=$HOME/.nvm/versions/node/v20.20.0/bin PATH=<v20-first> zsh -ic \"zsh reports/local/tools-probe.zsh\" (exact full command line including the injected PATH is in the artifact)",
+          "environment": "fresh zsh reproducing the documented VS Code terminal inheritance; launcher sourced inside the probe",
+          "checked_at": "2026-09-20T18:44:51Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/tools.log",
+          "sha256": "5bd6af333de2851b0187e484c93218cefead7b4d4ba84baa33794a91fec5cfcd"
+        },
+        {
+          "command": "source tools/env.sh && node tools/verify.js",
+          "environment": "Node v22.23.2 resolved through the launcher; specification plus review-integrity checks",
+          "checked_at": "2026-09-20T18:44:53Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/spec.log",
+          "sha256": "b6fbed2e445439867344dcae4b3c8cd169ea15066a89c590439511b0b55f89a0"
+        }
+      ]
     },
     {
       "id": "V-003",
-      "status": "pending",
-      "summary": "",
-      "changed_paths": [],
-      "evidence": []
+      "status": "addressed",
+      "summary": "Committed a sanitized, hashed evidence bundle under validation/evidence/001-response/ (with manifest.json) tied to implementation commit 1aef2d9: clean source identity; WSL2/VS Code context (no SSH session markers; DISPLAY/Wayland active); RTX 4050 Laptop 6141 MiB measured by nvidia-smi and matched by the Windows video-controller query — the owner confirmation is recorded and was not re-requested; Godot executable hash (distinct from the downloaded archive hash); disposable uv venv (CPython 3.12.14, trivial import) created and removed; fresh engine import; 96-check combat suite; guard contract; WSLg GUI render log plus the actual title PNG; client tool probe with the review marker and commit. Deferred MCP/model backends are reported in service_status and were not installed for this review.",
+      "changed_paths": [
+        "validation/evidence/001-response/"
+      ],
+      "evidence": [
+        {
+          "command": "git rev-parse HEAD; git status --short (captured first, before evidence files were written)",
+          "environment": "runtime-zero checkout on the local laptop; records the tested commit and its clean tree",
+          "checked_at": "2026-09-20T18:44:48Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/source.log",
+          "sha256": "010954ead5fcafb337bd3ead693a3496150d068db2bc414e8dfc3b983e8b4d27"
+        },
+        {
+          "command": "uname -a; /etc/os-release; command -v code; ssh markers; DISPLAY",
+          "environment": "establishes WSL2 on the Lenovo and the VS Code connection context",
+          "checked_at": "2026-09-20T18:44:48Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/wsl-context.log",
+          "sha256": "056c3d5d2460fc959c4c2bdf93522ed44a59b7f91c2670607333d84cb7154a99"
+        },
+        {
+          "command": "/usr/lib/wsl/lib/nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv",
+          "environment": "WSL GPU passthrough on the laptop",
+          "checked_at": "2026-09-20T18:44:48Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/gpu.log",
+          "sha256": "076a71b5cd7608100c55e92af86ff4332da98e3ab53f073b713f42a2b85be043"
+        },
+        {
+          "command": "powershell.exe -NoProfile -Command \"Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion | ConvertTo-Json\"",
+          "environment": "Windows host comparison from the same machine",
+          "checked_at": "2026-09-20T18:44:50Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/windows-gpu.log",
+          "sha256": "5989831fcc01b38c2dbcb4cb5663be6932774d988142f82d403e41af6bf50a09"
+        },
+        {
+          "command": "readlink -f ~/.local/bin/godot; godot --version; sha256sum <resolved executable>",
+          "environment": "executable hash distinguished from the downloaded archive hash",
+          "checked_at": "2026-09-20T18:44:52Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/godot-provenance.log",
+          "sha256": "483292af4bc34569cb25891722aff31fb84dd86aae14a2a68b5ea5a760595c25"
+        },
+        {
+          "command": "uv venv /tmp/rz-rv001-python-probe --python 3.12; python -V; python -c 'trivial import'; rm -rf probe",
+          "environment": "disposable project-owned probe, removed after the run",
+          "checked_at": "2026-09-20T18:44:52Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/python.log",
+          "sha256": "aec27796d204e37b2eb7d3686654ad9ab8cffc67cd2e5fe2056f0bd5ea601fc0"
+        },
+        {
+          "command": "source tools/env.sh && godot --path game --quit-after 300 -- --smoke-shot (WSLg render; PNG copied from user://)",
+          "environment": "local laptop display via WSLg; OpenGL 3.3 (Mesa/D3D12) on the RTX 4050",
+          "checked_at": "2026-09-20T18:45:07Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/gui.log",
+          "sha256": "70516d4a056e4b227ffecb6a478a011c8e238e48d9109ef74cead18b9cdf3585"
+        },
+        {
+          "command": "copy of the render produced by the gui capture (user://title_smoke.png)",
+          "environment": "actual title screenshot from the tested build; a screenshot proves rendering, not gameplay input",
+          "checked_at": "2026-09-20T18:45:07Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/title-smoke.png",
+          "sha256": "1304aa63480204d73240bdb079ffe758e011c2fc4b285a7a6d48bce7f413669e"
+        },
+        {
+          "command": "client tool probe: echo review marker + git rev-parse HEAD + UTC (executed by this agent session's terminal tool)",
+          "environment": "coding-client tool call recorded; model-picker identity is user-stated, not cryptographically verified",
+          "checked_at": "2026-09-20T18:45:07Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/001-response/client-tool.log",
+          "sha256": "1b59004570fb81c6479bdd51000aa975464354194ea81903b0b7775f3e9535a1"
+        }
+      ]
     },
     {
       "id": "V-004",
-      "status": "pending",
-      "summary": "",
-      "changed_paths": [],
-      "evidence": []
+      "status": "addressed",
+      "summary": "Entry documents updated to the implemented reality: README describes the toolchain, scaffold and combat core with remaining work explicit; START_HERE uses the owner-confirmed RTX 4050/6 GB, points at the tools/env.sh route and lists what is available versus future; reports/README.md indexes the actual reports and this response bundle; docs/DECISIONS.md D-010 records the partial client probe with its evidence path while keeping RZ-021 for MCP. Provisional design (D-006-D-008), D-009 unresolved items and the RZ-012 review gate are unchanged; no playable slice or studio capability is claimed.",
+      "changed_paths": [
+        "README.md",
+        "START_HERE.md",
+        "reports/README.md",
+        "docs/DECISIONS.md"
+      ],
+      "evidence": [
+        {
+          "command": "grep-based docs_check (observation; see artifact): updated paragraphs present, stale 'not implemented / unmeasured / no evidence' claims absent",
+          "environment": "runtime-zero working tree at implementation commit 1aef2d9",
+          "checked_at": "2026-09-20T18:46:14Z",
+          "exit_code": 0,
+          "result": "observation",
+          "artifact": "validation/evidence/001-response/docs-check.log",
+          "sha256": "0f02580c980a0455d86c83541112b70ae50d178538bc4a515cc171f2cbf9cf2d"
+        }
+      ]
     }
   ]
 }

@@ -1,0 +1,17 @@
+start=2026-09-20T18:44:48Z
+command: powershell.exe -NoProfile -Command Get-CimInstance\ Win32_VideoController\ \|\ Select-Object\ Name,DriverVersion\ \|\ ConvertTo-Json 
+---
+[
+    {
+        "Name":  "Intel(R) UHD Graphics",
+        "DriverVersion":  "32.0.101.7026"
+    },
+    {
+        "Name":  "NVIDIA GeForce RTX 4050 Laptop GPU",
+        "DriverVersion":  "32.0.15.8186"
+    }
+]
+
+---
+exit_code=0
+end=2026-09-20T18:44:50Z

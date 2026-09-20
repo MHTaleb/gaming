@@ -1,0 +1,129 @@
+start=2026-09-20T18:44:52Z
+command: spec_check 
+---
+node: v22.23.2
+TAP version 13
+# Subtest: backlog is valid and ready rows respect dependencies
+ok 1 - backlog is valid and ready rows respect dependencies
+  ---
+  duration_ms: 8.747839
+  type: 'test'
+  ...
+# Subtest: unmet prerequisites cannot be ready or doing
+ok 2 - unmet prerequisites cannot be ready or doing
+  ---
+  duration_ms: 4.937016
+  type: 'test'
+  ...
+# Subtest: long and self dependency cycles fail
+ok 3 - long and self dependency cycles fail
+  ---
+  duration_ms: 2.79127
+  type: 'test'
+  ...
+# Subtest: done needs evidence and doing needs ownership
+ok 4 - done needs evidence and doing needs ownership
+  ---
+  duration_ms: 2.523442
+  type: 'test'
+  ...
+# Subtest: unknown dependencies and malformed instruction arrays fail
+ok 5 - unknown dependencies and malformed instruction arrays fail
+  ---
+  duration_ms: 2.108505
+  type: 'test'
+  ...
+# Subtest: blocked reason and completion dependencies are enforced
+ok 6 - blocked reason and completion dependencies are enforced
+  ---
+  duration_ms: 2.212853
+  type: 'test'
+  ...
+# Subtest: duplicate epic/research IDs and failed evidence are rejected
+ok 7 - duplicate epic/research IDs and failed evidence are rejected
+  ---
+  duration_ms: 2.13376
+  type: 'test'
+  ...
+# Subtest: board server reads its own data and rejects writes and non-board paths
+ok 8 - board server reads its own data and rejects writes and non-board paths
+  ---
+  duration_ms: 130.266038
+  type: 'test'
+  ...
+# Subtest: open review holds target and descendants, not unrelated work
+ok 9 - open review holds target and descendants, not unrelated work
+  ---
+  duration_ms: 32.130389
+  type: 'test'
+  ...
+# Subtest: complete executor submission waits for validator and keeps its gate
+ok 10 - complete executor submission waits for validator and keeps its gate
+  ---
+  duration_ms: 14.276834
+  type: 'test'
+  ...
+# Subtest: matching accepted verdict clears gate; changed response makes acceptance stale
+ok 11 - matching accepted verdict clears gate; changed response makes acceptance stale
+  ---
+  duration_ms: 10.871035
+  type: 'test'
+  ...
+# Subtest: changed implementation commit invalidates acceptance
+ok 12 - changed implementation commit invalidates acceptance
+  ---
+  duration_ms: 6.559407
+  type: 'test'
+  ...
+# Subtest: evidence bytes must match their hash even after acceptance
+ok 13 - evidence bytes must match their hash even after acceptance
+  ---
+  duration_ms: 7.405439
+  type: 'test'
+  ...
+# Subtest: executor cannot submit accepted status or incomplete ready evidence
+ok 14 - executor cannot submit accepted status or incomplete ready evidence
+  ---
+  duration_ms: 6.643236
+  type: 'test'
+  ...
+# Subtest: request edits require reconciliation; missing records fail closed
+ok 15 - request edits require reconciliation; missing records fail closed
+  ---
+  duration_ms: 4.909232
+  type: 'test'
+  ...
+# Subtest: artifact path escape and nonzero passed evidence are rejected
+ok 16 - artifact path escape and nonzero passed evidence are rejected
+  ---
+  duration_ms: 7.346508
+  type: 'test'
+  ...
+# Subtest: backlog readiness includes eligible unheld ticket and excludes held ticket
+ok 17 - backlog readiness includes eligible unheld ticket and excludes held ticket
+  ---
+  duration_ms: 0.825356
+  type: 'test'
+  ...
+# Subtest: registered current review is well-formed
+ok 18 - registered current review is well-formed
+  ---
+  duration_ms: 2.797558
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 328.177531
+Review records valid; 1 review(s) unresolved (not independent approval).
+doctor Python syntax: passed
+Specification verification passed (30 implementation tickets; game/GPU checks not run).
+
+---
+exit_code=0
+end=2026-09-20T18:44:53Z

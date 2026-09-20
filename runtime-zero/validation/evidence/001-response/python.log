@@ -1,0 +1,13 @@
+start=2026-09-20T18:44:52Z
+command: python_probe 
+---
+Using CPython 3.12.14
+Creating virtual environment at: /tmp/rz-rv001-python-probe
+Activate with: source /tmp/rz-rv001-python-probe/bin/activate
+Python 3.12.14
+trivial import ok: {"python": "3.12.14", "ok": true}
+disposable probe venv removed: /tmp/rz-rv001-python-probe
+
+---
+exit_code=0
+end=2026-09-20T18:44:52Z

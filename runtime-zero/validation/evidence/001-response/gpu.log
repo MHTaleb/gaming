@@ -1,0 +1,9 @@
+start=2026-09-20T18:44:48Z
+command: /usr/lib/wsl/lib/nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv 
+---
+name, memory.total [MiB], memory.free [MiB], driver_version
+NVIDIA GeForce RTX 4050 Laptop GPU, 6141 MiB, 5554 MiB, 581.86
+
+---
+exit_code=0
+end=2026-09-20T18:44:48Z

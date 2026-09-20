@@ -1,0 +1,70 @@
+{
+  "review": "RV-001",
+  "implementation_commit": "1aef2d92efb68a368649119cfc4a0df183e12257",
+  "collected_utc_window": "2026-09-20T18:44:48Z .. 2026-09-20T18:46:14Z",
+  "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6, local laptop (no SSH markers); commands executed through the project launcher tools/env.sh; Godot 4.7.2.stable.official.ed1daf0bf; Node v22.23.2; managed CPython 3.12.14",
+  "command_route": "Each log records start/end UTC, the exact command and its exit_code. Tools resolve through tools/env.sh (RV-001 V-002); the guard-contract run uses the validator-owned validation/guard_contract.gd unmodified.",
+  "log_normalization": "Home paths replaced with $HOME; usernames/hostnames normalized to <user>/<winuser>; ANSI/trailing whitespace removed; command output otherwise unmodified. Raw unredacted logs stay in the ignored reports/local/ (not committed).",
+  "files": {
+    "client-tool.log": {
+      "sha256": "1b59004570fb81c6479bdd51000aa975464354194ea81903b0b7775f3e9535a1",
+      "exit_code": 0
+    },
+    "combat.log": {
+      "sha256": "dd963f4438e682b427dd9c2225f6504257a70e7628182d20a9babad8f566653a",
+      "exit_code": 0
+    },
+    "docs-check.log": {
+      "sha256": "0f02580c980a0455d86c83541112b70ae50d178538bc4a515cc171f2cbf9cf2d",
+      "exit_code": 0
+    },
+    "godot-provenance.log": {
+      "sha256": "483292af4bc34569cb25891722aff31fb84dd86aae14a2a68b5ea5a760595c25",
+      "exit_code": 0
+    },
+    "gpu.log": {
+      "sha256": "076a71b5cd7608100c55e92af86ff4332da98e3ab53f073b713f42a2b85be043",
+      "exit_code": 0
+    },
+    "guard-contract.log": {
+      "sha256": "5d69a1e0459fde43661339367a487406605262199a718071dde493c990714a6a",
+      "exit_code": 0
+    },
+    "gui.log": {
+      "sha256": "70516d4a056e4b227ffecb6a478a011c8e238e48d9109ef74cead18b9cdf3585",
+      "exit_code": 0
+    },
+    "import.log": {
+      "sha256": "5803eff5f85e347c853175ceeb7ef102c16bc3e89dda964218207ea5434828b7",
+      "exit_code": 0
+    },
+    "python.log": {
+      "sha256": "aec27796d204e37b2eb7d3686654ad9ab8cffc67cd2e5fe2056f0bd5ea601fc0",
+      "exit_code": 0
+    },
+    "source.log": {
+      "sha256": "010954ead5fcafb337bd3ead693a3496150d068db2bc414e8dfc3b983e8b4d27",
+      "exit_code": 0
+    },
+    "spec.log": {
+      "sha256": "b6fbed2e445439867344dcae4b3c8cd169ea15066a89c590439511b0b55f89a0",
+      "exit_code": 0
+    },
+    "title-smoke.png": {
+      "sha256": "1304aa63480204d73240bdb079ffe758e011c2fc4b285a7a6d48bce7f413669e",
+      "exit_code": null
+    },
+    "tools.log": {
+      "sha256": "5bd6af333de2851b0187e484c93218cefead7b4d4ba84baa33794a91fec5cfcd",
+      "exit_code": 0
+    },
+    "windows-gpu.log": {
+      "sha256": "5989831fcc01b38c2dbcb4cb5663be6932774d988142f82d403e41af6bf50a09",
+      "exit_code": 0
+    },
+    "wsl-context.log": {
+      "sha256": "056c3d5d2460fc959c4c2bdf93522ed44a59b7f91c2670607333d84cb7154a99",
+      "exit_code": 0
+    }
+  }
+}

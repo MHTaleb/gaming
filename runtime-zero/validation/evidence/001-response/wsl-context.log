@@ -1,0 +1,13 @@
+start=2026-09-20T18:44:48Z
+command: wsl_context 
+---
+Linux <user> 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+PRETTY_NAME="Ubuntu 20.04.6 LTS"
+vscode remote-cli: $HOME/.vscode-server/bin/7debcd0e2acdea1c52de81bf9ee1620444407dda/bin/remote-cli/code
+ssh session marke[r]s present: no
+DISPLAY=:0 WAYLAND_DISPLAY=wayland-0
+powershell interop: /mnt/c/Windows/System32/WindowsPowerShell/v1.0//powershell.exe
+
+---
+exit_code=0
+end=2026-09-20T18:44:48Z
