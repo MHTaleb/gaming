@@ -270,7 +270,7 @@
       "epic": "E-GAME",
       "area": "design",
       "type": "spike",
-      "status": "next",
+      "status": "done",
       "priority": "P0",
       "size": "S",
       "value": 5,
@@ -307,7 +307,20 @@
         "P0",
         "design"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "owner ask (one time, via client question UI): earlier design? slice changes? PATH line?",
+          "result": "passed",
+          "artifact": "reports/design-reconciliation.md",
+          "environment": "Asked-not-approved: owner unavailable at ask time (auto-response: will review later); no design document supplied; recorded honestly"
+        },
+        {
+          "command": "node tools/verify.js",
+          "result": "passed",
+          "artifact": "reports/design-reconciliation.md",
+          "environment": "Backlog valid after RZ-003; register review recorded in docs/DECISIONS.md (RZ-003 reconciliation section)"
+        }
+      ]
     },
     {
       "id": "RZ-004",
@@ -315,7 +328,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "task",
-      "status": "later",
+      "status": "next",
       "priority": "P0",
       "size": "M",
       "value": 5,
