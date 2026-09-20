@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "id": "RV-001",
+  "author_role": "validator",
+  "reviewed_commit": "caf1cce1b7c57b6e88a9b65c52e6000ba25d736f",
+  "created_at": "2026-09-20",
+  "report": "reports/validation-001.md",
+  "orders": "validation/VALIDATOR_ORDERS.md",
+  "owner_confirmations": [
+    {
+      "date": "2026-09-20",
+      "fact": "Housseyn confirmed RTX 4050 Laptop GPU with 6 GB VRAM; earlier RTX 4060 statement was mistaken. Hardware identity discrepancy is resolved. Fresh execution evidence is still requested.",
+      "source": "Housseyn confirmation in the current conversation"
+    }
+  ],
+  "findings": [
+    {
+      "id": "V-001",
+      "severity": "high",
+      "kind": "fix",
+      "title": "Consume Guard on the first incoming hit",
+      "blocks": [
+        "RZ-006"
+      ],
+      "required_actions": [
+        "Implement the next-hit Guard contract and explicit unused expiry; bump rules version.",
+        "Update conflicting tests and preserve the independent regression expectation."
+      ],
+      "acceptance_checks": [
+        "Two-enemy Guard produces hits [3,6] and hero HP 91.",
+        "Original combat suite and independent Guard regression pass; edge cases covered."
+      ]
+    },
+    {
+      "id": "V-002",
+      "severity": "medium",
+      "kind": "fix",
+      "title": "Make the local toolchain reproducible",
+      "blocks": [
+        "RZ-006"
+      ],
+      "required_actions": [
+        "Provide project-local activation/launcher or an actually approved host configuration.",
+        "Verify from a fresh VS Code WSL terminal; record exact commands instead of approximate equivalents."
+      ],
+      "acceptance_checks": [
+        "Node 22+, uv, managed Python and pinned Godot resolve through the documented route.",
+        "Specification and Godot tests run through that route."
+      ]
+    },
+    {
+      "id": "V-003",
+      "severity": "medium",
+      "kind": "evidence",
+      "title": "Supply inspectable local execution and GUI evidence",
+      "blocks": [
+        "RZ-006"
+      ],
+      "required_actions": [
+        "Capture sanitized command/UTC/exit/stdout/stderr evidence tied to the implementation commit.",
+        "Provide the actual title PNG with hash and coding-client terminal probe.",
+        "Use confirmed RTX 4050/6 GB; do not ask Housseyn to reconfirm the model. Record current terminal measurements and phase-aware service status."
+      ],
+      "acceptance_checks": [
+        "Small durable evidence bundle is available to the validator.",
+        "Laptops tests are distinguished from cloud tests; deferred MCP backends are not claimed working."
+      ]
+    },
+    {
+      "id": "V-004",
+      "severity": "medium",
+      "kind": "documentation",
+      "title": "Update stale project entry documents",
+      "blocks": [
+        "RZ-006"
+      ],
+      "required_actions": [
+        "Update README, START_HERE, reports index and relevant decision entries.",
+        "Link implemented title/core and pending validation; leave full game, MCP and generation work pending."
+      ],
+      "acceptance_checks": [
+        "Entry documents match actual files and capabilities.",
+        "Provisional design and owner-review gates remain explicit."
+      ]
+    }
+  ]
+}

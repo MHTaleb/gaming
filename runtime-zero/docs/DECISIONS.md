@@ -7,7 +7,7 @@ Treat status as part of every requirement. Record new decisions with date, autho
 | D-001 | Confirmed | Add a separate RPG folder in MHTaleb/gaming; reuse the existing local ticket board where practical. | This specification |
 | D-002 | Confirmed | Address implementation instructions to Copilot/DeepSeek; agents install missing required tools locally. | RZ-001 onward |
 | D-003 | Confirmed direction | Godot/GDScript, local image/audio generation, deterministic headless simulation, Python analysis and custom MCP adapters. | Verify versions/capabilities before install |
-| D-004 | User-reported | Lenovo LOQ with RTX 4060. Design conservatively around approximately 8 GB VRAM until measured. RAM/SSD unknown. | RZ-001 |
+| D-004 | Owner-confirmed correction, 2026-09-20 | Lenovo LOQ with RTX 4050 Laptop GPU and 6 GB VRAM. Housseyn corrected the earlier RTX 4060 statement and confirmed the agent report. Use a 6 GB GPU budget; runtime/tool measurements still require evidence. | RV-001/V-003 execution evidence |
 | D-005 | Confirmed constraint | No paid per-generation image/music APIs; keep models outside Git. | Every asset task |
 | D-006 | Provisional | Runtime Zero is the working title; technological dark fantasy theme with software-inspired enemies and equipment. | RZ-003 / RZ-012 |
 | D-007 | Provisional | Small single-player 2D encounter RPG, turn-based prototype, landscape presentation, desktop development then Android. | RZ-003 / RZ-012 |

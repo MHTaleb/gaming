@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "review_id": "RV-001",
+  "author_role": "executor",
+  "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
+  "state": "draft",
+  "implementation_commit": null,
+  "summary": "Awaiting executor response. No correction or local evidence is claimed yet.",
+  "findings": [
+    {
+      "id": "V-001",
+      "status": "pending",
+      "summary": "",
+      "changed_paths": [],
+      "evidence": []
+    },
+    {
+      "id": "V-002",
+      "status": "pending",
+      "summary": "",
+      "changed_paths": [],
+      "evidence": []
+    },
+    {
+      "id": "V-003",
+      "status": "pending",
+      "summary": "",
+      "changed_paths": [],
+      "evidence": []
+    },
+    {
+      "id": "V-004",
+      "status": "pending",
+      "summary": "",
+      "changed_paths": [],
+      "evidence": []
+    }
+  ]
+}

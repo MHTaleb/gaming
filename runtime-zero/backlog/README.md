@@ -28,3 +28,7 @@ The copied validator is extended to catch cycles of any length, invalid task ins
 After completing work, promote the earliest-phase eligible later ticket to next under AGENTS.md. Record actual manual approvals as evidence; tooling cannot establish that a human review occurred. The priority formula remains `2*value - 1.5*risk + bonus(P0=9,P1=5,P2=2,P3=0)` and never overrides prerequisites.
 
 No implementation ticket is marked done by this specification delivery. The initial executable task is RZ-001, local machine inventory.
+
+## Review holds
+
+reviews/ is the canonical review inbox. `node tools/reviews.js --next` lists correction/evidence work; review-held implementation tickets stay blocked or later in this board. `tools/backlog.js --ready` also excludes review holds, including inherited prerequisite holds. After Codex accepts the exact response/commit, the executor may clear the review blockedBy and promote the eligible ticket. A done implementation claim does not constitute independent reviewer approval.

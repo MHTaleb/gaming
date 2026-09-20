@@ -92,3 +92,7 @@ No live laptop ports were queried by the validator. A free port alone does not p
 ## Next validation submission
 
 Follow [VALIDATOR_ORDERS.md](../validation/VALIDATOR_ORDERS.md). Preserve the original claims as history and submit a response mapping V-001 through V-004 to exact changes, commands and evidence. The validator will review the new commit and reproduce the targeted checks. No persistent automatic monitoring or laptop access is implied by this report.
+
+## Owner confirmation and protocol addendum (2026-09-20)
+
+Housseyn subsequently confirmed RTX 4050 / 6 GB and corrected his earlier RTX 4060 statement. The hardware identity discrepancy above is resolved; do not ask him to confirm it again. V-003 still requests accessible terminal and GUI execution evidence. Current structured requests and responses now live under reviews/RV-001/; follow reviews/README.md for the standing protocol. Earlier passages are retained as the historical review of caf1cce.

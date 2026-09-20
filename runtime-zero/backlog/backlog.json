@@ -446,7 +446,7 @@
       "epic": "E-GAME",
       "area": "content",
       "type": "task",
-      "status": "next",
+      "status": "blocked",
       "priority": "P1",
       "size": "M",
       "value": 5,
@@ -483,7 +483,11 @@
         "P1",
         "content"
       ],
-      "evidence": []
+      "evidence": [],
+      "blockedBy": "RV-001: validator acceptance required for V-001 through V-004. See reviews/RV-001/request.json; run node tools/reviews.js --next.",
+      "review_ids": [
+        "RV-001"
+      ]
     },
     {
       "id": "RZ-007",

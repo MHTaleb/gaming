@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "review_id": "RV-001",
+  "author_role": "validator",
+  "decision": "changes_requested",
+  "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
+  "response_sha256": null,
+  "implementation_commit": null,
+  "reason": "V-001 through V-004 remain open. GPU identity is now confirmed by Housseyn; V-003 still requests actual execution evidence."
+}

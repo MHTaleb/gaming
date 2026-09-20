@@ -26,7 +26,16 @@ for (const item of data.items) {
 for (const folder of ['tools','backlog']) {
   for (const file of fs.readdirSync(path.join(ROOT,folder)).filter((f)=>f.endsWith('.js'))) run(process.execPath,['--check',folder+'/'+file]);
 }
-run(process.execPath,['--test','tools/backlog.test.js']);
+run(process.execPath,['--test','tools/backlog.test.js','tools/reviews.test.js']);
+run(process.execPath,['tools/reviews.js','--check']);
+try {
+  const review = require('./reviews').snapshot(data.items);
+  for (const item of data.items) {
+    if (review.blockers[item.id] && ['next','doing','done'].includes(item.status)) {
+      failed=true; console.error(item.id+' is held by review; keep it blocked/later until accepted.');
+    }
+  }
+} catch (err) { failed=true; console.error(err.message); }
 // Compile in memory: no pycache or machine probing during specification checks.
 run('python3',['-c',"from pathlib import Path; compile(Path('tools/doctor.py').read_text(), 'tools/doctor.py', 'exec'); print('doctor Python syntax: passed')"]);
 console.log(failed ? 'Specification verification FAILED' : `Specification verification passed (${data.items.length} implementation tickets; game/GPU checks not run).`);

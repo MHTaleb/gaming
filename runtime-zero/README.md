@@ -46,3 +46,7 @@ Open http://127.0.0.1:8090/backlog/ for the board. It reads JSON and does not wr
 | [docs/SOURCES.md](docs/SOURCES.md) | Revalidate external integrations before pinning them |
 
 The backlog is authoritative for work status and dependencies. Specifications define required behavior. A status edit cannot waive an acceptance criterion. All implementation tickets initially remain uncompleted.
+
+## Standing review workflow
+
+Read [reviews/README.md](reviews/README.md). Run `node tools/reviews.js --next` before choosing implementation work. Review requests, executor responses and validator verdicts share reviews/RV-nnn/. RZ-006 is held by RV-001 pending acceptance. Housseyn has confirmed RTX 4050 / 6 GB. The validator report and current request distinguish implemented title/core from the remaining game and studio tasks.

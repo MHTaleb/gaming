@@ -198,9 +198,9 @@ function validate(data) {
   return result;
 }
 
-function readyItems(items) {
+function readyItems(items, blockers = {}) {
   const byId = new Map(items.map((i) => [i.id, i]));
-  return items.filter((i) => i.status === 'next' &&
+  return items.filter((i) => i.status === 'next' && !blockers[i.id] &&
     i.deps.every((id) => byId.has(id) && byId.get(id).status === 'done'))
     .sort((a, b) => score(b) - score(a) || a.id.localeCompare(b.id));
 }
@@ -251,7 +251,12 @@ function main() {
       for (const p of problems) console.error('  ! ' + p);
       process.exit(1);
     }
-    const ready = readyItems(items);
+    let review;
+    try { review = require('./reviews').snapshot(items); }
+    catch (err) { console.error('Review check failed: ' + err.message); process.exit(1); }
+    if (review.problems.length) { console.error(review.problems.join('\n')); process.exit(1); }
+    const ready = readyItems(items, review.blockers);
+    if (Object.keys(review.blockers).length) console.log('Review holds apply; run node tools/reviews.js --next for correction work.');
     console.log('\nready to pick up, best first\n');
     console.log('id        pri  score  size  area              title');
     console.log('-'.repeat(100));
