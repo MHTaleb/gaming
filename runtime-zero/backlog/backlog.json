@@ -328,7 +328,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "task",
-      "status": "next",
+      "status": "done",
       "priority": "P0",
       "size": "M",
       "value": 5,
@@ -367,7 +367,20 @@
         "P1",
         "gameplay"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "~/.local/bin/godot --headless --path game --editor --quit",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "Godot 4.7.2.stable.official.ed1daf0bf on WSL2/Lenovo; exit 0; no parse errors; title.gd.uid generated"
+        },
+        {
+          "command": "~/.local/bin/godot --path game --quit-after 300 -- --smoke-shot",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "WSLg GUI launch; OpenGL 3.3 (Mesa/D3D12, RTX 4050); title rendered; screenshot sha256 1304aa63... recorded in reports/local/rz-004-title-smoke.png"
+        }
+      ]
     },
     {
       "id": "RZ-005",
@@ -375,7 +388,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "task",
-      "status": "later",
+      "status": "next",
       "priority": "P0",
       "size": "L",
       "value": 5,
