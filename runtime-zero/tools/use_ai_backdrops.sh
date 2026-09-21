@@ -6,6 +6,12 @@
 #   tools/use_ai_backdrops.sh copy     # try the AI candidates in-game
 #   tools/use_ai_backdrops.sh revert   # restore the procedural art (re-run)
 #
+# Review material is validation/evidence/037/map-with-ai-backdrop.png and
+# combat-with-ai-backdrop.png (committed); the candidates themselves live in
+# validation/evidence/037/candidates/ which the repo .gitignore keeps out of
+# history by design. If the folder is missing (fresh clone), regenerate with:
+#   1. ~/ai/comfy-venv/bin/python ~/ai/ComfyUI/main.py --port 8188   (once)
+#   2. python3 tools/make_ai_backdrops.py validation/evidence/037/candidates
 # The procedural art stays the shipped default until the owner approves the AI
 # look at the RZ-012 style gate; until then this script is the deliberate,
 # reversible opt-in for playtesting.
@@ -28,6 +34,9 @@ copy)
 		source_png="$CANDIDATES/${region}_sdxl.png"
 		if [[ ! -f "$source_png" ]]; then
 			echo "missing candidate: $source_png" >&2
+			echo "candidates/ is gitignored by repo convention; regenerate:" >&2
+			echo "  1. ~/ai/comfy-venv/bin/python ~/ai/ComfyUI/main.py --port 8188" >&2
+			echo "  2. python3 tools/make_ai_backdrops.py validation/evidence/037/candidates" >&2
 			exit 1
 		fi
 		cp "$source_png" "$TARGET/${region}.png"

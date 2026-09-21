@@ -57,11 +57,18 @@ All three rendered on the RTX 4050 through the local `/prompt` API — sampler
 `euler_ancestral` / `normal`, **6 steps, cfg 1.0**, 1024×576, batch 1; tool
 `tools/make_ai_backdrops.py`.
 
-| Region | Candidate (`candidates/`) | Look | sha256 prefix |
+| Region | Candidate (`candidates/`, local-only — gitignored by convention) | Look | sha256 prefix |
 |---|---|---|---|
 | Intrusion | `intrusion_sdxl.png` | teal-lit night skyline against an orange dusk — matches the cyan-on-navy palette | `f2c1e39b…` |
 | Load Spike | `load_spike_sdxl.png` | magenta/violet spike field with cyan streaks — high-energy abstract stage | `b41e9005…` |
 | Server Cathedral | `server_cathedral_sdxl.png` | dark data-center nave, cyan trim lines, amber LED racks, central aisle beam | `538cbd05…` |
+
+The candidates are **not committed** (repo `.gitignore` keeps generated
+candidates out of history by design — see also `docs/ART_BIBLE.md`, rejected
+candidates stay outside `game/assets/`). The committed review material is the
+in-game captures below plus the hashes in `generation-log.txt`; regenerate the
+files any time with the tool (steps in the README of this directory / the swap
+script's error message).
 
 ## How they may reach the game (owner gate)
 
@@ -73,6 +80,10 @@ in-game with the deliberate, reversible opt-in:
 tools/use_ai_backdrops.sh copy     # use the AI candidates
 tools/use_ai_backdrops.sh revert   # re-run the deterministic generator
 ```
+
+`copy` also re-imports the Godot texture cache (verified: without it the game
+kept showing the old art). The candidates folder is local-only; on a fresh
+clone regenerate it first (see the script's error message for the two steps).
 
 A swap is the owner's call at the RZ-012 style gate; nothing auto-switches.
 
