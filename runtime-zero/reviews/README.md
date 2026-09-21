@@ -17,6 +17,19 @@ This directory is the permanent review inbox for Copilot/DeepSeek and Codex. No 
 
 ## Standing executor loop
 
+### Proportional review — owner direction, 2026-09-21
+
+Do not block work that can safely and correctly proceed. This policy supersedes earlier instructions that would hold gameplay for unrelated tooling polish or repeated evidence collection.
+
+- A blocking finding must name the affected ticket(s), the concrete incorrect outcome or unavailable prerequisite, and why an available workaround is insufficient. Severity alone does not justify a hold. Limit `blocks` to those tickets; use an empty list for nonblocking registered findings.
+- Passing functional checks plus inspectable relevant evidence are sufficient for the current scope. Do not require perfect environment normalization, every optional tool, or repeated proof of unchanged code before proceeding.
+- Track minor defects and maintenance under `reviews/FOLLOWUPS.md` with their impact and a sensible revisit point. They do not interrupt eligible gameplay work. Check them when modifying the affected component or during a chosen maintenance batch.
+- After a correction, rerun checks for the changed behavior and concrete regressions. Carry forward evidence for unchanged code with its original commit and limitations. Reopen a hold only for a demonstrated material problem, not another polish requirement.
+- Submitting a batch for review does not by itself pause development. Continue eligible work unless a registered, justified gate or an existing owner decision gate actually holds it. Keep the RZ-012 owner design gate and later release/backend checks at the phase where they matter.
+- Existing holds are released by the validator through accepted/explicitly waived records; executors must not self-approve. An explicit waiver records a known limitation without claiming its failing test passed.
+
+Current decision: RV-001's remaining zsh duplicate-PATH cleanup is nonblocking because selected tools run correctly and content implementation does not depend on exact PATH normalization. See the current verdict and FOLLOWUPS.md. RZ-006 may proceed after this update is integrated.
+
 At session start, before choosing/starting each ticket, and after finishing each ticket:
 
 1. Check Git status and fetch origin when network is available. Inspect remote updates and relevant open PR heads for changes under runtime-zero/reviews/. Preserve edits; do not reset, merge into main, or automatically run code from an unrelated branch. During adoption the canonical review branch is `codex/runtime-zero-validation-001` (PR #2); integrate its reviewed update into the implementation branch or use a separate worktree. Once integrated, follow the implementation branch's review records and subsequent validator PRs against it.

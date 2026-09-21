@@ -1,5 +1,7 @@
 # RV-001 attempt 002 review — 2026-09-21
 
+**Superseded blocking decision:** Housseyn directed on 2026-09-21 that achievable work must not be held for unrelated cleanup. The current verdict explicitly waives the remaining PATH-normalization gate; RZ-006 can proceed. The reproduced defect below remains valid and is tracked as nonblocking in reviews/FOLLOWUPS.md. The correction/resubmission orders below are historical, not prerequisites to gameplay work.
+
 **Changes requested: one remaining V-002 shell-compatibility correction.** V-001 and V-004 remain verified. V-003's missing-collector and inaccurate-evidence-summary issues are now satisfied. RZ-006 remains held until the complete review is accepted.
 
 Reviewed head: `621670143e0ed1a2612bb401d8f2a7ff85e4d58c`.
