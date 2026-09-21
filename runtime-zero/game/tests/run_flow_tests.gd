@@ -17,6 +17,12 @@ var run: RZRunService
 
 func _initialize() -> void:
 	run = root.get_node("RZRun")
+	# The autoload's _ready (profile reload) lands on the first processed frame;
+	# settle it before redirecting persistence away from the real save.
+	await process_frame
+	run.profile_path = "user://test-runflow-save.json"
+	_wipe_profile()
+	run.reload_profile()
 	_test_begin_variants()
 	_test_progression_rewards_once()
 	_test_defeat_stall_and_double_report()
@@ -42,6 +48,12 @@ func _expect(condition: bool, label: String) -> void:
 func _fresh_run() -> void:
 	run.reset()
 	run.completed.clear()
+
+func _wipe_profile() -> void:
+	for suffix in ["", ".bak", ".tmp"]:
+		var path: String = run.profile_path + suffix
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 func _clear_scene() -> void:
 	if current_scene != null:
@@ -140,6 +152,7 @@ func _test_defeat_stall_and_double_report() -> void:
 
 func _test_loadout_scene_flow() -> void:
 	_fresh_run()
+	run.last_equipment = ""
 	_clear_scene()
 	var node := await _open(LOADOUT_SCENE)
 	_expect(node.name == "Loadout", "loadout scene opens")
@@ -160,7 +173,15 @@ func _test_loadout_scene_flow() -> void:
 		and run.equipment_id == "guard_plating", "the run is active with the chosen loadout")
 	_expect(current_scene.get_node("%HeroHPText").text == "125 / 125",
 		"the chosen guard plating is applied in the fight")
+	# Reopening the loadout preselects the remembered equipment (RZ-009).
 	_fresh_run()
+	_clear_scene()
+	var again := await _open(LOADOUT_SCENE)
+	_expect(not again.get_node("%BeginButton").disabled
+		and again.get_node("%SummaryLabel").text.contains("guard_plating"),
+		"reopening the loadout preselects the remembered equipment")
+	_fresh_run()
+	run.last_equipment = ""
 	_clear_scene()
 
 func _test_full_campaign_through_scenes() -> void:
@@ -228,3 +249,4 @@ func _test_full_campaign_through_scenes() -> void:
 		and not run.active, "play again returns to the loadout screen")
 	_fresh_run()
 	_clear_scene()
+	_wipe_profile()

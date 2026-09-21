@@ -288,3 +288,34 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game --script $PWD/validation/guard_contract.gd` | exit 0 |
 | `tools/demo.sh run -- --auto-enter 60 --capture …loadout.png` | exit 0 — loadout capture |
 | `tools/demo.sh run -- --auto-enter 60 --auto-begin guard_plating --capture …combat-in-campaign.png` | exit 0 — title → loadout → combat through real input hooks |
+
+## RZ-009 — save, backup recovery and migration (2026-09-21)
+
+- `game/src/infrastructure/save_repository.gd`: versioned JSON under user:// with **atomic
+  replacement** (temp file + rename, previous revision kept as `.bak`), **backup recovery**
+  when the main file is unreadable, **v0→v1 migration**, strict field sanitizing (wrong types
+  fall back to defaults, rewards deduplicated) and fail-closed handling of newer save versions.
+  A missing/corrupt save never blocks the game and never raises.
+- Wired into the app: `RZRun` loads the profile at startup and persists rewards as they are
+  granted, the last equipment choice on begin, and the reduced-motion setting from the combat
+  toggle (the mute field is ready for RZ-010 audio). The loadout preselects the remembered
+  equipment, so **progress and settings survive restarts**.
+- `game/tests/save_tests.gd`: **24 checks** — round-trip, atomic replace (no `.tmp` residue,
+  `.bak` holds the previous revision), corrupt main → backup recovery, fully corrupt → usable
+  defaults, raw v0 fixture migration, future version refusal, type sanitizing/dedup, and the
+  RZRun profile integration (settings persist, equipment remembered, rewards survive reload).
+
+Test-suite note (learned here): in `--script` harnesses the autoload's `_ready` runs on the
+first processed frame; suites settle it with `await process_frame` before touching profile
+state, otherwise the reload clobbers test setup.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/save_tests.gd` | exit 0 — **ALL SAVE TESTS PASSED (24 checks)** |
+| `godot --headless --path game --script res://tests/run_flow_tests.gd` | exit 0 — 45 checks (loadout memory covered) |
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 111 checks |
+| `godot --headless --path game --script res://tests/run_tests.gd` | exit 0 — 96 checks |
+| `godot --headless --path game --script res://tests/content_tests.gd` | exit 0 — 54 checks |
+| `tools/demo.sh run -- --auto-enter 60 --auto-begin power_booster --quit-after 400` | real GUI session wrote `save.json` with `last_equipment: power_booster` (checked on disk) |

@@ -133,7 +133,11 @@ func _connect_ui() -> void:
 	%ContinueButton.pressed.connect(_continue)
 	%TitleButton.pressed.connect(_go_title)
 	%QuitButton.pressed.connect(_quit)
-	%ReducedMotion.toggled.connect(func(pressed: bool) -> void: reduced_motion = pressed)
+	%ReducedMotion.toggled.connect(func(pressed: bool) -> void:
+		reduced_motion = pressed
+		RZRun.set_setting("reduced_motion", pressed))
+	%ReducedMotion.set_pressed_no_signal(RZRun.setting("reduced_motion"))
+	reduced_motion = %ReducedMotion.button_pressed
 	%AttackButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_ATTACK)
 	%GuardButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_GUARD)
 	%SkillButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_SKILL)

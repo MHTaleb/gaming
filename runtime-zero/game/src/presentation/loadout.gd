@@ -29,8 +29,13 @@ func _ready() -> void:
 	%BeginButton.pressed.connect(_begin)
 	%BackButton.pressed.connect(_back)
 	%BeginButton.disabled = true
-	if first != null:
+	if not RZRun.last_equipment.is_empty() and _cards.has(RZRun.last_equipment):
+		_select(RZRun.last_equipment)
+	if _selected_id.is_empty() and first != null:
 		first.grab_focus()
+	elif _cards.has(_selected_id):
+		var selected_card: Button = _cards[_selected_id]
+		selected_card.grab_focus()
 	var args := OS.get_cmdline_user_args()
 	var auto := _arg_value(args, "--auto-begin")
 	if not auto.is_empty():

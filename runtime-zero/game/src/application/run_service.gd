@@ -18,7 +18,7 @@ extends Node
 var active := false
 var equipment_id := ""
 var encounter_id := ""
-## Reward ids granted this process (a reward is granted at most once).
+## Reward ids granted (loaded from the save at startup, granted at most once).
 var completed: Array[String] = []
 ## "victory" | "defeat" | "stalled" while a fight outcome awaits advancing.
 var pending_outcome := ""
@@ -28,7 +28,45 @@ var last_reward_id := ""
 var last_reward_granted := false
 var run_complete := false
 
+## Persisted profile (RZ-009): settings + unlocks live in the save file.
+var profile_path: String = RZSaveRepository.DEFAULT_PATH
+var settings := {"mute": false, "reduced_motion": false}
+var last_equipment := ""
+
 var _pack: Dictionary = {}
+
+func _ready() -> void:
+	reload_profile()
+
+## Loads the persisted profile; a broken save falls back to defaults without
+## blocking gameplay, and a backup copy is used when the main file is corrupt.
+func reload_profile() -> void:
+	var repository := RZSaveRepository.new()
+	var data: Dictionary = repository.load_data(profile_path)
+	settings.mute = bool(data.settings.mute)
+	settings.reduced_motion = bool(data.settings.reduced_motion)
+	completed.clear()
+	for reward in data.rewards:
+		completed.append(str(reward))
+	last_equipment = str(data.last_equipment)
+
+func persist() -> void:
+	var repository := RZSaveRepository.new()
+	var err := repository.save_data({
+		"version": RZSaveRepository.CURRENT_VERSION,
+		"settings": settings.duplicate(),
+		"rewards": completed.duplicate(),
+		"last_equipment": last_equipment,
+	}, profile_path)
+	if err != OK:
+		printerr("RZRun: could not persist profile: ", repository.errors)
+
+func set_setting(key: String, value: bool) -> void:
+	settings[key] = value
+	persist()
+
+func setting(key: String, fallback: bool = false) -> bool:
+	return bool(settings.get(key, fallback))
 
 ## Starts a run for one equipment choice at the pack's first encounter.
 ## Returns {ok, errors} - a broken pack or unknown equipment fails closed.
@@ -46,12 +84,14 @@ func begin(chosen_equipment_id: String, root: String = RZContentRepository.DEFAU
 	_pack = pack
 	active = true
 	equipment_id = chosen_equipment_id
+	last_equipment = chosen_equipment_id
 	encounter_id = str(encounters[0].get("id", ""))
 	pending_outcome = ""
 	last_outcome = ""
 	last_reward_id = ""
 	last_reward_granted = false
 	run_complete = false
+	persist()
 	return {"ok": true}
 
 ## Ends the current run (title flow). `completed` (in-process unlocks) stays.
@@ -116,6 +156,7 @@ func advance() -> Dictionary:
 	last_reward_granted = last_reward_id != "" and not completed.has(last_reward_id)
 	if last_reward_granted:
 		completed.append(last_reward_id)
+		persist()
 	pending_outcome = ""
 	var next_id := next_encounter_id()
 	if next_id.is_empty():

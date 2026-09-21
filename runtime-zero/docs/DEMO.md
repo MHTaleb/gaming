@@ -22,10 +22,14 @@ repository (the runner activates the pinned toolchain itself via
 - **Input**: mouse, touch (48 px targets), keyboard (`1`/`2`/`3`, Tab/Enter),
   double-click/tap protection, reduced-motion toggle.
 - **Quit** with the in-game Quit button (clean shutdown) or the window's X.
+- **Progress is remembered** (RZ-009): reduced-motion setting, unlocked rewards
+  and your last equipment choice survive restarts. The save is a plain JSON file
+  under `~/.local/share/godot/app_userdata/Runtime Zero/save.json`; a corrupt
+  save recovers from its backup (`.bak`) and the game always reaches the title.
 
-**Not playable yet** (later tickets): saves/persistence (RZ-009), accessibility
-polish and placeholder sound (RZ-010), replay fixtures/CI (RZ-011), real
-AI-generated art and music (gated phases RZ-016+, RZ-023+), Android build.
+**Not playable yet** (later tickets): accessibility polish and placeholder sound
+(RZ-010), replay fixtures/CI (RZ-011), real AI-generated art and music (gated
+phases RZ-016+, RZ-023+), Android build.
 
 ## Run it
 
