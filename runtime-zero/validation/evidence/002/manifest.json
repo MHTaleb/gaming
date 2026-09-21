@@ -1,0 +1,28 @@
+{
+  "review": "RV-001",
+  "attempt": "002 — V-002 launcher precedence and V-003 replayability corrections (2026-09-21)",
+  "implementation_commit": "74b2b74bb46e686ad56941a1e30d6573d27896d5",
+  "collected_utc_window": "2026-09-21T00:33:43Z .. 2026-09-21T00:33:51Z",
+  "collector": "validation/evidence/collect.zsh (committed before collection; every probe body is inspectable in Git; each substantive step records its own command and exit code)",
+  "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6, local laptop; terminal checks through the corrected tools/env.sh route; Godot 4.7.2.stable.official.ed1daf0bf; Node v22.23.2; managed CPython 3.12.14",
+  "files": {
+    "client-tool.log": {"sha256": "6ee5189498a1c3a75710d39708bba9da04800121ceb38f83bff07b480201d924", "exit_code": 0},
+    "combat.log": {"sha256": "519a4caec98c2425925947b8ee806734befd79a154de7eb4851abf9a29c9b194", "exit_code": 0},
+    "controlled.log": {"sha256": "27017de9d8cd8424664cc4f0e2ac128a5d8aaff3999e7e941542afe3f34c0e32", "exit_code": 0},
+    "expected-failure.log": {"sha256": "8256cc2cde01d97c4c470cfa306725eae28181cd2cb2939bda8599956f2d2b53", "exit_code": 3},
+    "fresh-terminal.log": {"sha256": "b2f38fd1b84921445ad988570d4a64ba3058a00b959bbc1f7dbf80d6301cc13d", "exit_code": 0},
+    "guard-contract.log": {"sha256": "5404fe3f02981779783fd2c6343f02a7ac27c459c7055d5129b08bc6cd15a5f6", "exit_code": 0},
+    "import.log": {"sha256": "7f3e277924db508edc106c26828d5869afbeb7ae0cd36fa2f3da44cd62b879a0", "exit_code": 0},
+    "launcher-contract.log": {"sha256": "cdb95edd4a0250c6be247756e65bfbee09a6156eb0f94502aa3092480366778c", "exit_code": 0},
+    "managed-python.log": {"sha256": "8513e5d729108af581e53226e8d4bc70743db1469596336fe4ee69d2e83e1e72", "exit_code": 0},
+    "source.log": {"sha256": "72054ccda3ac25112310e2040d54f32ffd0acfc9ddcf77f6a35768ec8216b40a", "exit_code": 0},
+    "spec.log": {"sha256": "c84bfad940dd924aa1d2249530495918d389da8a65fa7cc53402d7fff66262bf", "exit_code": 0},
+    "terminal.log": {"sha256": "98d2b21c480329331d602bb5bd058410b5e00a25862a1dbb1bffa6ce55f48c7b", "exit_code": 0}
+  },
+  "notes": {
+    "expected_failure": "expected-failure.log is a deliberate nonzero probe (exit 3), labelled in its log; it proves per-command exit-code propagation and that a trailing echo cannot hide a failure.",
+    "fresh_terminal": "fresh-terminal.log reconstructs a newly opened VS Code WSL terminal from the PATH recorded at this session's start (Node 20 first, ~/.local/bin absent); Windows-interop entries are elided because they contain no node/uv/godot.",
+    "history": "validation/evidence/001/ (validator) and validation/evidence/001-response/ (first executor bundle) are preserved unchanged as history; the 001-response bundle's inaccurate before-activation summary is corrected in the response, not by rewriting historical logs.",
+    "log_normalization": "Home paths replaced with $HOME; /mnt/c/Users/* replaced with <winuser>; hostname replaced with <host>; command output otherwise unmodified. Raw logs stay in the ignored reports/local/ directory."
+  }
+}

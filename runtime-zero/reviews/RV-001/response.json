@@ -4,8 +4,8 @@
   "author_role": "executor",
   "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
   "state": "ready_for_review",
-  "implementation_commit": "1aef2d92efb68a368649119cfc4a0df183e12257",
-  "summary": "V-001 Guard corrected to the specified single-use contract (rules v2) with explicit consumption/unused-expiry wording and an expanded suite; the validator-owned guard_contract regression passes unmodified. V-002 adds tools/env.sh, a project-local launcher verified from a simulated fresh VS Code WSL terminal (Node 22+, uv, pinned Godot, managed Python), no global shell edits. V-003 supplies the sanitized evidence bundle under validation/evidence/001-response/ (source identity, WSL/GPU, provenance, spec/import/combat/guard/GUI logs, with title PNG and client tool probe) tied to commit 1aef2d9. V-004 updates README, START_HERE, reports index and D-010. RZ-006 remains held pending the validator verdict; no self-approval is claimed.",
+  "implementation_commit": "74b2b74bb46e686ad56941a1e30d6573d27896d5",
+  "summary": "Resubmission addressing the 2026-09-21 follow-up. V-002: tools/env.sh now performs deterministic strip-and-pin PATH surgery and passes the validator-owned two-scenario regression; fresh-terminal and controlled runs through the corrected route are recorded per-step. V-003: evidence rebuilt as attempt validation/evidence/002/ from the committed collector validation/evidence/collect.zsh (every probe body inspectable in Git; per-step exit codes; a labelled expected-failure probe proves propagation); the earlier inaccurate before-activation statement is corrected and the 001 bundles are preserved as history. V-001 Guard and V-004 documentation corrections remain in place as verified. Deferred MCP/model backends are reported honestly and were not installed. RZ-006 remains held pending the validator verdict; no self-approval is claimed.",
   "service_status": [
     {
       "component": "Studio MCP server",
@@ -153,7 +153,7 @@
     {
       "id": "V-002",
       "status": "addressed",
-      "summary": "Added tools/env.sh: a project-local activation script that makes the newest nvm-managed Node >=22, uv and the pinned Godot win from a fresh terminal, without editing global shell configuration. Verified by simulating the documented VS Code WSL inheritance (NVM_BIN=v20.20.0 with v20 first on PATH): before sourcing, node resolves v20.20.0 and uv/godot do not; after sourcing, node v22.23.2, uv 0.12.17, godot 4.7.2 and managed CPython 3.12.14 all resolve, and node tools/verify.js passes through that route. The system python3.8 venv limitation is unchanged and not needed by this route.",
+      "summary": "tools/env.sh now performs deterministic strip-and-pin PATH surgery: exact duplicates of the selected Node directory and ~/.local/bin are removed wherever they sit, then the order [selected Node >=22][~/.local/bin][rest] is pinned, stable on first and repeated activation. This fixes both reviewed defects (a competing earlier entry won because presence-anywhere was mistaken for precedence; first and second activation could select different Nodes). Verified by the live session terminal; a labelled fresh-terminal equivalence reconstruction (Node 20 first, ~/.local/bin absent: before = node v20.20.0 with uv/godot not found, after = node v22.23.2, uv 0.12.17, godot 4.7.2); a labelled controlled case with the same shape checking first and repeated activation; and python validation/launcher_contract.py passing both scenarios (exit 0). Specification, import, combat and Guard checks all run through the corrected route. The system python3.8 venv limitation is unchanged and not needed by this route.",
       "changed_paths": [
         "tools/env.sh",
         "config/toolchain.lock.json",
@@ -162,54 +162,127 @@
       ],
       "evidence": [
         {
-          "command": "env NVM_BIN=$HOME/.nvm/versions/node/v20.20.0/bin PATH=<v20-first> zsh -ic \"zsh reports/local/tools-probe.zsh\" (exact full command line including the injected PATH is in the artifact)",
-          "environment": "fresh zsh reproducing the documented VS Code terminal inheritance; launcher sourced inside the probe",
-          "checked_at": "2026-09-20T18:44:51Z",
+          "command": "zsh validation/evidence/collect.zsh - probe fresh-terminal (committed collector; PATH restored to the session-start fresh-terminal recording: Node 20 first, ~/.local/bin absent)",
+          "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6 (local laptop); before: node v20.20.0, uv/godot not found; after: node v22.23.2, uv 0.12.17, godot 4.7.2",
+          "checked_at": "2026-09-21T00:33:43Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/001-response/tools.log",
-          "sha256": "5bd6af333de2851b0187e484c93218cefead7b4d4ba84baa33794a91fec5cfcd"
+          "artifact": "validation/evidence/002/fresh-terminal.log",
+          "sha256": "b2f38fd1b84921445ad988570d4a64ba3058a00b959bbc1f7dbf80d6301cc13d"
         },
         {
-          "command": "source tools/env.sh && node tools/verify.js",
-          "environment": "Node v22.23.2 resolved through the launcher; specification plus review-integrity checks",
-          "checked_at": "2026-09-20T18:44:53Z",
+          "command": "zsh validation/evidence/collect.zsh - probe controlled (Node 20 first, user tool directory absent; first and repeated activation)",
+          "environment": "same host; stable selections across both activations: v22.23.2 node, ~/.local/bin uv and godot",
+          "checked_at": "2026-09-21T00:33:43Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/001-response/spec.log",
-          "sha256": "b6fbed2e445439867344dcae4b3c8cd169ea15066a89c590439511b0b55f89a0"
+          "artifact": "validation/evidence/002/controlled.log",
+          "sha256": "27017de9d8cd8424664cc4f0e2ac128a5d8aaff3999e7e941542afe3f34c0e32"
+        },
+        {
+          "command": "python3 validation/launcher_contract.py (validator-owned two-scenario regression; fixture stubs, no HOME or host modification)",
+          "environment": "both scenarios PASS: competing earlier tools demoted; selected Node wins on first and repeated activation",
+          "checked_at": "2026-09-21T00:33:44Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/launcher-contract.log",
+          "sha256": "cdb95edd4a0250c6be247756e65bfbee09a6156eb0f94502aa3092480366778c"
+        },
+        {
+          "command": "zsh validation/evidence/collect.zsh - probe terminal (live session terminal, labelled as potentially session-modified)",
+          "environment": "same host; records inherited NVM_BIN and that the launcher keeps the selected tools in front",
+          "checked_at": "2026-09-21T00:33:43Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/terminal.log",
+          "sha256": "98d2b21c480329331d602bb5bd058410b5e00a25862a1dbb1bffa6ce55f48c7b"
+        },
+        {
+          "command": "zsh validation/evidence/collect.zsh - probe spec (source tools/env.sh && node tools/verify.js)",
+          "environment": "Node v22.23.2 resolved through the launcher; specification and review-integrity checks pass",
+          "checked_at": "2026-09-21T00:33:45Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/spec.log",
+          "sha256": "c84bfad940dd924aa1d2249530495918d389da8a65fa7cc53402d7fff66262bf"
+        },
+        {
+          "command": "zsh validation/evidence/collect.zsh - probe import (godot --headless --path game --editor --quit through the route)",
+          "environment": "pinned Godot 4.7.2 via launcher; headless import exit 0",
+          "checked_at": "2026-09-21T00:33:50Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/import.log",
+          "sha256": "7f3e277924db508edc106c26828d5869afbeb7ae0cd36fa2f3da44cd62b879a0"
+        },
+        {
+          "command": "zsh validation/evidence/collect.zsh - probe combat (godot --headless --path game --script res://tests/run_tests.gd through the route)",
+          "environment": "96 checks pass through the corrected route",
+          "checked_at": "2026-09-21T00:33:50Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/combat.log",
+          "sha256": "519a4caec98c2425925947b8ee806734befd79a154de7eb4851abf9a29c9b194"
+        },
+        {
+          "command": "zsh validation/evidence/collect.zsh - probe guard-contract (validator Guard regression through the route, file unmodified)",
+          "environment": "hits [3,6], hero HP 91, input unchanged; exit 0",
+          "checked_at": "2026-09-21T00:33:51Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/guard-contract.log",
+          "sha256": "5404fe3f02981779783fd2c6343f02a7ac27c459c7055d5129b08bc6cd15a5f6"
         }
       ]
     },
     {
       "id": "V-003",
       "status": "addressed",
-      "summary": "Committed a sanitized, hashed evidence bundle under validation/evidence/001-response/ (with manifest.json) tied to implementation commit 1aef2d9: clean source identity; WSL2/VS Code context (no SSH session markers; DISPLAY/Wayland active); RTX 4050 Laptop 6141 MiB measured by nvidia-smi and matched by the Windows video-controller query — the owner confirmation is recorded and was not re-requested; Godot executable hash (distinct from the downloaded archive hash); disposable uv venv (CPython 3.12.14, trivial import) created and removed; fresh engine import; 96-check combat suite; guard contract; WSLg GUI render log plus the actual title PNG; client tool probe with the review marker and commit. Deferred MCP/model backends are reported in service_status and were not installed for this review.",
+      "summary": "Rebuilt as attempt validation/evidence/002/ produced by the committed collector validation/evidence/collect.zsh: every probe body is inspectable in Git, each substantive step records its own command and exit code (a trailing echo cannot hide a failure), and a labelled deliberate nonzero probe records exit_code=3 to prove propagation. The bundle covers source identity (branch, HEAD 74b2b74, clean tree), the fresh-terminal and controlled before/after cases, the validator launcher regression, spec/import/combat/Guard runs through the corrected route, a managed-Python probe (uv python find + disposable venv created, exercised, removed), the expected-failure probe and a fresh client tool probe. This corrects the earlier inaccurate 'uv/godot absent before activation' summary: in the old live-terminal log both were resolvable; the missing-PATH claim is now supported by the labelled fresh-terminal reconstruction and controlled case, and the live-terminal log is explicitly marked as potentially session-modified. The 001 bundles are preserved as history. GPU/GUI evidence stays tied to the original tested commit: RTX 4050 Laptop 6141 MiB (owner-confirmed, not re-asked), executable hash distinct from the archive hash, and the real title PNG. Deferred MCP/model backends are reported in service_status and were not installed.",
       "changed_paths": [
-        "validation/evidence/001-response/"
+        "validation/evidence/collect.zsh",
+        "validation/evidence/002/"
       ],
       "evidence": [
         {
-          "command": "git rev-parse HEAD; git status --short (captured first, before evidence files were written)",
-          "environment": "runtime-zero checkout on the local laptop; records the tested commit and its clean tree",
-          "checked_at": "2026-09-20T18:44:48Z",
+          "command": "zsh validation/evidence/collect.zsh - probe source (branch, HEAD, git status --short)",
+          "environment": "runtime-zero checkout on the local laptop; records HEAD 74b2b74 and a clean tree at capture time",
+          "checked_at": "2026-09-21T00:33:43Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/001-response/source.log",
-          "sha256": "010954ead5fcafb337bd3ead693a3496150d068db2bc414e8dfc3b983e8b4d27"
+          "artifact": "validation/evidence/002/source.log",
+          "sha256": "72054ccda3ac25112310e2040d54f32ffd0acfc9ddcf77f6a35768ec8216b40a"
         },
         {
-          "command": "uname -a; /etc/os-release; command -v code; ssh markers; DISPLAY",
-          "environment": "establishes WSL2 on the Lenovo and the VS Code connection context",
-          "checked_at": "2026-09-20T18:44:48Z",
+          "command": "zsh validation/evidence/collect.zsh - probe managed-python (uv python find 3.12; disposable venv create/run/remove)",
+          "environment": "managed CPython 3.12.14; venv created, version and trivial import exercised, then removed",
+          "checked_at": "2026-09-21T00:33:51Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/001-response/wsl-context.log",
-          "sha256": "056c3d5d2460fc959c4c2bdf93522ed44a59b7f91c2670607333d84cb7154a99"
+          "artifact": "validation/evidence/002/managed-python.log",
+          "sha256": "8513e5d729108af581e53226e8d4bc70743db1469596336fe4ee69d2e83e1e72"
         },
         {
-          "command": "/usr/lib/wsl/lib/nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv",
-          "environment": "WSL GPU passthrough on the laptop",
+          "command": "zsh validation/evidence/collect.zsh - probe expected-failure (deliberate `sh -c 'exit 3'`, labelled in the log)",
+          "environment": "recorded exit_code=3 proves per-command propagation; not a project failure",
+          "checked_at": "2026-09-21T00:33:51Z",
+          "exit_code": 3,
+          "result": "observation",
+          "artifact": "validation/evidence/002/expected-failure.log",
+          "sha256": "8256cc2cde01d97c4c470cfa306725eae28181cd2cb2939bda8599956f2d2b53"
+        },
+        {
+          "command": "zsh validation/evidence/collect.zsh - probe client-tool (review marker + git rev-parse HEAD + UTC)",
+          "environment": "fresh coding-client terminal call; model-picker identity is user-stated, not cryptographically verified",
+          "checked_at": "2026-09-21T00:33:51Z",
+          "exit_code": 0,
+          "result": "passed",
+          "artifact": "validation/evidence/002/client-tool.log",
+          "sha256": "6ee5189498a1c3a75710d39708bba9da04800121ceb38f83bff07b480201d924"
+        },
+        {
+          "command": "/usr/lib/wsl/lib/nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv (preserved from the first bundle)",
+          "environment": "WSL GPU passthrough on the laptop; owner-confirmed RTX 4050 identity, not re-requested",
           "checked_at": "2026-09-20T18:44:48Z",
           "exit_code": 0,
           "result": "passed",
@@ -217,7 +290,7 @@
           "sha256": "076a71b5cd7608100c55e92af86ff4332da98e3ab53f073b713f42a2b85be043"
         },
         {
-          "command": "powershell.exe -NoProfile -Command \"Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion | ConvertTo-Json\"",
+          "command": "powershell.exe -NoProfile -Command \"Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion | ConvertTo-Json\" (preserved)",
           "environment": "Windows host comparison from the same machine",
           "checked_at": "2026-09-20T18:44:50Z",
           "exit_code": 0,
@@ -226,8 +299,8 @@
           "sha256": "5989831fcc01b38c2dbcb4cb5663be6932774d988142f82d403e41af6bf50a09"
         },
         {
-          "command": "readlink -f ~/.local/bin/godot; godot --version; sha256sum <resolved executable>",
-          "environment": "executable hash distinguished from the downloaded archive hash",
+          "command": "readlink -f ~/.local/bin/godot; godot --version; sha256sum <resolved executable> (preserved)",
+          "environment": "executable hash distinguished from the downloaded archive hash; matches the validator's extracted executable",
           "checked_at": "2026-09-20T18:44:52Z",
           "exit_code": 0,
           "result": "passed",
@@ -235,17 +308,8 @@
           "sha256": "483292af4bc34569cb25891722aff31fb84dd86aae14a2a68b5ea5a760595c25"
         },
         {
-          "command": "uv venv /tmp/rz-rv001-python-probe --python 3.12; python -V; python -c 'trivial import'; rm -rf probe",
-          "environment": "disposable project-owned probe, removed after the run",
-          "checked_at": "2026-09-20T18:44:52Z",
-          "exit_code": 0,
-          "result": "passed",
-          "artifact": "validation/evidence/001-response/python.log",
-          "sha256": "aec27796d204e37b2eb7d3686654ad9ab8cffc67cd2e5fe2056f0bd5ea601fc0"
-        },
-        {
-          "command": "source tools/env.sh && godot --path game --quit-after 300 -- --smoke-shot (WSLg render; PNG copied from user://)",
-          "environment": "local laptop display via WSLg; OpenGL 3.3 (Mesa/D3D12) on the RTX 4050",
+          "command": "godot --path game --quit-after 300 -- --smoke-shot (preserved WSLg render log)",
+          "environment": "local laptop display via WSLg; recorded X11/xkb and V-Sync warnings retained, render succeeded",
           "checked_at": "2026-09-20T18:45:07Z",
           "exit_code": 0,
           "result": "passed",
@@ -253,22 +317,13 @@
           "sha256": "70516d4a056e4b227ffecb6a478a011c8e238e48d9109ef74cead18b9cdf3585"
         },
         {
-          "command": "copy of the render produced by the gui capture (user://title_smoke.png)",
-          "environment": "actual title screenshot from the tested build; a screenshot proves rendering, not gameplay input",
+          "command": "copy of the render produced by the gui capture (user://title_smoke.png; preserved)",
+          "environment": "actual title screenshot from the original tested build; a screenshot proves rendering, not gameplay input",
           "checked_at": "2026-09-20T18:45:07Z",
           "exit_code": 0,
           "result": "passed",
           "artifact": "validation/evidence/001-response/title-smoke.png",
           "sha256": "1304aa63480204d73240bdb079ffe758e011c2fc4b285a7a6d48bce7f413669e"
-        },
-        {
-          "command": "client tool probe: echo review marker + git rev-parse HEAD + UTC (executed by this agent session's terminal tool)",
-          "environment": "coding-client tool call recorded; model-picker identity is user-stated, not cryptographically verified",
-          "checked_at": "2026-09-20T18:45:07Z",
-          "exit_code": 0,
-          "result": "passed",
-          "artifact": "validation/evidence/001-response/client-tool.log",
-          "sha256": "1b59004570fb81c6479bdd51000aa975464354194ea81903b0b7775f3e9535a1"
         }
       ]
     },

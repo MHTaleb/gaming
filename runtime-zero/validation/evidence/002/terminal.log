@@ -1,0 +1,64 @@
+start=2026-09-21T00:33:43Z
+collector: validation/evidence/collect.zsh (committed)
+probe: terminal 
+---
+live session terminal: this executor session's long-lived VS Code WSL terminal.
+It may include session-scoped PATH additions made during earlier work; treat
+'before' as informational only. The fresh-terminal and controlled probes below
+cover the unmodified cases.
+inherited NVM_BIN: $HOME/.nvm/versions/node/v20.20.0/bin
+before activation:
+step: node before
+  command: sh -c command\ -v\ node\ \|\|\ echo\ \"node:\ not\ found\ on\ PATH\" 
+$HOME/.nvm/versions/node/v22.23.2/bin/node
+  exit_code=0
+
+step: uv before
+  command: sh -c command\ -v\ uv\ \|\|\ echo\ \"uv:\ not\ found\ on\ PATH\" 
+$HOME/.local/bin/uv
+  exit_code=0
+
+step: godot before
+  command: sh -c command\ -v\ godot\ \|\|\ echo\ \"godot:\ not\ found\ on\ PATH\" 
+$HOME/.local/bin/godot
+  exit_code=0
+
+after activation:
+step: source tools/env.sh
+  command: source tools/env.sh 
+  exit_code=0
+
+step: node path
+  command: command -v node 
+$HOME/.nvm/versions/node/v22.23.2/bin/node
+  exit_code=0
+
+step: uv path
+  command: command -v uv 
+$HOME/.local/bin/uv
+  exit_code=0
+
+step: godot path
+  command: command -v godot 
+$HOME/.local/bin/godot
+  exit_code=0
+
+step: node version
+  command: node --version 
+v22.23.2
+  exit_code=0
+
+step: uv version
+  command: uv --version 
+uv 0.12.17 (x86_64-unknown-linux-gnu)
+  exit_code=0
+
+step: godot version
+  command: godot --version 
+4.7.2.stable.official.ed1daf0bf
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T00:33:43Z

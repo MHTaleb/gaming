@@ -1,0 +1,15 @@
+start=2026-09-21T00:33:51Z
+collector: validation/evidence/collect.zsh (committed)
+probe: client_probe 
+---
+RZ-RV-001-EVIDENCE client-tool probe executed by this Copilot/DeepSeek agent session
+step: implementation commit
+  command: git rev-parse HEAD 
+74b2b74bb46e686ad56941a1e30d6573d27896d5
+  exit_code=0
+
+utc=2026-09-21T00:33:51Z
+
+---
+exit_code=0
+end=2026-09-21T00:33:51Z
