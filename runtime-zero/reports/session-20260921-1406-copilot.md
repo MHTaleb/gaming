@@ -1,0 +1,28 @@
+# Session handoff
+
+- **Agent/client/model:** GitHub Copilot in VS Code (DeepSeek V4.1 Flash selected by the user; one writer at a time; backend-per-response identity is not verifiable from inside the session). Validator side is a separate independent agent — no self-approval was performed.
+- **Environment:** Lenovo 83GS (LOQ) — WSL2 Ubuntu 20.04.6, local laptop, not remote, not CI. Windows 11 build 26200, RTX 4050 Laptop GPU (6141 MiB VRAM, driver 581.86), WSLg working. No sudo password → user-space installs only.
+- **Branch and implementation commit:** `codex/runtime-zero-impl` — RZ-006 at `6c6d61c` (pushed; remote `refs/heads/codex/runtime-zero-impl` = `6c6d61cd458524f100ea868e81dcf52d92c976e8`). Prior in-session commits: `b685127` (launcher v3 zsh-safe PATH), `1f7e2d2` (attempt 003 evidence), `e1cee80` (proportional-review rule merge), `74e0cad` (RV-001 record reconciliation), `f07be2e` (RZ-031 ticket + RZ-006 start). Nothing merged or pushed to `main`.
+- **Tickets completed / still doing / blocked:** **RZ-006 = done with evidence (6/31 tickets, 19%).** Nothing is `doing`; nothing is `blocked`. `node tools/backlog.js ready` → **RZ-007** (score 12; the new RZ-031 demo runner ties at 12 and sorts after by ID). RZ-031 (owner demo runner) is registered and next-eligible — re-order at owner's word if the demo should come first.
+- **Changed paths and behavior:**
+
+| Area | Paths | Behavior |
+|---|---|---|
+| RZ-006 content | `game/content/{enemies,encounters,equipment}.json`, `game/content/README.md` | Prototype packs: Memory Leak groups, Server Cathedral boss, three equipment effects; item-level `schema_version`; schemas + allowlists documented |
+| RZ-006 code | `game/src/infrastructure/content_repository.gd` | JSON-only loader/validator: per-entry schema/stat checks + reference checks (unknown enemy, actor/count, duplicate ids) + progression checks (single root, cycles, unreachable, dangling); behavior **allowlist** (`basic_attack`, `boss_heavy_cycle`) — a script path is rejected as data, never loaded; integral JSON floats normalized to ints (Godot parses all JSON numbers as floats) |
+| RZ-006 tests | `game/tests/content_tests.gd`, `game/tests/fixtures/content/*.json` | **54 headless checks** including malformed fixtures (duplicate ids, non-integer stat, zero hp, broken links, stale versions) |
+| Docs | `README.md`, `START_HERE.md`, `reports/README.md`, `reports/prototype-log.md` | Deliverable/available/not-yet lists updated to include validated content packs |
+| Backlog | `backlog/backlog.json` | RZ-006 → done with 5 evidence entries; RZ-007 → next; RZ-031 registered (owner demo request) |
+
+- **Commands run, exit codes, measured outcomes** (all after `source tools/env.sh`, Godot 4.7.2, Node 22.23.2):
+  - `godot --headless --path game --editor --quit` → exit 0 (import scan + global class cache; required after adding `.gd` files)
+  - `godot --headless --path game --script res://tests/content_tests.gd` → exit 0, **ALL CONTENT TESTS PASSED (54 checks)**
+  - `godot --headless --path game --script res://tests/run_tests.gd` → exit 0, **ALL TESTS PASSED (96 checks)** — no combat regression
+  - `godot --headless --path game --script $PWD/validation/guard_contract.gd` → exit 0, validator Guard regression still passes (hits [3,6], hero HP 91, input unchanged)
+  - `node tools/verify.js` → exit 0, 18/18 subtests; specification verification passed (31 tickets); review records valid
+  - `node tools/backlog.js ready` → exit 0, RZ-007 first eligible
+- **Evidence artifacts and hashes:** commit-tracked `reports/prototype-log.md` (RZ-006 section with the command/result table), `game/tests/content_tests.gd`, `game/tests/fixtures/content/*`, backlog evidence entries. RV-001 records remain as reconciled after the owner waiver (`reviews/RV-001/`, evidence under `validation/evidence/`). No raw local artifacts were needed for RZ-006.
+- **Human reviews obtained or pending:** RV-001 = **owner-proportional-review waiver applied** (owner, 2026-09-21; recorded in `reviews/RV-001/`); findings V-001–V-004 corrected and verified before the waiver; NB-001 (zsh duplicate-entry cleanup) is an accepted nonblocking follow-up (fix already committed at `b685127` for validator reference). Still pending: **RZ-012 owner design/playtest gate** (untouched), and the owner demo experience requested via RZ-031.
+- **Services still running and how to stop project-owned processes:** none. No servers, watchers or Godot instances were left running this session.
+- **Known failures / skipped checks and why:** none failing at commit time. Notes: `node tools/reviews.js --gate RV-001` returns `unknown gate target` because `--gate` takes ticket ids, not review ids (not needed for RZ-006). The duplicate-id fixture test initially failed because duplicates are detected in the reference pass, not per-entry parsing — the test now exercises read + `validate_references` exactly like production loading, so the result is real. Godot JSON-parses all numbers as floats; integer checks normalize first (this caused and then fixed the earlier stale-schema test failures).
+- **Next eligible ticket and exact first action:** **RZ-007 — Build playable combat UI and intent feedback.** First action: `source tools/env.sh && node tools/backlog.js ready`, read RZ-007 refs (`docs/GAME_DESIGN.md`, `docs/ARCHITECTURE.md`), then implement `game/scenes/combat.tscn` + `game/src/presentation/` per its steps (HUD/actions/targeting/intent/event log; double-input rejection; keyboard/mouse/touch), with the headless suites kept green. If the owner prefers the demo first, swap in RZ-031 (`tools/demo.sh` + `docs/DEMO.md` + `validation/demo/`) — it must not bypass the RZ-012 gate.
