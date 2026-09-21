@@ -34,17 +34,18 @@ Record later research as a dated finding with source/revision, observed constrai
 
 | Component | Revision actually installed | Source |
 |---|---|---|
-| ComfyUI | `b0f4b7b294ce482a2e071d9d762c133d38c7aa07` (git clone --depth 1) at `~/ai/ComfyUI` | https://github.com/Comfy-Org/ComfyUI |
-| PyTorch | `torch 2.6.0+cu124`, `torchvision 0.21.0+cu124` (CUDA 12.4 wheels) | https://download.pytorch.org/whl/cu124 |
-| Model weights | `sd_xl_turbo_1.0_fp16.safetensors` (~6.9 GB) at `~/ai/ComfyUI/models/checkpoints/` | https://huggingface.co/stabilityai/sdxl-turbo |
+| ComfyUI | v0.37.0, `b0f4b7b294ce482a2e071d9d762c133d38c7aa07` (2026-09-20, git clone --depth 1) at `~/ai/ComfyUI` | https://github.com/Comfy-Org/ComfyUI |
+| PyTorch | `torch 2.8.0+cu128`, `torchvision 0.23.0+cu128`, `torchaudio 2.8.0` — upgraded from 2.6.0+cu124 because ComfyUI's `comfy-kitchen` custom ops fail schema inference on torch 2.6 (`stride: list[int]`) | https://download.pytorch.org/whl/cu128 |
+| Model weights | `sd_xl_turbo_1.0_fp16.safetensors`, 6938081905 bytes, sha256 `e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26` at `~/ai/ComfyUI/models/checkpoints/` | https://huggingface.co/stabilityai/sdxl-turbo |
 | venv | CPython 3.12.14 via uv at `~/ai/comfy-venv` | https://docs.astral.sh/uv/ |
 
 Observed: `torch.cuda.is_available() == True` on the RTX 4050 Laptop (6141 MiB VRAM
-reported by nvidia-smi); SDXL-Turbo is a 4–8 step distilled checkpoint, chosen for
-that VRAM budget. Install had to be resumed once after a `pypi.nvidia.com`
-download timeout (`UV_HTTP_TIMEOUT=600`). Weights and the toolchain live outside
-the repository (`~/ai`) per D-005 — no paid APIs, no service accounts; the
-procedural generators remain the shipped, hash-pinned default until the owner
-style gate (RZ-012) approves AI output. License of the downloaded weights: check
-the model card before any commercial promotion; not asserted here.
+reported by nvidia-smi; host driver 581.86/CUDA 13.0 capable); SDXL-Turbo is a
+4–8 step distilled checkpoint, chosen for that VRAM budget. Install had to be
+resumed once after a `pypi.nvidia.com` download timeout (`UV_HTTP_TIMEOUT=600`).
+Weights and the toolchain live outside the repository (`~/ai`) per D-005 — no
+paid APIs, no service accounts; the procedural generators remain the shipped,
+hash-pinned default until the owner style gate (RZ-012) approves AI output.
+License of the downloaded weights: check the model card before any commercial
+promotion; not asserted here.
 

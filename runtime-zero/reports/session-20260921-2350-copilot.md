@@ -53,6 +53,12 @@ Branch: `codex/runtime-zero-impl` (never `main`). Commit: `4c67975` — pushed.
   otherwise → "No loader found for resource") — recorded in repo memory.
 - The pypi.nvidia wheel download timed out once; resumed with
   `UV_HTTP_TIMEOUT=600` (cached wheels reused).
+- **Post-install fix (same night):** ComfyUI main (v0.37.0, commit `b0f4b7b`,
+  2026-09-20) ships `comfy-kitchen`, whose torch.library custom ops annotate
+  `stride: list[int]` — unsupported by torch 2.6.0's schema inference, so the
+  server refused to start. Upgraded the venv to the current supported pair
+  (`torch==2.8.0+cu128`, `torchvision==0.23.0+cu128`, `torchaudio==2.8.0`);
+  recorded in `validation/evidence/037/install-log-excerpt.txt`.
 - Backlog: RZ-036 `done` with evidence; RZ-037 `doing` (install + CUDA evidence
   recorded; first generations pending). 37 items valid.
 

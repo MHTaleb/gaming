@@ -8,6 +8,21 @@ Use graphite/navy backgrounds, warm neutral character bodies, cyan for player te
 
 Use original fictional motifs: server architecture as ruins, circuit patterns as magic, memory fragments as equipment. Do not reproduce company logos or imitate a specific living artist. Final title, protagonist identity and costume need owner review. Placeholder shapes remain acceptable until the game loop passes.
 
+## Prototype hero identity (owner-directed, 2026-09-21, RZ-036)
+
+The owner locked the hero read in round 5: **a young man with a laptop.** The
+prototype (deterministic generator `tools/make_character_anim.gd`, 128 px
+frames, palette-locked) draws: dark cropped hair with a fringe, a warm-neutral
+face, a teal/navy engineer jacket with the cyan TRIM zipper (cyan = player
+technology), a shoulder strap, dark trousers and shoes, and a laptop held open
+in front with a glowing cyan screen plus one amber indicator (amber = warning,
+used sparingly). Six-frame walk cycle and two-frame idle; nothing is encoded in
+colour alone — posture and animation carry state.
+
+This satisfies "start with one view and one character reference" as a
+**prototype**; the production contract (approved parts → manual cleanup →
+Skeleton2D/AnimationPlayer, per the table below) still stands for later phases.
+
 ## Asset families
 
 | Family | Prototype | Production candidate contract |

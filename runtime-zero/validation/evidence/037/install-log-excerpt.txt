@@ -17,7 +17,19 @@ note: first attempt timed out on pypi.nvidia.com (nvidia-curand-cu12); resumed w
 === step 5: CUDA check ===
 torch 2.6.0+cu124 cuda 12.4 available True
 gpu NVIDIA GeForce RTX 4050 Laptop GPU
-=== step 6: model download (SDXL-Turbo fp16, ~6.9 GB) ===
 
 === step 6: model download ===
-TODO: filled after the download completed
+sd_xl_turbo_1.0_fp16.safetensors
+size: 6938081905 bytes (~6.5 GiB)
+sha256: e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26
+INSTALL-DONE
+
+=== note (post-install fix, same night) ===
+The first server start failed: ComfyUI main's comfy-kitchen backend uses
+torch.library custom ops annotated `stride: list[int]`, which torch 2.6.0
+cannot infer ("unsupported type list[int]"). Fixed by upgrading the venv to the
+current supported pair:
+  torch==2.8.0+cu128, torchvision==0.23.0+cu128, torchaudio==2.8.0
+  (uv pip install --index-url https://download.pytorch.org/whl/cu128)
+CUDA re-verified after the upgrade (see generation log).
+
