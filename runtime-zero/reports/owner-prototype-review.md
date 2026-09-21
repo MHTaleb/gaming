@@ -113,3 +113,11 @@ Record the owner's answers here, then create corrective tasks and decide whether
      CUDA proof, provenance in docs/SOURCES.md).
    - Open question for the owner: should the AI-generated stage art replace the
      procedural backdrops, or stay as an alternate look?
+   - Update (same night): the toolchain generated its first three candidates
+     (see `validation/evidence/037/`). You can look at the AI look in the
+     actual map and fight right now, in the committed captures
+     `validation/evidence/037/map-with-ai-backdrop.png` and
+     `combat-with-ai-backdrop.png`. To try it yourself in-game:
+     `tools/use_ai_backdrops.sh copy` then `tools/demo.sh run`; undo with
+     `tools/use_ai_backdrops.sh revert` (it restores the exact procedural art,
+     verified byte-identical).

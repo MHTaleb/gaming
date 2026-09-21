@@ -435,3 +435,17 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `tools/make_character_anim.gd` ×2 + diff | byte-identical across runs (`validation/evidence/036/art-hashes.txt`) |
 | `~/ai/comfy-venv/bin/python -c 'import torch; print(torch.cuda.is_available())'` | `True` — NVIDIA GeForce RTX 4050 Laptop GPU |
 | captures | `validation/evidence/036/work-map-animated.png`, `battle-intrusion.png`, `hero-anim-sheet.png` |
+
+## RZ-037 follow-up — first AI stage art generated and verified (2026-09-21, after the toolchain install)
+
+- Fixed the server boot (torch 2.6 → 2.8.0+cu128; comfy-kitchen needs >= 2.7)
+  and generated the three region concepts locally: teal night skyline, magenta
+  spike field, data-center cathedral (euler_ancestral, 6 steps, cfg 1.0,
+  1024×576, seeded; hashes in `validation/evidence/037/generation-log.txt`).
+- `tools/make_ai_backdrops.py` (localhost-only /prompt client) and
+  `tools/use_ai_backdrops.sh copy|revert` (owner-controlled swap; re-imports
+  the Godot texture cache). Revert restores the procedural art byte-for-byte
+  (map capture hash `fe0bc419…` identical before/after).
+- Candidates are gitignored by convention; committed review material is the
+  in-game captures in `validation/evidence/037/`. Procedural art remains the
+  shipped default until the owner's RZ-012 style-gate decision.
