@@ -319,3 +319,26 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game --script res://tests/run_tests.gd` | exit 0 — 96 checks |
 | `godot --headless --path game --script res://tests/content_tests.gd` | exit 0 — 54 checks |
 | `tools/demo.sh run -- --auto-enter 60 --auto-begin power_booster --quit-after 400` | real GUI session wrote `save.json` with `last_equipment: power_booster` (checked on disk) |
+
+## RZ-010 — accessibility polish and placeholder sound (2026-09-21)
+
+- `tools/make_sfx.gd`: deterministic generator (no downloads/randomness) -> seven WAV cues
+  (ui_click, hit, guard, skill, telegraph, victory, defeat); identical hashes across runs.
+- `game/src/presentation/audio.gd` (autoload `RZAudio`, runtime profile lookup): fixed voice
+  pool, event->cue mapping, mute-aware playback, `stop_all` on mute. Loadout/result/title play
+  click cues; combat maps every domain event (energy regen deliberately silent).
+- Mute + reduced-motion checkboxes on title and combat persist via the RZ-009 save; both scenes
+  reflect saved state on load. Keyboard focusability and 48 px targets re-verified.
+- `reports/prototype-accessibility.md`: scope, honest gaps (portrait/phone + screen-reader not
+  claimed, real audio phase later) and the cue inventory with hashes.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/feedback_tests.gd` | exit 0 — **ALL FEEDBACK TESTS PASSED (36 checks)** |
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 111 checks |
+| `godot --headless --path game --script res://tests/run_flow_tests.gd` | exit 0 — 45 checks |
+| `godot --headless --path game --script res://tests/save_tests.gd` | exit 0 — 24 checks |
+| `run_tests.gd` / `content_tests.gd` / `guard_contract.gd` | all exit 0 |
+| `godot --path game --resolution 1024x600 -- --capture validation/evidence/010/narrow-1024x600.png` | exit 0 — narrow desktop capture inspected |

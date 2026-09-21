@@ -794,7 +794,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "task",
-      "status": "next",
+      "status": "done",
       "priority": "P1",
       "size": "M",
       "value": 5,
@@ -832,7 +832,45 @@
         "P1",
         "gameplay"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/feedback_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/feedback_tests.gd",
+          "environment": "ALL FEEDBACK TESTS PASSED (36 checks): cue assets decode and carry audible samples, event->cue mapping incl. deliberate silence, mute blocks playback and stops voices, settings checkboxes reflect + persist; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script $PWD/tools/make_sfx.gd (two runs)",
+          "result": "passed",
+          "artifact": "game/assets/audio/hit.wav",
+          "environment": "seven deterministic cues, identical sha256 across runs (e.g. hit 2cc51dfe...9801); no downloads; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/presentation_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/presentation_tests.gd",
+          "environment": "111 checks: focusability, 48 px targets, animation-off state-hash equality; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/run_flow_tests.gd && godot --headless --path game --script res://tests/save_tests.gd",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "45 flow + 24 save checks, no regression; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --path game --resolution 1024x600 -- --capture validation/evidence/010/narrow-1024x600.png",
+          "result": "passed",
+          "artifact": "validation/evidence/010/narrow-1024x600.png",
+          "environment": "narrow desktop window capture inspected: title readable, controls reachable; portrait phone layout explicitly deferred to the Android phase; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && node tools/verify.js",
+          "result": "passed",
+          "artifact": "reports/prototype-accessibility.md",
+          "environment": "specification verification passes with RZ-010 done; exit 0; 2026-09-21"
+        }
+      ],
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)"
     },
     {
       "id": "RZ-011",
@@ -840,7 +878,7 @@
       "epic": "E-GAME",
       "area": "qa",
       "type": "task",
-      "status": "later",
+      "status": "next",
       "priority": "P1",
       "size": "L",
       "value": 5,

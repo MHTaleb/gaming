@@ -68,6 +68,7 @@ func _select(equipment_id: String) -> void:
 		card.button_pressed = id == _selected_id
 	%BeginButton.disabled = false
 	%SummaryLabel.text = "Selected: %s - the choice lasts the whole run." % equipment_id
+	RZAudio.play("ui_click")
 
 func _begin() -> void:
 	if _selected_id.is_empty():

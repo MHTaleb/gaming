@@ -138,6 +138,11 @@ func _connect_ui() -> void:
 		RZRun.set_setting("reduced_motion", pressed))
 	%ReducedMotion.set_pressed_no_signal(RZRun.setting("reduced_motion"))
 	reduced_motion = %ReducedMotion.button_pressed
+	%MuteCheck.set_pressed_no_signal(RZRun.setting("mute"))
+	%MuteCheck.toggled.connect(func(pressed: bool) -> void:
+		RZRun.set_setting("mute", pressed)
+		if pressed:
+			RZAudio.stop_all())
 	%AttackButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_ATTACK)
 	%GuardButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_GUARD)
 	%SkillButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_SKILL)
@@ -313,6 +318,9 @@ func _append_events(events: Array) -> void:
 	var names := session.display_names()
 	for event in events:
 		_append_log_line(RZCombatText.event_line(event, names))
+		var cue := RZAudioService.cue_for_event(event.type)
+		if not cue.is_empty():
+			RZAudio.play(cue)
 
 func _append_log_line(text: String) -> void:
 	var line := Label.new()

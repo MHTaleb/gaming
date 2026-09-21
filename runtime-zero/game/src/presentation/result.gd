@@ -54,16 +54,20 @@ func _show_victory() -> void:
 	%NextButton.visible = true
 
 func _next() -> void:
+	RZAudio.play("ui_click")
 	get_tree().change_scene_to_file(COMBAT_SCENE)
 
 func _retry() -> void:
+	RZAudio.play("ui_click")
 	RZRun.retry()
 	get_tree().change_scene_to_file(COMBAT_SCENE)
 
 func _replay() -> void:
+	RZAudio.play("ui_click")
 	RZRun.reset()
 	get_tree().change_scene_to_file(LOADOUT_SCENE)
 
 func _title() -> void:
+	RZAudio.play("ui_click")
 	RZRun.reset()
 	get_tree().change_scene_to_file(TITLE_SCENE)

@@ -27,9 +27,13 @@ repository (the runner activates the pinned toolchain itself via
   under `~/.local/share/godot/app_userdata/Runtime Zero/save.json`; a corrupt
   save recovers from its backup (`.bak`) and the game always reaches the title.
 
-**Not playable yet** (later tickets): accessibility polish and placeholder sound
-(RZ-010), replay fixtures/CI (RZ-011), real AI-generated art and music (gated
-phases RZ-016+, RZ-023+), Android build.
+- **Placeholder sound + mute** (RZ-010): distinct cues for hit/guard/skill/
+  telegraph/victory/defeat and UI clicks (generated, deterministic). The **Mute**
+  checkbox on the title and combat screens silences everything and is remembered;
+  no essential information is audio-only.
+
+**Not playable yet** (later tickets): replay fixtures/CI (RZ-011), real
+AI-generated art and music (gated phases RZ-016+, RZ-023+), Android build.
 
 ## Run it
 

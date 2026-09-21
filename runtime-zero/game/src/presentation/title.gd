@@ -26,6 +26,11 @@ func _ready() -> void:
 	print("[rz] title ready")
 	%StartButton.pressed.connect(_start_game)
 	%QuitButton.pressed.connect(_quit)
+	%MuteCheck.set_pressed_no_signal(RZRun.setting("mute"))
+	%MuteCheck.toggled.connect(func(pressed: bool) -> void:
+		RZRun.set_setting("mute", pressed)
+		if pressed:
+			RZAudio.stop_all())
 	%StartButton.grab_focus()
 	var auto_enter := _arg_value(args, "--auto-enter")
 	var capture_path := RZCapture.requested_path()
@@ -60,6 +65,7 @@ func _start_game() -> void:
 	if _started:
 		return
 	_started = true
+	RZAudio.play("ui_click")
 	print("[rz] start -> loadout")
 	get_tree().change_scene_to_file(LOADOUT_SCENE)
 

@@ -94,3 +94,10 @@ layout_mode = 2
 size_flags_horizontal = 4
 custom_minimum_size = Vector2(140, 40)
 text = "Quit"
+
+[node name="MuteCheck" type="CheckBox" parent="Center"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+tooltip_text = "Silence placeholder sound cues"
+text = "Mute"

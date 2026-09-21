@@ -25,3 +25,4 @@ renderer/rendering_method.mobile="gl_compatibility"
 [autoload]
 
 RZRun="*res://src/application/run_service.gd"
+RZAudio="*res://src/presentation/audio.gd"

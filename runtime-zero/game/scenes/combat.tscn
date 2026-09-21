@@ -57,6 +57,12 @@ layout_mode = 2
 tooltip_text = "Disable flashes and floating numbers (accessibility)"
 text = "Reduced motion"
 
+[node name="MuteCheck" type="CheckBox" parent="Margin/Column/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Silence placeholder sound cues"
+text = "Mute"
+
 [node name="TitleButton" type="Button" parent="Margin/Column/Header"]
 unique_name_in_owner = true
 layout_mode = 2
