@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "encounters": [
+    {
+      "schema_version": 1,
+      "id": "enc_bad_count",
+      "title": "Bad Count",
+      "enemy_groups": [
+        {"enemy_id": "memory_leak", "count": 2, "actor_ids": ["enemy_1"]}
+      ],
+      "reward_id": "completion_bad_count",
+      "next_encounter_id": null,
+      "rules_version": 2
+    },
+    {
+      "schema_version": 1,
+      "id": "enc_bad_actors",
+      "title": "Bad Actors",
+      "enemy_groups": [
+        {"enemy_id": "memory_leak", "count": 2, "actor_ids": ["enemy_1", "enemy_1"]}
+      ],
+      "reward_id": "completion_bad_actors",
+      "next_encounter_id": null,
+      "rules_version": 2
+    }
+  ]
+}

@@ -96,3 +96,28 @@ Note for CI (RZ-011): a fresh checkout must run the headless editor import once 
 - **V-004 (docs)**: README, START_HERE, reports index and the decision register updated
   to describe the implemented scaffold/core and the still-pending game, studio and
   device work.
+
+## RZ-006 — content packs with validation (2026-09-21)
+
+- `game/content/{enemies,encounters,equipment}.json`: prototype fixtures (Memory Leak groups,
+  Server Cathedral boss, three equipment effects) with item-level schema versions; documented in
+  `game/content/README.md`.
+- `game/src/infrastructure/content_repository.gd`: JSON-only loader/validator. Godot's JSON parser
+  returns numbers as floats, so loads normalize integral values back to ints and scalar checks
+  accept integral floats while rejecting fractions, non-finite values and wrong types. Behavior ids
+  are allowlist lookups (`basic_attack`, `boss_heavy_cycle`); a script path is rejected as data and
+  never loaded.
+- Rejects: missing/duplicate ids, wrong field types, out-of-range stats, unknown behaviors/stats,
+  unknown enemy references, actor/count mismatches, duplicate actor ids, broken progression links
+  (dangling target, cycles, extra roots, unreachable), unsupported schema/rules versions.
+- `game/tests/content_tests.gd` plus malformed fixtures under `game/tests/fixtures/content/`.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --editor --quit` | exit 0 (imports + class cache) |
+| `godot --headless --path game --script res://tests/content_tests.gd` | exit 0 — **54 checks passed** |
+| `godot --headless --path game --script res://tests/run_tests.gd` | exit 0 — 96 checks, regression intact |
+| `godot --headless --path game --script $PWD/validation/guard_contract.gd` | exit 0 — hits [3,6], HP 91 unchanged |
+| `node tools/verify.js` | exit 0 — specification verification passed (31 implementation tickets), review records valid |

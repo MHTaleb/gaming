@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "encounters": [
+    {
+      "schema_version": 1,
+      "id": "encounter_1",
+      "title": "Intrusion",
+      "enemy_groups": [
+        {"enemy_id": "memory_leak", "count": 1, "actor_ids": ["enemy_1"]}
+      ],
+      "reward_id": "completion_intrusion",
+      "next_encounter_id": "encounter_2",
+      "rules_version": 2
+    },
+    {
+      "schema_version": 1,
+      "id": "encounter_2",
+      "title": "Load Spike",
+      "enemy_groups": [
+        {"enemy_id": "memory_leak", "count": 2, "actor_ids": ["enemy_1", "enemy_2"]}
+      ],
+      "reward_id": "completion_load_spike",
+      "next_encounter_id": "encounter_3",
+      "rules_version": 2
+    },
+    {
+      "schema_version": 1,
+      "id": "encounter_3",
+      "title": "Server Cathedral",
+      "enemy_groups": [
+        {"enemy_id": "server_cathedral", "count": 1, "actor_ids": ["boss_1"]}
+      ],
+      "reward_id": "completion_slice",
+      "next_encounter_id": null,
+      "rules_version": 2
+    }
+  ]
+}

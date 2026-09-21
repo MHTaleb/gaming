@@ -446,7 +446,7 @@
       "epic": "E-GAME",
       "area": "content",
       "type": "task",
-      "status": "doing",
+      "status": "done",
       "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
       "priority": "P1",
       "size": "M",
@@ -484,7 +484,38 @@
         "P1",
         "content"
       ],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --editor --quit",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "Godot 4.7.2 pinned via launcher; headless scan imports content scripts; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/content_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/content_tests.gd",
+          "environment": "ALL CONTENT TESTS PASSED (54 checks), exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/run_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/run_tests.gd",
+          "environment": "96 combat checks, no regression; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script $PWD/validation/guard_contract.gd",
+          "result": "passed",
+          "artifact": "validation/guard_contract.gd",
+          "environment": "validator regression: hits [3,6], hero HP 91, input unchanged; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && node tools/verify.js",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "Specification verification passed (31 implementation tickets), review records valid; exit 0; 2026-09-21"
+        }
+      ],
       "review_ids": [
         "RV-001"
       ]
@@ -495,7 +526,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "story",
-      "status": "later",
+      "status": "next",
       "priority": "P1",
       "size": "M",
       "value": 5,

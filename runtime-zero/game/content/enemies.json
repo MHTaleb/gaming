@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "enemies": [
+    {
+      "schema_version": 1,
+      "id": "memory_leak",
+      "display_name": "Memory Leak",
+      "stats": {"max_hp": 35, "attack": 9, "defense": 1},
+      "behavior_id": "basic_attack",
+      "presentation_id": "placeholder_enemy"
+    },
+    {
+      "schema_version": 1,
+      "id": "server_cathedral",
+      "display_name": "Server Cathedral",
+      "stats": {"max_hp": 90, "attack": 12, "defense": 2},
+      "behavior_id": "boss_heavy_cycle",
+      "presentation_id": "placeholder_boss"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "equipment": [
+    {
+      "schema_version": 1,
+      "id": "guard_plating",
+      "display_name": "Guard Plating",
+      "description": "+25 maximum HP.",
+      "effect": {"stat": "max_hp", "amount": 25}
+    },
+    {
+      "schema_version": 1,
+      "id": "power_booster",
+      "display_name": "Power Booster",
+      "description": "+3 attack.",
+      "effect": {"stat": "attack", "amount": 3}
+    },
+    {
+      "schema_version": 1,
+      "id": "battery_cell",
+      "display_name": "Battery Cell",
+      "description": "+3 energy capacity.",
+      "effect": {"stat": "energy_cap", "amount": 3}
+    }
+  ]
+}

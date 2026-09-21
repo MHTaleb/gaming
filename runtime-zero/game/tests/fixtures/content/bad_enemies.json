@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "enemies": [
+    {
+      "schema_version": 1,
+      "id": "dupe",
+      "display_name": "First",
+      "stats": {"max_hp": 10, "attack": 1, "defense": 0},
+      "behavior_id": "basic_attack",
+      "presentation_id": "placeholder_enemy"
+    },
+    {
+      "schema_version": 1,
+      "id": "dupe",
+      "display_name": "Second duplicate id",
+      "stats": {"max_hp": 10, "attack": 1, "defense": 0},
+      "behavior_id": "basic_attack",
+      "presentation_id": "placeholder_enemy"
+    },
+    {
+      "schema_version": 1,
+      "id": "broken_stats",
+      "display_name": "Broken Stats",
+      "stats": {"max_hp": 0, "attack": "nine", "defense": 1},
+      "behavior_id": "basic_attack",
+      "presentation_id": "placeholder_enemy"
+    }
+  ]
+}
