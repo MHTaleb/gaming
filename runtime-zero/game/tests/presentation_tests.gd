@@ -28,6 +28,7 @@ func _initialize() -> void:
 	await _test_scene_terminal_and_retry()
 	await _test_animation_timing_does_not_change_outcomes()
 	await _test_title_scene_links_to_combat()
+	await _test_title_input_paths()
 	if _failures == 0:
 		print("ALL PRESENTATION TESTS PASSED (%d checks)" % _checks)
 		quit(0)
@@ -49,6 +50,13 @@ func _expect(condition: bool, label: String) -> void:
 ## harness (headless --script mode), so every scene test waits one frame.
 func _open_combat() -> Control:
 	var scene: PackedScene = load(COMBAT_SCENE)
+	var node: Control = scene.instantiate()
+	root.add_child(node)
+	await process_frame
+	return node
+
+func _open_title() -> Control:
+	var scene: PackedScene = load(TITLE_SCENE)
 	var node: Control = scene.instantiate()
 	root.add_child(node)
 	await process_frame
@@ -321,6 +329,23 @@ func _test_scene_widgets_and_keyboard() -> void:
 	_expect(shortcuts_ok, "1/2/3 shortcuts are wired to the three actions")
 	_expect(not attack.disabled and not guard.disabled and not skill.disabled,
 		"all three actions start available")
+	var hero_chip: ColorRect = node.get_node("%HeroChip")
+	_expect(hero_chip.custom_minimum_size.x >= 48.0,
+		"hero chip is a sized placeholder character")
+	var chip: ColorRect = null
+	for child in row.find_children("Chip", "ColorRect", true, false):
+		chip = child
+	_expect(chip != null, "enemy rows show a placeholder character chip")
+	var boss_node := await _open_combat()
+	boss_node.session = RZCombatSession.start("encounter_3")
+	boss_node.call("_refresh_all")
+	var boss_row: Node = boss_node.get_node("%EnemiesBox").get_child(0)
+	var boss_chip: ColorRect = null
+	for child in boss_row.find_children("Chip", "ColorRect", true, false):
+		boss_chip = child
+	_expect(boss_chip != null and chip != null and boss_chip.color != chip.color,
+		"the boss chip is visually distinct from a normal enemy chip")
+	_close(boss_node)
 	_close(node)
 
 func _test_scene_attack_and_double_input() -> void:
@@ -424,3 +449,53 @@ func _test_title_scene_links_to_combat() -> void:
 	_expect(not FileAccess.file_exists("user://rz_capture_probe.png"),
 		"the refused capture writes no file")
 	_close(node)
+
+## Title interactions must all lead into combat: the Start button, a click
+## anywhere on the background, and the ENTER key. Background clicks were
+## swallowed by the full-screen ColorRect before this test existed (owner
+## report: "only got a screen about the game, nothing else").
+func _test_title_input_paths() -> void:
+	var title := await _open_title()
+	_expect(title.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"the title root does not swallow clicks")
+	_expect(title.get_node("Background").mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"the title background does not swallow clicks")
+	_expect(title.get_node("Center").mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"the title column does not swallow clicks")
+	var start: Button = title.get_node("%StartButton")
+	_expect(start.custom_minimum_size.y >= 48.0, "start button meets the touch target size")
+	_expect(start.focus_mode == Control.FOCUS_ALL, "start button is keyboard focusable")
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = Vector2(40, 680)
+	root.push_input(click, true)
+	await process_frame
+	await process_frame
+	_expect(current_scene != null and current_scene.name == "Combat",
+		"a background click starts the combat scene")
+	_expect(current_scene.get("session") != null
+		and current_scene.get("session").state != null,
+		"the combat scene reached from the title is playable")
+	title.free()
+	title = await _open_title()
+	var enter := InputEventKey.new()
+	enter.keycode = KEY_ENTER
+	enter.pressed = true
+	root.push_input(enter, true)
+	await process_frame
+	await process_frame
+	_expect(current_scene != null and current_scene.name == "Combat",
+		"pressing ENTER starts the combat scene")
+	title.free()
+	title = await _open_title()
+	title.get_node("%StartButton").pressed.emit()
+	await process_frame
+	await process_frame
+	_expect(current_scene != null and current_scene.name == "Combat",
+		"the start button starts the combat scene")
+	if is_instance_valid(title):
+		title.free()
+	if current_scene != null:
+		current_scene.free()
+		current_scene = null

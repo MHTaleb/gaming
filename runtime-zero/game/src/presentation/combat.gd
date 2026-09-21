@@ -165,6 +165,13 @@ func _build_enemy_row(enemy: RZActorState) -> Dictionary:
 	var box := HBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	margin.add_child(box)
+	# Placeholder character chip: shape and text carry the identity; a later
+	# asset ticket replaces it without touching combat logic (RZ-016+).
+	var chip := ColorRect.new()
+	chip.name = "Chip"
+	chip.custom_minimum_size = Vector2(56, 56)
+	chip.color = _kind_color(enemy.kind)
+	box.add_child(chip)
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(info)
@@ -192,6 +199,16 @@ func _build_enemy_row(enemy: RZActorState) -> Dictionary:
 	box.add_child(target_button)
 	return {"row": row, "hp_text": hp_text, "name": name_label, "intent": intent_label,
 		"target_button": target_button}
+
+## Placeholder identity colors (real art arrives in RZ-016+; color is never the
+## only signal - names and labels carry the same information).
+func _kind_color(kind: String) -> Color:
+	match kind:
+		RZRules.KIND_BOSS:
+			return Color(0.72, 0.45, 0.95)
+		RZRules.KIND_HERO:
+			return Color(0.45, 0.7, 1.0)
+	return Color(0.9, 0.42, 0.35)
 
 func _ensure_valid_target() -> void:
 	var living := session.enemies()

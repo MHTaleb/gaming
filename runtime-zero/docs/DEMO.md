@@ -7,9 +7,11 @@ repository (the runner activates the pinned toolchain itself via
 
 ## What is playable right now (2026-09-21)
 
-- **Title → combat.** The title screen starts the prototype combat encounter on
-  Enter, Space or a click.
+- **Title → combat.** The title screen has a visible **Start - enter combat**
+  button; ENTER/Space or a click anywhere also starts the fight.
 - **One encounter** (`encounter_1`, "Intrusion"): you against one Memory Leak.
+- **Placeholder characters**: the hero and each enemy show a colored chip (real
+  art arrives in the graphics phase; names and text carry the identity too).
 - **Three actions**: Attack, Guard (halves the next incoming hit, single use),
   Skill (costs 3 energy, double attack power). Unavailable actions are disabled
   and say why (e.g. "Needs 3 energy (have 2)").
@@ -65,6 +67,21 @@ backlog evidence.
   Housseyn's playtest notes.
 - A capture never claims more than the build it came from: the manifest states
   the exact playable scope at that commit.
+
+## If something goes wrong
+
+- **The window crashed / the terminal shows exit code 134 or 139.** This
+  machine's WSLg/Mesa graphics stack occasionally crashes while the window is
+  being torn down, after the game itself worked (the 2026-09-21 session that
+  reported "nothing to click" ended this way). The runner now explains the code.
+  Godot writes a log and crash dump under
+  `~/.local/share/godot/app_userdata/Runtime Zero/logs/`. If it repeats, run
+  `wsl --shutdown` in Windows PowerShell, reopen the terminal and retry. If it
+  ever crashes *while you are playing*, note what you were doing - that would be
+  a game bug, not a teardown crash.
+- **Nothing responds to clicks.** Should not happen anymore: the title
+  background passes clicks through and the Start button is a real button. If it
+  does, the log above plus the exact click location helps.
 
 ## Verifying the runner itself
 

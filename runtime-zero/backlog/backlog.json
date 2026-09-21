@@ -600,6 +600,18 @@
           "result": "passed",
           "artifact": "reports/prototype-log.md",
           "environment": "specification verification passes with RZ-007 done; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/presentation_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/presentation_tests.gd",
+          "environment": "post-demo fix (owner report 2026-09-21): title root/background/column swallowed clicks, so clicking did nothing; now IGNORE + Start button + placeholder chips; suite 92 -> 104 checks; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-combat-from-title.png",
+          "result": "passed",
+          "artifact": "validation/demo/20260921-combat-from-title.png",
+          "environment": "desktop verification: real ENTER injected into the live window, title -> combat transition, capture written, exit 0, no crash dump; repeated run also clean; 2026-09-21"
         }
       ]
     },
@@ -1754,6 +1766,18 @@
           "result": "passed",
           "artifact": "reports/prototype-log.md",
           "environment": "specification verification passes with RZ-031 done; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && tools/demo.sh run --definitely-not-a-flag",
+          "result": "passed",
+          "artifact": "tools/demo.sh",
+          "environment": "guidance path verified with a real signalled exit (Godot aborted 134): runner printed the WSLg/Mesa guidance, pointed at the Godot log path and exited with the same code; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && tools/demo.sh capture validation/demo/20260921-title.png",
+          "result": "passed",
+          "artifact": "validation/demo/20260921-title.png",
+          "environment": "regenerated after the interaction fix (Start button): sha256 0d608d67638ce70b4cf449be1ff06a473149cc24a15541184781e866064e8639; 2026-09-21"
         }
       ]
     }

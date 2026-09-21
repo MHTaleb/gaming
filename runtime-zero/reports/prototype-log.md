@@ -185,3 +185,34 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game -- --capture /tmp/rz-headless.png` | exit 1 — clear refusal, no file written |
 | `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 92 checks |
 | `node tools/verify.js` | exit 0 — specification verification passes with RZ-031 done |
+
+## Post-demo feedback fixes (2026-09-21 evening)
+
+Owner report after `tools/demo.sh run`: "I started the demo but only got a screen about the game,
+there was nothing else, no characters no menu" (terminal exit 134).
+
+Findings and fixes:
+
+- **Clicks did nothing.** The full-screen title `Control` and its `Background`/`Center` children kept
+  the default `MOUSE_FILTER_STOP`, so the GUI layer consumed every click before `_unhandled_input`
+  could start the game. Reproduced through the real input pipeline (`Window.push_input`) and pinned by
+  regression tests that inject a real click, a real ENTER press and a real Start-button press.
+  Fixed by `mouse_filter = IGNORE` on all three containers.
+- **No visible way in.** Added a real `Start - enter combat` button (focused by default) plus a hint
+  line: ENTER/Space, a click anywhere and the button all start the fight.
+- **"No characters".** Added placeholder character chips (hero blue, enemies orange, boss violet) —
+  shapes only, per the placeholder-art mandate; the graphics phase (RZ-016+) replaces them.
+- **Exit code 134.** Godot's own crash dump (under the app_userdata logs) shows SIGSEGV inside
+  `swrast_dri.so` (Mesa software rasterizer) after a session that had started normally on D3D12 — an
+  environment teardown crash, not game logic. `tools/demo.sh` now explains signalled exits, points at
+  the log directory and exits with the same code; `docs/DEMO.md` has an "If something goes wrong"
+  section. Guidance verified with a real signalled exit.
+
+Verification (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — **104 checks** (was 92; +12 interaction/chip checks) |
+| `tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-combat-from-title.png` | exit 0 — real ENTER injected into the live window, title → combat, capture written, no crash dump; repeated run also clean |
+| `tools/demo.sh run --definitely-not-a-flag` | exit 134 with the new guidance lines (real signalled exit) |
+| `run_tests.gd` / `content_tests.gd` / `guard_contract.gd` / `verify.js` | all green |

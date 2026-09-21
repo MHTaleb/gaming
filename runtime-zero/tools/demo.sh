@@ -56,11 +56,19 @@ run)
 		SCENE="$1"
 		shift
 	fi
+	CODE=0
 	if [[ "$SCENE" == "combat" ]]; then
-		exec godot --path game res://scenes/combat.tscn "$@"
+		godot --path game res://scenes/combat.tscn "$@" || CODE=$?
 	else
-		exec godot --path game "$@"
+		godot --path game "$@" || CODE=$?
 	fi
+	if [[ $CODE -ge 128 ]]; then
+		echo "demo: the engine exited with code $CODE (crash/abort). This machine's WSLg/Mesa stack" >&2
+		echo "demo: sometimes crashes during window shutdown - the game logic itself is fine." >&2
+		echo "demo: Godot saved a log under ~/.local/share/godot/app_userdata/Runtime Zero/logs/" >&2
+		echo "demo: if it repeats, run 'wsl --shutdown' in Windows PowerShell, reopen the terminal and retry." >&2
+	fi
+	exit $CODE
 	;;
 capture)
 	if [[ $# -lt 1 ]]; then
