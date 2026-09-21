@@ -212,6 +212,14 @@ text = "Skill (3)"
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="ContinueButton" type="Button" parent="Margin/Column/Actions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(170, 48)
+focus_mode = 2
+text = "Continue"
+
 [node name="RetryButton" type="Button" parent="Margin/Column/Actions"]
 unique_name_in_owner = true
 layout_mode = 2

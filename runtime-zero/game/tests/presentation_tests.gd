@@ -432,6 +432,10 @@ func _test_animation_timing_does_not_change_outcomes() -> void:
 
 func _test_title_scene_links_to_combat() -> void:
 	_expect(ResourceLoader.exists(COMBAT_SCENE), "the combat scene exists as a resource")
+	_expect(ResourceLoader.exists("res://scenes/loadout.tscn"),
+		"the loadout scene exists as a resource")
+	_expect(ResourceLoader.exists("res://scenes/result.tscn"),
+		"the result scene exists as a resource")
 	var scene: PackedScene = load(TITLE_SCENE)
 	var node: Control = scene.instantiate()
 	root.add_child(node)
@@ -483,11 +487,10 @@ func _test_title_input_paths() -> void:
 	root.push_input(click, true)
 	await process_frame
 	await process_frame
-	_expect(current_scene != null and current_scene.name == "Combat",
-		"a background click starts the combat scene")
-	_expect(current_scene.get("session") != null
-		and current_scene.get("session").state != null,
-		"the combat scene reached from the title is playable")
+	_expect(current_scene != null and current_scene.name == "Loadout",
+		"a background click opens the loadout screen")
+	_expect(current_scene.get_node("%OptionsBox").get_child_count() == 3,
+		"the loadout screen reached from the title lists the three choices")
 	title.free()
 	title = await _open_title()
 	var enter := InputEventKey.new()
@@ -496,15 +499,15 @@ func _test_title_input_paths() -> void:
 	root.push_input(enter, true)
 	await process_frame
 	await process_frame
-	_expect(current_scene != null and current_scene.name == "Combat",
-		"pressing ENTER starts the combat scene")
+	_expect(current_scene != null and current_scene.name == "Loadout",
+		"pressing ENTER opens the loadout screen")
 	title.free()
 	title = await _open_title()
 	title.get_node("%StartButton").pressed.emit()
 	await process_frame
 	await process_frame
-	_expect(current_scene != null and current_scene.name == "Combat",
-		"the start button starts the combat scene")
+	_expect(current_scene != null and current_scene.name == "Loadout",
+		"the start button opens the loadout screen")
 	if is_instance_valid(title):
 		title.free()
 	if current_scene != null:

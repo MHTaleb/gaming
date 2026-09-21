@@ -7,25 +7,25 @@ repository (the runner activates the pinned toolchain itself via
 
 ## What is playable right now (2026-09-21)
 
-- **Title → combat.** The title screen has procedural placeholder key art, a
-  visible **Start - enter combat** button; ENTER/Space or a click anywhere also
-  starts the fight. Quit with the in-game **Quit** button (clean shutdown).
-- **One encounter** (`encounter_1`, "Intrusion"): you against one Memory Leak.
-- **Placeholder characters**: the hero and each enemy show a colored chip (real
-  art arrives in the graphics phase; names and text carry the identity too).
-- **Three actions**: Attack, Guard (halves the next incoming hit, single use),
-  Skill (costs 3 energy, double attack power). Unavailable actions are disabled
-  and say why (e.g. "Needs 3 energy (have 2)").
-- **Target selection**, **enemy intent** ("Attack", "Heavy attack incoming (x2)"
-  for the boss), an ordered **combat log**, HP/energy **bars plus text**,
-  **win/lose/round-cap** banner with **Retry** and **Title** buttons.
-- **Input**: mouse, touch (48 px targets), keyboard (`1` Attack / `2` Guard /
-  `3` Skill, Tab to move focus, Enter to activate), double-click/tap protection,
-  and a **Reduced motion** toggle.
+- **The full three-encounter campaign.** Title (with procedural key art) →
+  **equipment loadout** (pick one of three, effect explained) → **encounter 1**
+  ("Intrusion") → reward result → **encounter 2** ("Load Spike", two enemies) →
+  reward result → **encounter 3** ("Server Cathedral" boss) → **RUN COMPLETE**
+  with play-again. Retry and title flows reset cleanly; rewards are granted
+  exactly once per run.
+- **Combat**: Attack, Guard (single-use halving), Skill (3 energy, double
+  attack), target selection, enemy intent, ordered combat log, HP/energy bars
+  with text, win/lose/round-cap states. Placeholder character chips identify
+  hero (blue), enemies (orange) and boss (violet).
+- **Between encounters** the hero is fully healed and refilled (each fight is a
+  fresh session).
+- **Input**: mouse, touch (48 px targets), keyboard (`1`/`2`/`3`, Tab/Enter),
+  double-click/tap protection, reduced-motion toggle.
+- **Quit** with the in-game Quit button (clean shutdown) or the window's X.
 
-**Not playable yet** (later tickets): loadout and equipment choice UI,
-encounter progression beyond the first fight, rewards, saves, audio, Android
-build. This demo shows the first slice's combat loop only.
+**Not playable yet** (later tickets): saves/persistence (RZ-009), accessibility
+polish and placeholder sound (RZ-010), replay fixtures/CI (RZ-011), real
+AI-generated art and music (gated phases RZ-016+, RZ-023+), Android build.
 
 ## Run it
 
@@ -42,7 +42,8 @@ if nothing appears, make sure you are in a WSL terminal with `DISPLAY` set
 
 ```sh
 tools/demo.sh capture validation/demo/20260921-title.png
-tools/demo.sh capture validation/demo/20260921-combat.png combat
+tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-loadout.png
+tools/demo.sh run -- --auto-enter 60 --auto-begin guard_plating --capture validation/demo/20260921-combat-in-campaign.png
 tools/demo.sh smoke validation/demo/20260921-combat   # Attack/Guard/Skill frames + state summary
 ```
 

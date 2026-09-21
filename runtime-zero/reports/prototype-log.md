@@ -256,3 +256,35 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `tools/demo.sh capture validation/demo/20260921-title.png` | exit 0 — title art captured |
 | `tools/demo.sh run -- --auto-enter 60 --capture …combat-from-title.png` | exit 0 — real ENTER, combat reached |
 | `tools/demo.sh smoke validation/demo/20260921-combat` | exit 0 — 3 frames; state_hash `8fcedb79…` unchanged |
+
+## RZ-008 — three-encounter campaign: loadout, progression, rewards, retry (2026-09-21)
+
+- `game/src/application/run_service.gd` (autoload `RZRun`): loadout choice, the connected
+  encounter chain, rewards granted at most once, defeat/stall handling, retry and reset.
+  Progression is deliberately two-step - the combat scene *reports* an outcome, the result
+  screen *advances* - so duplicate clicks or a re-entered screen cannot double-grant or skip
+  an encounter. Healing between fights is structural: every fight is a fresh session at full
+  HP/energy.
+- `game/scenes/loadout.tscn` + `loadout.gd`: equipment cards driven by content (name,
+  description, exclusive selection, Begin disabled until chosen; `--auto-begin` hook for
+  verification captures).
+- `game/scenes/result.tscn` + `result.gd`: victory/reward/next, run-complete with play-again,
+  defeat/stall with retry; advancing happens here exactly once.
+- `combat.gd`: follows the active run (encounter + equipment), reports the outcome once,
+  offers Continue instead of standalone Retry while a run is live; title resets the run.
+- `game/tests/run_flow_tests.gd`: **44 checks** - begin variants, advance refused without a
+  victory, reward-granted-once (incl. campaign replay), first-report-wins, defeat/stall cannot
+  advance, and the full campaign through the real scenes: loadout → encounter_1 → result →
+  encounter_2 (healed) → boss → RUN COMPLETE → play again.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/run_flow_tests.gd` | exit 0 — **ALL RUN FLOW TESTS PASSED (44 checks)** |
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 111 checks (title now opens the loadout) |
+| `godot --headless --path game --script res://tests/run_tests.gd` | exit 0 — 96 checks |
+| `godot --headless --path game --script res://tests/content_tests.gd` | exit 0 — 54 checks |
+| `godot --headless --path game --script $PWD/validation/guard_contract.gd` | exit 0 |
+| `tools/demo.sh run -- --auto-enter 60 --capture …loadout.png` | exit 0 — loadout capture |
+| `tools/demo.sh run -- --auto-enter 60 --auto-begin guard_plating --capture …combat-in-campaign.png` | exit 0 — title → loadout → combat through real input hooks |

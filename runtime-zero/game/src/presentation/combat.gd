@@ -20,6 +20,7 @@ extends Control
 ## by animation or color alone (text states every value).
 
 const TITLE_SCENE := "res://scenes/title.tscn"
+const RESULT_SCENE := "res://scenes/result.tscn"
 const DEFAULT_ENCOUNTER := "encounter_1"
 const SMOKE_STEP_DELAY := 0.4
 const LOG_LINE_LIMIT := 200
@@ -33,13 +34,19 @@ var debounce_ms := 300
 var _last_accepted_ms := -1000000
 var _enemy_rows := {}
 var _log_lines: Array[Label] = []
+var _outcome_reported := false
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	var encounter_id := _arg_value(args, "--encounter")
+	var equipment_id := _arg_value(args, "--equipment")
+	if encounter_id.is_empty() and RZRun.active:
+		encounter_id = RZRun.encounter_id
+		if equipment_id.is_empty():
+			equipment_id = RZRun.equipment_id
 	if encounter_id.is_empty():
 		encounter_id = DEFAULT_ENCOUNTER
-	session = RZCombatSession.start(encounter_id, _arg_value(args, "--equipment"))
+	session = RZCombatSession.start(encounter_id, equipment_id)
 	_connect_ui()
 	if session.state == null:
 		_show_fatal()
@@ -99,6 +106,17 @@ func _quit() -> void:
 	print("[rz] quit requested")
 	get_tree().quit(0)
 
+## Run-aware ways out of the fight: advancing goes through the result screen so
+## rewards are granted exactly once; leaving the title ends the run.
+func _continue() -> void:
+	if RZRun.active:
+		get_tree().change_scene_to_file(RESULT_SCENE)
+
+func _go_title() -> void:
+	if RZRun.active:
+		RZRun.reset()
+	get_tree().change_scene_to_file(TITLE_SCENE)
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		print("[rz] window close requested")
@@ -112,7 +130,8 @@ func _connect_ui() -> void:
 	%GuardButton.pressed.connect(submit_action.bind(RZRules.ACTION_GUARD))
 	%SkillButton.pressed.connect(submit_action.bind(RZRules.ACTION_SKILL))
 	%RetryButton.pressed.connect(_on_retry)
-	%TitleButton.pressed.connect(func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))
+	%ContinueButton.pressed.connect(_continue)
+	%TitleButton.pressed.connect(_go_title)
 	%QuitButton.pressed.connect(_quit)
 	%ReducedMotion.toggled.connect(func(pressed: bool) -> void: reduced_motion = pressed)
 	%AttackButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_ATTACK)
@@ -256,9 +275,21 @@ func _update_terminal() -> void:
 	var terminal := session.terminal()
 	%TerminalTitle.visible = terminal
 	%TerminalDetail.visible = terminal
+	var run_active := RZRun.active
+	%ContinueButton.visible = terminal and run_active
+	%RetryButton.visible = terminal and not run_active
 	if terminal:
 		%TerminalTitle.text = RZCombatText.outcome_title(session.state.outcome)
 		%TerminalDetail.text = RZCombatText.outcome_detail(session.state.outcome)
+		if not _outcome_reported:
+			_outcome_reported = true
+			if run_active:
+				var outcome := "victory"
+				if session.state.outcome == RZCombatState.Outcome.STALLED:
+					outcome = "stalled"
+				elif session.state.outcome != RZCombatState.Outcome.VICTORY:
+					outcome = "defeat"
+				RZRun.report_outcome(outcome)
 
 func _show_fatal() -> void:
 	var message := "Combat data failed to load:\n" + "\n".join(session.errors)

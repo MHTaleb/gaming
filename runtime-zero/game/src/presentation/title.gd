@@ -17,14 +17,14 @@ extends Control
 const SMOKE_SHOT_ARG := "--smoke-shot"
 const SMOKE_SHOT_FRAMES := 5
 const SMOKE_SHOT_PATH := "user://title_smoke.png"
-const COMBAT_SCENE := "res://scenes/combat.tscn"
+const LOADOUT_SCENE := "res://scenes/loadout.tscn"
 
 var _started := false
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	print("[rz] title ready")
-	%StartButton.pressed.connect(_start_combat)
+	%StartButton.pressed.connect(_start_game)
 	%QuitButton.pressed.connect(_quit)
 	%StartButton.grab_focus()
 	var auto_enter := _arg_value(args, "--auto-enter")
@@ -51,16 +51,17 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not wants_start:
 		return
 	get_viewport().set_input_as_handled()
-	_start_combat()
+	_start_game()
 
-## One-way transition: the button press, keyboard and click paths all land here,
-## and two events in the same frame must not change the scene twice.
-func _start_combat() -> void:
+## One-way transition into the campaign (loadout first); the button press,
+## keyboard and click paths all land here, and two events in the same frame
+## must not change the scene twice.
+func _start_game() -> void:
 	if _started:
 		return
 	_started = true
-	print("[rz] start -> combat")
-	get_tree().change_scene_to_file(COMBAT_SCENE)
+	print("[rz] start -> loadout")
+	get_tree().change_scene_to_file(LOADOUT_SCENE)
 
 ## Clean in-game quit: the same shutdown path as the window's close button.
 func _quit() -> void:

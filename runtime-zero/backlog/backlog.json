@@ -610,8 +610,8 @@
         {
           "command": "source tools/env.sh && tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-combat-from-title.png",
           "result": "passed",
-          "artifact": "validation/demo/20260921-combat-from-title.png",
-          "environment": "desktop verification: real ENTER injected into the live window, title -> combat transition, capture written, exit 0, no crash dump; repeated run also clean; 2026-09-21"
+          "artifact": "validation/demo/20260921-combat-in-campaign.png",
+          "environment": "desktop verification: real ENTER injected into the live window, title -> combat transition, capture written, exit 0, no crash dump; repeated run also clean; 2026-09-21 (artifact superseded: the capture was renamed when RZ-008 moved the title flow through the loadout screen)"
         }
       ]
     },
@@ -621,7 +621,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "story",
-      "status": "next",
+      "status": "done",
       "priority": "P1",
       "size": "M",
       "value": 5,
@@ -659,7 +659,51 @@
         "P1",
         "gameplay"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/run_flow_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/run_flow_tests.gd",
+          "environment": "ALL RUN FLOW TESTS PASSED (44 checks): reward granted once incl. campaign replay, first-report-wins, defeat/stall cannot advance, full campaign loadout->3 encounters->RUN COMPLETE->play again with heal between fights; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/presentation_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/presentation_tests.gd",
+          "environment": "111 checks; title now opens the loadout scene (click/ENTER/button paths); exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/run_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/run_tests.gd",
+          "environment": "96 combat checks, no regression; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/content_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/content_tests.gd",
+          "environment": "54 content checks, no regression; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script $PWD/validation/guard_contract.gd",
+          "result": "passed",
+          "artifact": "validation/guard_contract.gd",
+          "environment": "validator Guard regression passes; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && tools/demo.sh run -- --auto-enter 60 --auto-begin guard_plating --capture validation/demo/20260921-combat-in-campaign.png",
+          "result": "passed",
+          "artifact": "validation/demo/20260921-combat-in-campaign.png",
+          "environment": "desktop chain through real input hooks: title -> loadout -> combat (guard plating applied, 125 HP); loadout capture also committed; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && node tools/verify.js",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "specification verification passes with RZ-008 done; exit 0; 2026-09-21"
+        }
+      ],
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)"
     },
     {
       "id": "RZ-009",
@@ -667,7 +711,7 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "task",
-      "status": "later",
+      "status": "next",
       "priority": "P1",
       "size": "M",
       "value": 5,
@@ -1854,8 +1898,8 @@
         {
           "command": "source tools/env.sh && tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-combat-from-title.png",
           "result": "passed",
-          "artifact": "validation/demo/20260921-combat-from-title.png",
-          "environment": "real ENTER through the input pipeline: title -> combat with quit button, capture written, exit 0; 2026-09-21"
+          "artifact": "validation/demo/20260921-combat-in-campaign.png",
+          "environment": "real ENTER through the input pipeline: title -> combat with quit button, capture written, exit 0; 2026-09-21 (artifact superseded: the capture was renamed when RZ-008 moved the title flow through the loadout screen)"
         },
         {
           "command": "signal matrix: WM close / SIGTERM@3s / SIGTERM@10s / SIGINT@10s / XTEST focus+ENTER",
