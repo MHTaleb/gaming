@@ -1,0 +1,23 @@
+RZ-037 install log excerpt (from /tmp/rz_install_tools.log, 2026-09-21T23:38Z)
+
+=== step 1: ComfyUI clone ===
+Cloning into 'ComfyUI'...
+b0f4b7b294ce482a2e071d9d762c133d38c7aa07
+
+=== step 2: venv ===
+Python 3.12.14 (uv venv ~/ai/comfy-venv)
+
+=== step 3: pytorch cu124 ===
+torch==2.6.0+cu124, torchvision==0.21.0+cu124 (27 packages installed)
+note: first attempt timed out on pypi.nvidia.com (nvidia-curand-cu12); resumed with UV_HTTP_TIMEOUT=600
+
+=== step 4: comfy requirements ===
+72 packages installed into ~/ai/comfy-venv
+
+=== step 5: CUDA check ===
+torch 2.6.0+cu124 cuda 12.4 available True
+gpu NVIDIA GeForce RTX 4050 Laptop GPU
+=== step 6: model download (SDXL-Turbo fp16, ~6.9 GB) ===
+
+=== step 6: model download ===
+TODO: filled after the download completed

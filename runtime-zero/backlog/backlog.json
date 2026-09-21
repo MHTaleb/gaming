@@ -2241,6 +2241,160 @@
           "environment": "capture mode accepts title|combat|map; map capture starts a demo run so tickets render; 2026-09-21"
         }
       ]
+    },
+    {
+      "id": "RZ-036",
+      "title": "Animated hero (young man with laptop) and painted region stages",
+      "epic": "E-GAME",
+      "area": "graphics",
+      "type": "task",
+      "status": "done",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "The hero is the owner's young man with a laptop: a 6-frame walk cycle and 2-frame idle built by a deterministic generator, wired into the work map as an AnimatedSprite2D that plays while walking and flips to face the direction of travel. Each region (and each fight) now gets its own painted 1280x720 backdrop.",
+      "why": "Owner round 5: 'I need the character to be able to move, walk in animated mode, like any 2D game where characters are humanoids, our character is a young man with a laptop' and 'create great art, background'.",
+      "steps": [
+        "Write tools/make_character_anim.gd: 128px SDF frames, walk cycle with leg/arm counter-swing, idle breathing, sha256 per output.",
+        "Write tools/make_stage_art.gd: intrusion / load_spike / server_cathedral backdrops in the locked palette.",
+        "Swap the map character to AnimatedSprite2D with SpriteFrames from the sheets; walk/idle playback, facing flip, motion-mode fallback.",
+        "Apply the region backdrop on the map and per-encounter backdrop in combat; update suites."
+      ],
+      "outputs": [
+        "tools/make_character_anim.gd",
+        "tools/make_stage_art.gd",
+        "game/assets/characters/operator.png",
+        "game/assets/characters/operator_idle.png",
+        "game/assets/characters/operator_walk.png",
+        "game/assets/backdrops/intrusion.png",
+        "game/assets/backdrops/load_spike.png",
+        "game/assets/backdrops/server_cathedral.png",
+        "game/scenes/map.tscn",
+        "game/src/presentation/map.gd",
+        "game/src/presentation/combat.gd"
+      ],
+      "checks": [
+        "map_tests.gd 33 checks green incl. 5 animation checks (sheets wired, walk plays, facing flips, idle on arrival)",
+        "run_flow_tests.gd 52 checks green incl. per-region backdrop assertions through the real scenes",
+        "Generators byte-identical across two consecutive runs (diff clean)"
+      ],
+      "dod": [
+        "The engineer walks stone to stone with a real walk cycle, faces the direction of travel and rests in idle; every region and fight shows its own painted stage; reduced-motion accessibility unchanged; all suites and verify.js pass."
+      ],
+      "deps": [
+        "RZ-035"
+      ],
+      "refs": [
+        "validation/evidence/036/README.md",
+        "docs/DEMO.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "graphics"
+      ],
+      "evidence": [
+        {
+          "command": "godot --headless --path game --script res://tests/map_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/map_tests.gd",
+          "environment": "ALL MAP TESTS PASSED (33 checks): animated sheets wired, walk cycle plays while moving, engineer faces left walking back, rests in idle; exit 0; 2026-09-21"
+        },
+        {
+          "command": "godot --headless --path game --script res://tests/run_flow_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/run_flow_tests.gd",
+          "environment": "ALL RUN FLOW TESTS PASSED (52 checks): fights open on intrusion / load_spike / server_cathedral backdrops; exit 0; 2026-09-21"
+        },
+        {
+          "command": "full battery (import + 8 suites + guard + verify.js)",
+          "result": "passed",
+          "artifact": "validation/evidence/036/battery.log",
+          "environment": "463 checks total, every suite exit 0; guard GUARD CONTRACT PASSED; verify.js 35 tickets; 2026-09-21"
+        },
+        {
+          "command": "tools/make_character_anim.gd x2 + diff",
+          "result": "passed",
+          "artifact": "validation/evidence/036/art-hashes.txt",
+          "environment": "two consecutive runs byte-identical: operator.png 51f147a0, operator_idle.png b3798c6b, operator_walk.png ffe6c865 (sha256 prefix); 2026-09-21"
+        },
+        {
+          "command": "tools/demo.sh capture validation/evidence/036/work-map-animated.png map",
+          "result": "passed",
+          "artifact": "validation/evidence/036/work-map-animated.png",
+          "environment": "engineer planted on the START stone, intrusion skyline behind, mini map drawing; sha256 fe0bc419...; 2026-09-21"
+        },
+        {
+          "command": "tools/demo.sh capture validation/evidence/036/battle-intrusion.png combat",
+          "result": "passed",
+          "artifact": "validation/evidence/036/battle-intrusion.png",
+          "environment": "battlefield wears the intrusion backdrop (region art wired into combat); sha256 821b15f4...; 2026-09-21"
+        }
+      ]
+    },
+    {
+      "id": "RZ-037",
+      "title": "Local graphics toolchain (ComfyUI + SDXL-Turbo) for generated stage art",
+      "epic": "E-GAME",
+      "area": "graphics",
+      "type": "task",
+      "status": "doing",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
+      "priority": "P2",
+      "size": "L",
+      "value": 4,
+      "risk": 3,
+      "phase": "P1",
+      "summary": "Owner-directed: install image generation tools locally and use them for the game's art. ComfyUI + PyTorch cu124 + SDXL-Turbo fp16 run fully offline under ~/ai (weights never enter git); CUDA verified on the RTX 4050; first generations and owner-reviewed integration pending.",
+      "why": "Owner round 5: 'you task now is to install tools and use them to achieve this'. Constraint D-005: no paid APIs; local models only.",
+      "steps": [
+        "Clone ComfyUI and create an isolated venv under ~/ai.",
+        "Install PyTorch cu124 + ComfyUI requirements; verify torch.cuda.is_available().",
+        "Download sd_xl_turbo_1.0_fp16.safetensors and record size + sha256.",
+        "Generate region/stage art via the /prompt API; inspect; integrate only what the owner style gate approves (procedural art stays the hash-pinned default)."
+      ],
+      "outputs": [
+        "validation/evidence/037/README.md",
+        "validation/evidence/037/install-log-excerpt.txt"
+      ],
+      "checks": [
+        "torch 2.6.0+cu124 with cuda available True on RTX 4050 Laptop GPU",
+        "ComfyUI requirements installed (99 resolved packages) in ~/ai/comfy-venv",
+        "SDXL-Turbo fp16 model downloaded under ~/ai/ComfyUI/models/checkpoints (sha256 recorded)"
+      ],
+      "dod": [
+        "A documented, reproducible local command starts ComfyUI; at least one stage image is generated from the game's own prompts; provenance (model + hash + prompt) recorded; procedural default art untouched unless the owner approves a swap."
+      ],
+      "deps": [
+        "RZ-036"
+      ],
+      "refs": [
+        "validation/evidence/037/README.md",
+        "docs/SOURCES.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P2",
+        "graphics",
+        "studio"
+      ],
+      "evidence": [
+        {
+          "command": "~/ai/comfy-venv/bin/python -c 'import torch; print(torch.cuda.is_available())'",
+          "result": "passed",
+          "artifact": "validation/evidence/037/README.md",
+          "environment": "torch 2.6.0+cu124 cuda 12.4 available True gpu NVIDIA GeForce RTX 4050 Laptop GPU; 2026-09-21"
+        },
+        {
+          "command": "uv pip install -r ~/ai/ComfyUI/requirements.txt",
+          "result": "passed",
+          "artifact": "validation/evidence/037/install-log-excerpt.txt",
+          "environment": "72 packages installed into ~/ai/comfy-venv after the pypi.nvidia.com timeout resume (UV_HTTP_TIMEOUT=600); 2026-09-21"
+        }
+      ]
     }
   ]
 }

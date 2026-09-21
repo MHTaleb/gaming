@@ -1,0 +1,20 @@
+# RZ-036 art/asset sha256 (generated 2026-09-21T23:36Z)
+
+## hero animation sheets (tools/make_character_anim.gd, two consecutive runs identical)
+hero anim: res://assets/characters/operator.png sha256=51f147a068230261967ab6f4a1549ebe87b411bc3a50fc994ac05da27a7889de
+hero anim: res://assets/characters/operator_idle.png sha256=b3798c6bec97b22d5da3fff9eeec662b03f43ea4832dc08f3012ae34f8af449c
+hero anim: res://assets/characters/operator_walk.png sha256=ffe6c86509ffc4e57a49c829bf231bde9e892457878e4363b2e92d9e9b96e28c
+
+## region backdrops (tools/make_stage_art.gd)
+stage art: res://assets/backdrops/intrusion.png sha256=adedba521eb2e74a4d4910885ffa35c39eb52d74eca71ca121f7ea365aa59ce6
+stage art: res://assets/backdrops/load_spike.png sha256=1c320310a383e9af32cd22f034caebaf297ba5255cc5abc50ac15ae682770373
+stage art: res://assets/backdrops/server_cathedral.png sha256=6b8811967299e3fa24e654b4d0df329e5757c815ed3828d01c67c415e4d66afc
+
+## enemy art (tools/make_combat_art.gd, unchanged since RZ-034)
+combat art: res://assets/characters/memory_leak.png sha256=f6c4f093cefd2cf4c19c0e9c1f8a7f047c097b52f7573cc680836fce2b062ae7
+combat art: res://assets/characters/server_cathedral.png sha256=7896ae2a6658913684569e9b571cad42e163a876263e10b3d6a5cd0949fbdc5b
+
+## captures
+fe0bc419ae1cd93316bd6556539088536ac0a9b00a562050033af83d1228aaa6  validation/evidence/036/work-map-animated.png
+821b15f48a26a37566bfe7e053d8415171f261f68ac9697ddcd998fbeb71b71f  validation/evidence/036/battle-intrusion.png
+9a38df488a6e67f6e019ec6f9d1e21b33900990a850e82699fc52e1b54ea8c60  validation/evidence/036/hero-anim-sheet.png

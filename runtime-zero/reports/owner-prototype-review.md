@@ -82,3 +82,34 @@ Record the owner's answers here, then create corrective tasks and decide whether
      `validation/evidence/035/` (map captures with mini map, suite logs).
    - Direction recorded as D-012 in docs/DECISIONS.md (owner-directed; refines
      D-009 movement = point-to-point, not open world).
+
+## Feedback round 5 (2026-09-21, late night) — art & animation direction, implemented
+
+6. Verbatim: *"please try to create great art, background and also I need the
+   character to be able to move, walk in animated mode, like any 2D game where
+   characters are humanoids, our character is a young man with a laptop. you task
+   now is to install tools and use them to achieve this"*
+   - Hero identity locked (owner-directed): a **young man with a laptop** — the
+     procedural hero was revised to that read: dark cropped hair, teal engineer
+     jacket with the cyan zipper, shoulder strap, laptop held open in front with
+     a glowing cyan screen and amber indicator.
+   - Animation implemented (RZ-036): six-frame walk cycle (leg swing with knee
+     bend, counter-swinging arms, body bob, planted feet, moving shadow) plus a
+     two-frame idle breathing loop; the map character is now an AnimatedSprite2D
+     that plays the cycle while walking and flips to face the direction of
+     travel; reduced-motion mode still teleports with no cycle (accessibility
+     unchanged).
+   - Backgrounds implemented (RZ-036): one painted 1280x720 stage per region —
+     *Intrusion* (night skyline, horizon glow), *Load Spike* (magenta spike
+     field with data lines), *Server Cathedral* (LED-grid pillars, vaulted ribs,
+     central energy beam, perspective server-rack rows). Every fight opens on
+     its region's painting, dimmed for readability.
+   - Tools installed and used (RZ-037): local ComfyUI + PyTorch cu124 +
+     SDXL-Turbo fp16 under `~/ai` (no paid APIs — D-005); `torch.cuda.is_available()
+     == True` on the RTX 4050. The deterministic procedural art stays the
+     shipped, hash-pinned default until the owner style gate approves AI output.
+   - Evidence: `validation/evidence/036/` (walk sheet, map + battlefield
+     captures, battery, art hashes), `validation/evidence/037/` (install log,
+     CUDA proof, provenance in docs/SOURCES.md).
+   - Open question for the owner: should the AI-generated stage art replace the
+     procedural backdrops, or stay as an alternate look?

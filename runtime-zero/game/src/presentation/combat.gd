@@ -25,6 +25,13 @@ const DEFAULT_ENCOUNTER := "encounter_1"
 const SMOKE_STEP_DELAY := 0.4
 const LOG_LINE_LIMIT := 200
 const CHARACTER_ART_DIR := "res://assets/characters"
+## One painted backdrop per encounter region (tools/make_stage_art.gd).
+const REGION_BACKDROPS: Array = [
+	"res://assets/backdrops/intrusion.png",
+	"res://assets/backdrops/load_spike.png",
+	"res://assets/backdrops/server_cathedral.png",
+]
+const BACKDROP_DIM := Color(1, 1, 1, 0.55)
 
 var session: RZCombatSession = null
 var selected_target_id: String = ""
@@ -49,6 +56,7 @@ func _ready() -> void:
 	if encounter_id.is_empty():
 		encounter_id = DEFAULT_ENCOUNTER
 	session = RZCombatSession.start(encounter_id, equipment_id)
+	_apply_region_backdrop(encounter_id)
 	_connect_ui()
 	if session.state == null:
 		_show_fatal()
@@ -64,8 +72,23 @@ func _ready() -> void:
 	if not smoke_dir.is_empty():
 		await _run_smoke(smoke_dir)
 
-# ---------------------------------------------------------------- input
+# ---------------------------------------------------------------- backdrop
 
+## The stage behind the fight matches the region the ticket sits in.
+func _apply_region_backdrop(encounter_id: String) -> void:
+	var index := 0
+	if RZRun.active:
+		index = RZRun.encounter_number() - 1
+	elif encounter_id.begins_with("encounter_"):
+		index = int(encounter_id.trim_prefix("encounter_")) - 1
+	if index < 0 or index >= REGION_BACKDROPS.size():
+		return
+	var texture := load(str(REGION_BACKDROPS[index])) as Texture2D
+	if texture != null:
+		%Backdrop.texture = texture
+		%Backdrop.modulate = BACKDROP_DIM
+
+# ---------------------------------------------------------------- input
 ## The single input path for buttons, keyboard shortcuts, tests and the smoke
 ## script. Returns the resolver result (or a debounce ignore marker).
 func submit_action(action_id: String) -> Dictionary:

@@ -1,18 +1,7 @@
 extends SceneTree
-## Deterministic procedural character art - placeholder sprites (RZ-034).
-##
-##   cd runtime-zero
-##   source tools/env.sh
-##   godot --headless --path game --script "$PWD/tools/make_combat_art.gd"
-##   # contact sheet for review (writes outside res://):
-##   godot --headless --path game --script "$PWD/tools/make_combat_art.gd" -- \
-##       --sheet /tmp/rz-characters.png
-##
-## Writes game/assets/characters/{operator,memory_leak,server_cathedral}.png
-## (128x128 RGBA8) and prints sha256 for each. Same contract as the landing art
-## (RZ-032): pure math + integer hashes, no randomness, no downloads; re-running
-## reproduces byte-identical PNGs. docs/ART_BIBLE.md allows flat layered
-## placeholder shapes until the RZ-016+ generated-art pipeline replaces them.
+## Deterministic procedural enemy art (RZ-034; operator/hero frames come from
+## tools/make_character_anim.gd since RZ-036):
+##   game/assets/characters/{memory_leak,server_cathedral}.png
 
 const SIZE := 128
 const OUT_DIR := "res://assets/characters"
@@ -30,7 +19,6 @@ func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	_make_dir()
 	var results := {
-		"operator": _paint_operator(),
 		"memory_leak": _paint_memory_leak(),
 		"server_cathedral": _paint_server_cathedral(),
 	}
@@ -129,37 +117,6 @@ func _hash01(a: int, b: int) -> float:
 	return float(abs(h) % 100000) / 100000.0
 
 # ------------------------------------------------------------------ sprites
-
-## The Operator - field engineer: navy suit, cyan visor, reactor chest, tool.
-func _paint_operator() -> Image:
-	var image := Image.create_empty(SIZE, SIZE, false, Image.FORMAT_RGBA8)
-	var body: Array = [
-		_c(64, 60, 9), _c(40, 62, 9), _c(88, 62, 9),
-		_s(40, 62, 45, 88, 4.0), _s(88, 62, 83, 88, 4.0),
-		_r(64, 84, 24, 30, 12), _r(55, 118, 8, 5, 3), _r(73, 118, 8, 5, 3),
-	]
-	# Soft ground shadow.
-	_paint(image, [_r(64, 122, 26, 5, 4)], DARK, 0.45, -1.0, 2.0)
-	# Cyan halo, then the base silhouette.
-	_paint(image, body, CYAN, 0.18, 2.0, 2.0)
-	_paint(image, body, NAVY, 1.0)
-	# Head with slightly lighter helmet shell.
-	var head: Array = [_r(64, 38, 19, 15, 8)]
-	_paint(image, head, NAVY_LIGHT, 1.0)
-	# Visor band with a bright scan line.
-	_paint(image, [_r(64, 39, 17.5, 6.0, 3.0)], CYAN, 0.9)
-	_paint(image, [_r(64, 39, 14.5, 1.4, 1.0)], CYAN_BRIGHT, 0.95)
-	# Antenna with amber tip.
-	_paint(image, [_s(76, 26, 82, 14, 1.6)], CYAN, 0.75)
-	_paint(image, [_c(82.5, 12.5, 1.9)], AMBER, 0.95)
-	# Chest reactor: dark socket, glowing core.
-	_paint(image, [_r(64, 78, 9.5, 7.5, 3.0)], DARK, 1.0)
-	_paint(image, [_c(64, 78, 3.2)], CYAN, 0.9)
-	# Tool (wrench silhouette) in amber.
-	_paint(image, [_s(74, 94, 88, 106, 2.2), _c(90.5, 108, 3.4)], AMBER, 0.85)
-	# Chest emblem line (cyan) - reads as a work tab.
-	_paint(image, [_s(56, 90, 72, 90, 1.2)], CYAN, 0.45)
-	return image
 
 ## Memory Leak - wobbling violet blob with amber eyes and data drips.
 func _paint_memory_leak() -> Image:

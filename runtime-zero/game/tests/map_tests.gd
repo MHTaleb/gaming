@@ -11,7 +11,7 @@ const ROUTE_1: Array[Vector2] = [
 	Vector2(150, 470), Vector2(390, 350), Vector2(650, 440), Vector2(950, 330)]
 const ROUTE_2: Array[Vector2] = [
 	Vector2(140, 320), Vector2(420, 460), Vector2(720, 350), Vector2(1010, 470)]
-const OFFSET := Vector2(-58, -74)
+const OFFSET := Vector2(0, -54)
 
 var _checks := 0
 var _failures := 0
@@ -95,6 +95,14 @@ func _test_region_board() -> void:
 		"the last stone is labelled TICKET")
 	_expect(map_node.get_node("%Character").position == ROUTE_1[0] + OFFSET,
 		"the engineer starts on the first stone")
+	var sprite: AnimatedSprite2D = map_node.get_node("%Character")
+	_expect(sprite is AnimatedSprite2D and sprite.sprite_frames != null
+		and sprite.sprite_frames.has_animation("walk")
+		and sprite.sprite_frames.has_animation("idle")
+		and sprite.sprite_frames.get_frame_count("walk") == 6
+		and sprite.sprite_frames.get_frame_count("idle") == 2
+		and sprite.animation == "idle",
+		"the engineer is animated (6-frame walk, 2-frame idle, resting)")
 	_expect(map_node.call("_disc_state", 0) == "current"
 		and map_node.call("_disc_state", 1) == "ahead"
 		and map_node.call("_disc_state", 3) == "ahead",
@@ -199,6 +207,9 @@ func _test_motion_modes() -> void:
 	_expect(animated.get("_walking")
 		and animated.get_node("%Character").position != ROUTE_1[3] + OFFSET,
 		"the animated walk starts a tween instead of teleporting")
+	var walk_sprite: AnimatedSprite2D = animated.get_node("%Character")
+	_expect(walk_sprite.animation == "walk" and not walk_sprite.flip_h,
+		"the walk cycle plays while moving right")
 	var guard := 0
 	while animated.get("_walking") and guard < 1200:
 		await process_frame
@@ -207,6 +218,19 @@ func _test_motion_modes() -> void:
 		and animated.get_node("%Character").position == ROUTE_1[3] + OFFSET
 		and animated.get_node("%TicketPanel").visible,
 		"the animated walk finishes on the ticket stone")
+	_expect(walk_sprite.animation == "idle",
+		"the engineer rests in idle on arrival")
+	animated.call("_walk_to_disc", 0)
+	_expect(animated.get("_walking") and walk_sprite.animation == "walk",
+		"a walk back also plays the cycle")
+	var back_guard := 0
+	while animated.get("_walking") and back_guard < 1200:
+		await process_frame
+		back_guard += 1
+	_expect(back_guard < 1200
+		and animated.get_node("%Character").position == ROUTE_1[0] + OFFSET
+		and walk_sprite.flip_h and walk_sprite.animation == "idle",
+		"walking left faces the engineer left, then rests in idle")
 	_close(animated)
 	_fresh_run()
 

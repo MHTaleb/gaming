@@ -79,6 +79,13 @@ func _win_current_fight(limit: int) -> int:
 		turns += 1
 	return turns
 
+## The resource path of the battlefield backdrop, for region-look assertions.
+func _backdrop_path(node: Control) -> String:
+	var texture: Texture2D = node.get_node("%Backdrop").texture
+	if texture == null:
+		return ""
+	return texture.resource_path
+
 # ---------------------------------------------------------------- service
 
 func _test_begin_variants() -> void:
@@ -179,6 +186,8 @@ func _test_loadout_scene_flow() -> void:
 		"selecting the ticket stone starts the war")
 	_expect(current_scene.get_node("%HeroHPText").text == "125 / 125",
 		"the chosen guard plating is applied in the fight")
+	_expect(_backdrop_path(current_scene).contains("intrusion"),
+		"the fight opens on the region's painted backdrop")
 	# Reopening the loadout preselects the remembered equipment (RZ-009).
 	_fresh_run()
 	_clear_scene()
@@ -197,6 +206,8 @@ func _test_full_campaign_through_scenes() -> void:
 	var combat := await _open(COMBAT_SCENE)
 	_expect(combat.session != null and combat.session.encounter.get("id", "") == "encounter_1",
 		"combat scene follows the active run (encounter_1)")
+	_expect(_backdrop_path(combat).contains("intrusion"),
+		"the battlefield wears the region backdrop (intrusion)")
 	_expect(combat.get_node("%HeroHPText").text == "100 / 100",
 		"encounters start at full HP")
 	var turns := await _win_current_fight(10)
@@ -227,6 +238,8 @@ func _test_full_campaign_through_scenes() -> void:
 	_expect(current_scene != null and current_scene.name == "Combat"
 		and current_scene.get_node("%EnemiesBox").get_child_count() == 2,
 		"the next fight is encounter_2 with two enemies")
+	_expect(_backdrop_path(current_scene).contains("load_spike"),
+		"the second region fights on its own backdrop")
 	_expect(current_scene.get_node("%HeroHPText").text == "100 / 100"
 		and current_scene.get_node("%HeroEnergyText").text == "6 / 6",
 		"the hero is fully healed and refilled between encounters")
@@ -247,6 +260,8 @@ func _test_full_campaign_through_scenes() -> void:
 	_expect(current_scene != null and current_scene.name == "Combat"
 		and current_scene.get_node("%EnemiesBox").get_child_count() == 1,
 		"the boss encounter fields one enemy")
+	_expect(_backdrop_path(current_scene).contains("server_cathedral"),
+		"the boss fights in the server cathedral")
 	await _win_current_fight(14)
 	current_scene.get_node("%ContinueButton").pressed.emit()
 	await process_frame

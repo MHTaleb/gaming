@@ -405,3 +405,33 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game --script res://tests/run_flow_tests.gd` | exit 0 — 48 checks (loadout → map → war ×3, result → map → next war) |
 | `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 112 checks (battlefield layout incl. backdrop) |
 | captures | `validation/evidence/034/` battlefield ×2 + generator log; `validation/evidence/035/` map ×2 with mini map |
+
+## RZ-036 / RZ-037 — animated hero, painted stages, local graphics toolchain (2026-09-21 late night)
+
+- Owner round 5: "create great art, background ... the character to be able to
+  move, walk in animated mode ... our character is a young man with a laptop ...
+  install tools and use them."
+- RZ-036 (character + stages): `tools/make_character_anim.gd` now paints the
+  owner's hero — a young man with a laptop — as 128 px frames: a 6-frame walk
+  cycle (hip/knee swing, counter-swinging arms, body bob, planted feet, moving
+  shadow) and a 2-frame idle breathing loop, all deterministic with sha256 per
+  output. The map character is an AnimatedSprite2D driven by SpriteFrames built
+  at runtime (walk 10 fps / idle 2 fps), flipping to face the direction of
+  travel and resting in idle on arrival; reduced motion keeps the instant walk.
+  `tools/make_stage_art.gd` paints one 1280×720 stage per region (intrusion,
+  load_spike, server_cathedral with LED pillars, vaulted ribs, energy beam and
+  perspective rack rows); the map backdrop and every fight now use the region
+  painting (dimmed in combat for readability).
+- RZ-037 (toolchain): local ComfyUI (`b0f4b7b2`) + PyTorch 2.6.0+cu124 +
+  SDXL-Turbo fp16 installed under `~/ai` (no paid APIs, D-005); CUDA verified on
+  the RTX 4050. Weights stay outside git; procedural art remains the
+  hash-pinned shipped default until the owner style gate approves AI output.
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/map_tests.gd` | exit 0 — 33 checks (sheets wired, walk plays + faces direction, idle on arrival) |
+| `godot --headless --path game --script res://tests/run_flow_tests.gd` | exit 0 — 52 checks (per-region battlefield backdrops asserted) |
+| full battery (import + 8 suites + guard + verify.js) | all exit 0 — 463 checks (`validation/evidence/036/battery.log`) |
+| `tools/make_character_anim.gd` ×2 + diff | byte-identical across runs (`validation/evidence/036/art-hashes.txt`) |
+| `~/ai/comfy-venv/bin/python -c 'import torch; print(torch.cuda.is_available())'` | `True` — NVIDIA GeForce RTX 4050 Laptop GPU |
+| captures | `validation/evidence/036/work-map-animated.png`, `battle-intrusion.png`, `hero-anim-sheet.png` |

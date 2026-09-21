@@ -16,6 +16,12 @@ repository (the runner activates the pinned toolchain itself via
   play-again. Later stones are locked until their region unlocks; cleared
   stones stay walkable. Retry and title flows reset cleanly; rewards are
   granted exactly once per run.
+- **The hero is a young man with a laptop, and he walks.** A six-frame walk
+  cycle plays while he crosses the map (arms counter-swinging, laptop screen
+  glowing) and he turns to face the direction he is walking; he rests in a
+  two-frame idle breathing loop on every stone. Every region has its own painted
+  1280×720 backdrop (RZ-036) and fights open on the region's painting (dimmed
+  for readability).
 - **War (combat)**: battlefield staging per the owner's reference — the
   Operator left and the hostiles right, HP bars under each fighter (green pill
   for the hero, red pills for enemies), intent text, a mission banner, a
@@ -37,11 +43,13 @@ repository (the runner activates the pinned toolchain itself via
   checkbox on the title and combat screens silences everything and is remembered;
   no essential information is audio-only.
 
-**Not playable yet** (later tickets): real
-AI-generated art and music (gated phases RZ-016+, RZ-023+), Android build.
-The work map, the select-to-fight flow, the battlefield combat, saves, sound
-and the replay-verified rule set (RZ-011) are all in place; the next gate is
-**your playtest (RZ-012)**.
+**Not playable yet** (later tickets): Android build, real music, and
+AI-generated art *integration* — the local image toolchain (ComfyUI +
+SDXL-Turbo, RZ-037) is installed under `~/ai` and can generate offline, but the
+shipped look stays the deterministic procedural art until you approve a swap at
+the RZ-012 style gate. The work map, the select-to-fight flow, the battlefield
+combat, saves, sound and the replay-verified rule set (RZ-011) are all in place;
+the next gate is **your playtest (RZ-012)**.
 
 ## Run it
 
@@ -69,7 +77,9 @@ more useful than careful analysis:
 3. On the **work map**: walk the stones (tap one ahead of the engineer). Does
    the stone route + mini map make the region readable? Tapping the glowing
    TICKET stone walks the engineer there and **starts the war** — did that feel
-   right, or should there be a confirm step?
+   right, or should there be a confirm step? Watch the hero while he walks:
+   does the six-frame cycle read as walking, and does he face the right way
+   when you send him back to a cleared stone?
 4. Fight the three regions (Attack / Guard / Skill, tap a hostile to target
    it). Note:
    - **War feel:** is the rhythm (attack → enemy reply → telegraph → your

@@ -27,3 +27,24 @@ Consult these primary sources at installation time and pin what actually works. 
 Only the VS Code instruction/MCP, NVIDIA WSL, Godot Android, ComfyUI routes, ACE-Step repository/API/install, and Stable Audio tooling pages were retrieved for capability checks in this work. Other links are installation-time starting points, not claims of a tested installation. No third-party ComfyUI or Godot MCP is a mandatory dependency.
 
 Record later research as a dated finding with source/revision, observed constraints, affected tickets and uncertainty. Never copy previously asserted model names, license rights or minimum VRAM figures into a lockfile without verifying them.
+
+## Dated findings
+
+### 2026-09-21 — local graphics toolchain installed (RZ-037)
+
+| Component | Revision actually installed | Source |
+|---|---|---|
+| ComfyUI | `b0f4b7b294ce482a2e071d9d762c133d38c7aa07` (git clone --depth 1) at `~/ai/ComfyUI` | https://github.com/Comfy-Org/ComfyUI |
+| PyTorch | `torch 2.6.0+cu124`, `torchvision 0.21.0+cu124` (CUDA 12.4 wheels) | https://download.pytorch.org/whl/cu124 |
+| Model weights | `sd_xl_turbo_1.0_fp16.safetensors` (~6.9 GB) at `~/ai/ComfyUI/models/checkpoints/` | https://huggingface.co/stabilityai/sdxl-turbo |
+| venv | CPython 3.12.14 via uv at `~/ai/comfy-venv` | https://docs.astral.sh/uv/ |
+
+Observed: `torch.cuda.is_available() == True` on the RTX 4050 Laptop (6141 MiB VRAM
+reported by nvidia-smi); SDXL-Turbo is a 4–8 step distilled checkpoint, chosen for
+that VRAM budget. Install had to be resumed once after a `pypi.nvidia.com`
+download timeout (`UV_HTTP_TIMEOUT=600`). Weights and the toolchain live outside
+the repository (`~/ai`) per D-005 — no paid APIs, no service accounts; the
+procedural generators remain the shipped, hash-pinned default until the owner
+style gate (RZ-012) approves AI output. License of the downloaded weights: check
+the model card before any commercial promotion; not asserted here.
+
