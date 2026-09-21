@@ -526,7 +526,8 @@
       "epic": "E-GAME",
       "area": "gameplay",
       "type": "story",
-      "status": "next",
+      "status": "done",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
       "priority": "P1",
       "size": "M",
       "value": 5,
@@ -563,7 +564,44 @@
         "P1",
         "gameplay"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/presentation_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/presentation_tests.gd",
+          "environment": "ALL PRESENTATION TESTS PASSED (90 checks), exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/run_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/run_tests.gd",
+          "environment": "96 combat checks, no regression; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/content_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/content_tests.gd",
+          "environment": "54 content checks, no regression; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script $PWD/validation/guard_contract.gd",
+          "result": "passed",
+          "artifact": "validation/guard_contract.gd",
+          "environment": "validator Guard regression passes; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && DISPLAY=:0 godot --path game res://scenes/combat.tscn -- --combat-smoke validation/evidence/007/combat-smoke",
+          "result": "passed",
+          "artifact": "validation/evidence/007/combat-smoke/combat-3-skill.png",
+          "environment": "WSLg desktop smoke: Attack/Guard/Skill each accepted and captured; round=4 hero 85/100 energy 4/6; state_hash 8fcedb79cde93626392a0eb56b4271727418d8f7c82685b2deb4964b41516db9; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && node tools/verify.js",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "specification verification passes with RZ-007 done; exit 0; 2026-09-21"
+        }
+      ]
     },
     {
       "id": "RZ-008",

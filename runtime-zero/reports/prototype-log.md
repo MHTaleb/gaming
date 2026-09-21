@@ -121,3 +121,39 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game --script res://tests/run_tests.gd` | exit 0 — 96 checks, regression intact |
 | `godot --headless --path game --script $PWD/validation/guard_contract.gd` | exit 0 — hits [3,6], HP 91 unchanged |
 | `node tools/verify.js` | exit 0 — specification verification passed (31 implementation tickets), review records valid |
+
+## RZ-007 — playable combat scene (2026-09-21)
+
+- `game/src/application/combat_session.gd`: single-encounter session — loads the validated pack,
+  builds hero + enemies (equipment effects applied), runs intents through the pure resolver,
+  supports reset/retry. Hero baseline is the provisional GAME_DESIGN fixture held in one named
+  place; the loadout/run service (RZ-008) owns progression.
+- `game/scenes/combat.tscn` + `game/src/presentation/combat.gd`: HUD (HP/energy bars with text),
+  enemy rows with intent and target selection, action buttons with costs and disabled reasons,
+  ordered event log, outcome banner with Retry/Title, reduced-motion toggle, keyboard shortcuts
+  1/2/3 + Tab focus, 48 px touch targets. All input (mouse, touch, keyboard, scripted) goes through
+  one `submit_action()` path with double-click/tap debounce; queued duplicates for a resolved turn
+  are rejected by the domain as stale. State applies first, tweens only decorate.
+- `game/src/presentation/combat_text.gd`: pure formatting; boss intent mirrors the resolver's
+  telegraph cycle via RZRules constants; every resolver reason maps to a player sentence.
+- `game/src/presentation/capture.gd` unifies screenshot modes; the title screen starts combat
+  on Enter/click and keeps `--smoke-shot`.
+- `game/tests/presentation_tests.gd`: **90 checks** — session/equipment/error paths, energy gating,
+  stale-turn rejection, victory (4 attacks → 82 HP), defeat (guard-only loses on turn 12), round-cap
+  stall, boss intent cycle including the telegraphed heavy (21 → 10 halved), text coverage, scene
+  widgets + shortcuts + focus, double-input debounce, disabled-skill reason, terminal banner + retry,
+  and identical state hashes with animations on vs off.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — **ALL PRESENTATION TESTS PASSED (90 checks)** |
+| `godot --headless --path game --script res://tests/run_tests.gd` | exit 0 — 96 checks, regression intact |
+| `godot --headless --path game --script res://tests/content_tests.gd` | exit 0 — 54 checks, regression intact |
+| `godot --headless --path game --script $PWD/validation/guard_contract.gd` | exit 0 — Guard contract unchanged |
+| `DISPLAY=:0 godot --path game res://scenes/combat.tscn -- --combat-smoke validation/evidence/007/combat-smoke` | exit 0 — 3 captures; round=4, hero 85/100, energy 4/6; state_hash `8fcedb79…db9` |
+
+Capture hashes (sha256, this run; captures are cosmetic snapshots — the deterministic artifact
+is the printed state_hash): `combat-1-attack.png` `f29bf47d…6d89`, `combat-2-guard.png`
+`2d5a6b03…9d32`, `combat-3-skill.png` `4b7b7616…ed70`.

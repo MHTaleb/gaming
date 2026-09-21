@@ -44,7 +44,7 @@ horizontal_alignment = 1
 [node name="Subtitle" type="Label" parent="Center"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
-text = "provisional prototype - placeholder build"
+text = "provisional prototype - first combat encounter is playable"
 horizontal_alignment = 1
 
 [node name="BuildInfo" type="Label" parent="Center"]
@@ -56,5 +56,11 @@ horizontal_alignment = 1
 [node name="NextTicket" type="Label" parent="Center"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "combat, loadout and run loop arrive in RZ-005..RZ-008"
+text = "combat: attack / guard / skill vs one encounter - loadout and run loop arrive in RZ-008"
+horizontal_alignment = 1
+
+[node name="StartHint" type="Label" parent="Center"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Press ENTER or click to enter combat"
 horizontal_alignment = 1

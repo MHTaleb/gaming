@@ -1,0 +1,224 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/presentation/combat.gd" id="1_combat"]
+
+[node name="Combat" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_combat")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.071, 0.09, 1)
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="Column" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="EncounterLabel" type="Label" parent="Margin/Column/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Encounter"
+
+[node name="TurnLabel" type="Label" parent="Margin/Column/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Round 1"
+
+[node name="ReducedMotion" type="CheckBox" parent="Margin/Column/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Disable flashes and floating numbers (accessibility)"
+text = "Reduced motion"
+
+[node name="TitleButton" type="Button" parent="Margin/Column/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Title"
+
+[node name="StatusLabel" type="Label" parent="Margin/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = ""
+
+[node name="HeroPanel" type="PanelContainer" parent="Margin/Column"]
+layout_mode = 2
+
+[node name="HeroMargin" type="MarginContainer" parent="Margin/Column/HeroPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HeroBox" type="VBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HeroNameLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Operator"
+
+[node name="HPRow" type="HBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HPLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HPRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(70, 0)
+text = "HP"
+
+[node name="HeroHPBar" type="ProgressBar" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HPRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(260, 22)
+show_percentage = false
+max_value = 100.0
+value = 100.0
+
+[node name="HeroHPText" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HPRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "100 / 100"
+
+[node name="EnergyRow" type="HBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EnergyLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/EnergyRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(70, 0)
+text = "Energy"
+
+[node name="HeroEnergyBar" type="ProgressBar" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/EnergyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(260, 22)
+show_percentage = false
+max_value = 6.0
+value = 6.0
+
+[node name="HeroEnergyText" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/EnergyRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "6 / 6"
+
+[node name="HeroGuardLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = ""
+
+[node name="EnemiesIntro" type="Label" parent="Margin/Column"]
+layout_mode = 2
+text = "Enemies - intent shows the next enemy action; Target chooses who your attack lands on."
+
+[node name="EnemiesBox" type="VBoxContainer" parent="Margin/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LogTitle" type="Label" parent="Margin/Column"]
+layout_mode = 2
+text = "Combat log"
+
+[node name="LogScroll" type="ScrollContainer" parent="Margin/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="LogBox" type="VBoxContainer" parent="Margin/Column/LogScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="SkillHintLabel" type="Label" parent="Margin/Column"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = ""
+
+[node name="Actions" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="AttackButton" type="Button" parent="Margin/Column/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(170, 48)
+focus_mode = 2
+text = "Attack (1)"
+
+[node name="GuardButton" type="Button" parent="Margin/Column/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(170, 48)
+focus_mode = 2
+text = "Guard (2)"
+
+[node name="SkillButton" type="Button" parent="Margin/Column/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(170, 48)
+focus_mode = 2
+text = "Skill (3)"
+
+[node name="Spacer" type="Control" parent="Margin/Column/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RetryButton" type="Button" parent="Margin/Column/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(170, 48)
+focus_mode = 2
+text = "Retry fight"
+
+[node name="KeysHint" type="Label" parent="Margin/Column"]
+layout_mode = 2
+text = "Keys: 1 Attack / 2 Guard / 3 Skill - Tab moves focus, Enter activates. Touch targets >= 48 px."
+
+[node name="TerminalTitle" type="Label" parent="Margin/Column"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "VICTORY"
+horizontal_alignment = 1
+
+[node name="TerminalDetail" type="Label" parent="Margin/Column"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+autowrap_mode = 3
+text = "All enemies defeated."
+horizontal_alignment = 1
