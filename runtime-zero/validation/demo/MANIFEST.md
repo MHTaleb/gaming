@@ -82,3 +82,12 @@ Deterministic artifact unchanged: `state_hash=8fcedb79cde93626392a0eb56b42717274
 — the same durability for its scenario that the RZ-011 replay fixtures now
 enforce for theirs (`game/tests/replay_tests.gd`).
 
+
+## Renderer note (RZ-033, 2026-09-21)
+
+From this commit on, `tools/demo.sh` defaults to Mesa software rendering on WSL (the
+native WSLg D3D12 path crashes intermittently after ~20 s; see
+`reports/owner-prototype-review.md` and `validation/evidence/033/`). PNG pixels
+differ between renderers, so future captures may not hash-match the tables above
+even when the UI is unchanged; the printed `state_hash` values and the commit ids
+remain the comparable artifacts.

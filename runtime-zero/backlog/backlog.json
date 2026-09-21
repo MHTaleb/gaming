@@ -2021,6 +2021,83 @@
           "environment": "specification verification passes with RZ-032 done; exit 0; 2026-09-21"
         }
       ]
+    },
+    {
+      "id": "RZ-033",
+      "title": "Stabilize the demo on WSLg (software GL default after owner crash)",
+      "epic": "E-GAME",
+      "area": "qa",
+      "type": "task",
+      "status": "done",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
+      "priority": "P1",
+      "size": "S",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Owner playtest (RZ-012) reported the window closing right after Start. Root cause: the native WSLg D3D12 GL path crashes intermittently after ~20 s, reproduced without any game code. tools/demo.sh now defaults to Mesa software rendering on WSL.",
+      "why": "Corrective task from the first RZ-012 feedback: the build was unplayable on the owner machine (exit 134 within ~20 s), blocking the playtest gate; the stable path had to be found and verified end to end.",
+      "steps": [
+        "Reproduce the crash and isolate game vs environment with a minimal Godot project.",
+        "Find a stable rendering path and verify a full owner-equivalent mouse session.",
+        "Default the runner to it with an explicit opt-out and document the behavior."
+      ],
+      "outputs": [
+        "tools/demo.sh",
+        "docs/DEMO.md",
+        "game/scenes/title.tscn",
+        "validation/evidence/033/"
+      ],
+      "checks": [
+        "Idle survival >50 s plus a full mouse-driven title->loadout->combat->result->next->quit session, exit 0"
+      ],
+      "dod": [
+        "The documented owner command survives a full play session on this machine; the native path stays reachable via RZ_GL=hardware; honest evidence for all runs including the one that survived native."
+      ],
+      "deps": [
+        "RZ-031"
+      ],
+      "refs": [
+        "docs/DEMO.md",
+        "reports/owner-prototype-review.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "qa"
+      ],
+      "evidence": [
+        {
+          "command": "godot --path /tmp/rzmin (minimal project, native GL)",
+          "result": "passed",
+          "artifact": "validation/evidence/033/minimal-project-native-crash.log",
+          "environment": "crash at 23 s, signal 11 in swrast_dri.so; no game code involved, proving environment-level; 2026-09-21"
+        },
+        {
+          "command": "LIBGL_ALWAYS_SOFTWARE=1 timeout 50 godot --path /tmp/rzmin",
+          "result": "passed",
+          "artifact": "validation/evidence/033/minimal-project-llvmpipe-50s.log",
+          "environment": "survived the full 50 s window, 0 crash dumps; 2026-09-21"
+        },
+        {
+          "command": "tools/demo.sh run (fixed default, timeout 30)",
+          "result": "passed",
+          "artifact": "validation/evidence/033/demo-default-30s.log",
+          "environment": "llvmpipe selected automatically; survived 30 s, 0 crashes; 2026-09-21"
+        },
+        {
+          "command": "mouse-driven owner flow via XTEST: Start -> card -> Begin -> 4 attacks -> result -> next -> quit",
+          "result": "passed",
+          "artifact": "validation/evidence/033/owner-flow-mouse-llvmpipe.log",
+          "environment": "full session incl. encounter 2; demo-exit=0; capture and smoke modes also re-validated (smoke state_hash 8fcedb79... unchanged); 2026-09-21"
+        },
+        {
+          "command": "RZ_GL=hardware tools/demo.sh run (timeout 30)",
+          "result": "passed",
+          "artifact": "validation/evidence/033/demo-hardware-flaky-survival.log",
+          "environment": "opt-out reaches native D3D12 path; crash is intermittent (3 of 4 native runs crashed, this one survived 30 s) - default avoids the path; 2026-09-21"
+        }
+      ]
     }
   ]
 }

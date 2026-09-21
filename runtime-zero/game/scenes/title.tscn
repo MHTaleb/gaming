@@ -73,7 +73,7 @@ horizontal_alignment = 1
 [node name="NextTicket" type="Label" parent="Center"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "campaign: choose equipment, clear three encounters - saves and polish arrive in RZ-009/010"
+text = "campaign: choose equipment, clear three encounters - prototype build (RZ-012 playtest)"
 horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="Center"]

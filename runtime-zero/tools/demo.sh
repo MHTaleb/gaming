@@ -16,6 +16,11 @@
 #       Scripted Attack/Guard/Skill run of the combat scene: one PNG per action
 #       plus a state summary; used for milestone captures and evidence.
 #
+#   RZ_GL=hardware tools/demo.sh run
+#       Use the native WSLg GL path instead of Mesa software rendering. The
+#       native D3D12 path crashes intermittently after ~20 s on this machine
+#       (RZ-033); the runner therefore defaults to software rendering on WSL.
+#
 # The runner adds no gameplay state, no network calls and no credentials, and it
 # does not bypass the RZ-012 owner review gate: it only plays the current build.
 
@@ -25,7 +30,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(dirname "$HERE")"
 
 usage() {
-	sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+	sed -n '2,25p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 if [[ $# -lt 1 || "$1" == "--help" || "$1" == "-h" ]]; then
@@ -49,6 +54,14 @@ if [[ -z "${DISPLAY:-}" ]]; then
 	exit 1
 fi
 
+# Rendering path (RZ-033): the native WSLg D3D12 GL path crashes intermittently
+# after ~20 s of runtime (Mesa swrast interop; reproduced with a minimal Godot
+# project, 3 of 4 runs, so it is the environment, not the game). Default to
+# Mesa's software rasterizer; RZ_GL=hardware opts back into the native path.
+if [[ "${RZ_GL:-software}" != "hardware" ]] && grep -qi microsoft /proc/version 2>/dev/null; then
+	export LIBGL_ALWAYS_SOFTWARE=1
+fi
+
 case "$MODE" in
 run)
 	SCENE="title"
@@ -63,10 +76,10 @@ run)
 		godot --path game "$@" || CODE=$?
 	fi
 	if [[ $CODE -ge 128 ]]; then
-		echo "demo: the engine exited with code $CODE (crash/abort). This machine's WSLg/Mesa stack" >&2
-		echo "demo: sometimes crashes during window shutdown - the game logic itself is fine." >&2
+		echo "demo: the engine exited with code $CODE (crash/abort)." >&2
+		echo "demo: the runner already uses the stable software rendering path; if this" >&2
+		echo "demo: repeats, run 'wsl --shutdown' in Windows PowerShell and reopen the terminal." >&2
 		echo "demo: Godot saved a log under ~/.local/share/godot/app_userdata/Runtime Zero/logs/" >&2
-		echo "demo: if it repeats, run 'wsl --shutdown' in Windows PowerShell, reopen the terminal and retry." >&2
 	fi
 	exit $CODE
 	;;

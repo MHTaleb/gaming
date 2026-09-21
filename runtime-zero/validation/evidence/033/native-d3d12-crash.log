@@ -1,0 +1,35 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+/lib/x86_64-linux-gnu/libX11.so.6: undefined symbol: XSetIOErrorExitHandler
+/lib/x86_64-linux-gnu/libxkbcommon.so.0: undefined symbol: xkb_utf32_to_keysym
+/lib/x86_64-linux-gnu/libxkbcommon.so.0: undefined symbol: xkb_keymap_key_get_mods_for_level
+WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver.
+     at: set_use_vsync (platform/linuxbsd/x11/gl_manager_x11.cpp:372)
+OpenGL API 3.3 (Core Profile) Mesa 21.2.6 - Compatibility - Using Device: Microsoft - D3D12 (NVIDIA GeForce RTX 4050 Laptop GPU)
+
+[rz] title ready
+
+================================================================
+handle_crash: Program crashed with signal 11
+Engine version: Godot Engine v4.7.2.stable.official (ed1daf0bf001b61586d9930840f2f1394092c079)
+Dumping the backtrace. Please include this when reporting the bug on: https://github.com/godotengine/godot/issues
+Load address: 400000
+
+[1] 7cbad8815090 (libc.so.6+43090) - /lib/x86_64-linux-gnu/libc.so.6(+0x43090) [0x7cbad8815090]
+[2] 7cbaa3154f30 (swrast_dri.so+d54f30) - /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so(+0xd54f30) [0x7cbaa3154f30]
+[3] 7cbaa2653504 (swrast_dri.so+253504) - /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so(+0x253504) [0x7cbaa2653504]
+[4] 7cbaa26536c0 (swrast_dri.so+2536c0) - /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so(+0x2536c0) [0x7cbaa26536c0]
+[5] 7cbaa2795fd4 (swrast_dri.so+395fd4) - /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so(+0x395fd4) [0x7cbaa2795fd4]
+[6] 7cbaa2796c65 (swrast_dri.so+396c65) - /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so(+0x396c65) [0x7cbaa2796c65]
+[7] 18bc966 (main+14bc966) - godot() [0x18bc966]
+[8] 3e06787 (main+3a06787) - godot() [0x3e06787]
+[9] 566334 (main+166334) - godot() [0x566334]
+[10] 42c157 (main+2c157) - godot() [0x42c157]
+[11] 7cbad87f6083 (libc.so.6+24083) - /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xf3) [0x7cbad87f6083]
+[12] 48a6da (main+8a6da) - godot() [0x48a6da]
+-- END OF C++ BACKTRACE --
+================================================================
+tools/demo.sh: line 52: 945953 Aborted                 (core dumped) godot --path game "$@"
+demo: the engine exited with code 134 (crash/abort). This machine's WSLg/Mesa stack
+demo: sometimes crashes during window shutdown - the game logic itself is fine.
+demo: Godot saved a log under ~/.local/share/godot/app_userdata/Runtime Zero/logs/
+demo: if it repeats, run 'wsl --shutdown' in Windows PowerShell, reopen the terminal and retry.

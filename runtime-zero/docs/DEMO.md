@@ -46,7 +46,9 @@ tools/demo.sh run combat     # straight into the combat scene
 
 Quit with Ctrl+C in the terminal. On this laptop the window opens through WSLg;
 if nothing appears, make sure you are in a WSL terminal with `DISPLAY` set
-(`echo $DISPLAY` should print `:0`).
+(`echo $DISPLAY` should print `:0`). On WSL the runner automatically uses Mesa
+software rendering — the native driver crashes intermittently (RZ-033, see
+"If something goes wrong" below).
 
 ## Playtest checklist (RZ-012 — owner review)
 
@@ -113,18 +115,29 @@ backlog evidence.
 
 ## If something goes wrong
 
+- **The window closed by itself shortly after starting (exit code 134).**
+  Root cause found on 2026-09-21 (RZ-033): the **native WSLg D3D12 GL path**
+  crashes intermittently after roughly 20 seconds of runtime — reproduced with
+  a minimal Godot project that contains no game code, so it is the environment,
+  not the game. `tools/demo.sh` therefore now forces Mesa's **software
+  rendering** on WSL, which was stable in every test run (50 s idle, full
+  title→loadout→combat sessions, mouse-driven play, 136 fps measured in a
+  3000-frame run — plenty for this 2D game).
+- **Want the native (faster in theory) path anyway?**
+  `RZ_GL=hardware tools/demo.sh run` — expect the intermittent crash; useful
+  only for testing whether WSLg's driver got fixed upstream.
+- **Crashes even on the default path.** Godot writes a log and crash dump under
+  `~/.local/share/godot/app_userdata/Runtime Zero/logs/`. Run `wsl --shutdown`
+  in Windows PowerShell, reopen the terminal and retry. If it then still
+  crashes *while you are playing*, note what you were doing — that would be a
+  game bug.
 - **Quit cleanly from inside the game.** The **Quit** buttons on the title and
   combat screens and the window's X button use the clean shutdown path. Killing
-  the game from the terminal after playing for a while can make WSLg's graphics
-  stack crash *during teardown* (terminal exit code 134) even though gameplay was
-  fine — measured on 2026-09-21: window-close exits 0, `SIGTERM` at ~3 s exits
-  clean, `SIGTERM` at ~10 s crashed 4/4 (Mesa `swrast_dri.so`). Prefer Quit/X.
-- **The window crashed / the terminal shows exit code 134 or 139.** See above:
-  teardown crash of the WSLg/Mesa stack, not game logic. Godot writes a log and
-  crash dump under `~/.local/share/godot/app_userdata/Runtime Zero/logs/`.
-  If it repeats, run `wsl --shutdown` in Windows PowerShell, reopen the terminal
-  and retry. If it ever crashes *while you are playing*, note what you were doing
-  - that would be a game bug, not a teardown crash.
+  the game from the terminal (Ctrl+C) after playing for a while can make WSLg's
+  graphics stack crash *during teardown* (exit code 134) even though gameplay
+  was fine — measured on 2026-09-21: window-close exits 0, `SIGTERM` at ~3 s
+  exits clean, `SIGTERM` at ~10 s crashed 4/4 (Mesa `swrast_dri.so`). Prefer
+  Quit/X.
 - **Nothing responds to clicks.** Should not happen anymore: the title
   background passes clicks through and the Start button is a real button. If it
   does, the log above plus the exact click location helps.

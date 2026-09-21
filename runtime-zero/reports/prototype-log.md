@@ -371,3 +371,24 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game --script $PWD/tools/make_replay_fixtures.gd` (two runs) | identical sha256 for all four fixtures across runs |
 | full battery (import + 7 suites + guard + `verify.js`) | see `validation/evidence/011/battery.log` — all exit 0 |
 | deliberate rule change, unreviewed | replay suite failed 3/56 as designed, reverted (`validation/evidence/011/`) |
+
+## RZ-033 — demo stability on WSLg (hotfix from owner playtest, 2026-09-21)
+
+- Owner playtest finding: "when I hit start it closes directly". Reproduced with a real
+  mouse click and with idle runs: signal 11 in Mesa `swrast_dri.so`, exit 134 within
+  ~20 s — also on a **minimal Godot project without game code**, so the environment,
+  not the game.
+- Fix: `tools/demo.sh` now defaults to Mesa software rendering on WSL (stable in every
+  test: 50 s idle, 3000-frame chain at ~136 fps, full mouse-driven session ending
+  `demo-exit=0`); `RZ_GL=hardware` opts back into the native path. Title subtitle
+  updated (the "RZ-009/010" line was stale).
+- Evidence: `validation/evidence/033/` (8 logs + README); owner feedback recorded in
+  `reports/owner-prototype-review.md` (RZ-012 remains open).
+
+| Command | Result |
+|---|---|
+| `godot --path /tmp/rzmin` (minimal project, native GL) | crash at 23 s — environment-level |
+| `LIBGL_ALWAYS_SOFTWARE=1 timeout 50 godot --path /tmp/rzmin` | survived, 0 crashes |
+| `tools/demo.sh run` (default, 30 s) | survived on llvmpipe, 0 crashes |
+| mouse flow: Start → card → Begin → 4 attacks → result → next → Quit | `demo-exit=0` |
+| `tools/demo.sh capture` / `smoke` under the new default | work; smoke `state_hash` 8fcedb79… unchanged |
