@@ -132,14 +132,14 @@
     },
     {
       "tool": "runtime-zero project toolchain launcher (tools/env.sh)",
-      "version": "2 (RV-001 V-002 corrected 2026-09-21)",
+      "version": "3 (RV-001 V-002; zsh-safe explicit parsing, 2026-09-21)",
       "source_url": "repository file; resolves nvm-managed Node >=22 and the ~/.local/bin user-space tools",
-      "checksum_or_commit": "git-tracked; transcripts in validation/evidence/002/; validator regression validation/launcher_contract.py",
-      "installed_environment": "runtime-zero/ checkout on WSL2 (Lenovo 83GS)",
-      "verification_command": "python3 validation/launcher_contract.py && zsh -ic 'source tools/env.sh && command -v node uv godot && node --version && uv --version && godot --version'",
+      "checksum_or_commit": "git-tracked; transcripts in validation/evidence/003/; validator regressions validation/launcher_contract.py and validation/launcher_shell_contract.py",
+      "installed_environment": "runtime-zero/ checkout on WSL2 (Lenovo 83GS); verified in bash and zsh",
+      "verification_command": "python3 validation/launcher_contract.py && python3 validation/launcher_shell_contract.py && zsh -ic 'source tools/env.sh && command -v node uv godot && node --version && uv --version && godot --version'",
       "result": "passed",
       "checked_at": "2026-09-21",
-      "note": "Deterministic strip-and-pin precedence: removes exact duplicates of the selected Node and user bin directories, then pins [selected Node][~/.local/bin][rest] on first and repeated activation. Passes the validator's two-scenario regression; no global shell config is edited."
+      "note": "Explicit colon-remainder parsing (no reliance on shell word splitting): removes exact duplicates of the selected Node and user-bin directories, pins [selected Node][~/.local/bin][rest], and produces an identical PATH on first and repeated activation in both bash and zsh. No global shell config or shell option is changed."
     }
   ],
   "unavailable_deferred": [

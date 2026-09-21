@@ -2,10 +2,12 @@
 # RV-001 V-003 evidence collector (committed so every invoked probe body is inspectable).
 #
 # Usage (from runtime-zero/):
-#   zsh validation/evidence/collect.zsh
+#   zsh validation/evidence/collect.zsh [attempt]     (attempt defaults to 002)
 #
-# Writes raw logs to reports/local/validation-002/ (ignored by Git), then sanitized
-# copies to validation/evidence/002/ (committed) and prints their SHA-256 values.
+# Probes are ordinary functions; the function name identifies each probe in its log.
+# Writes raw logs to reports/local/validation-<attempt>/ (ignored by Git), then
+# sanitized copies to validation/evidence/<attempt>/ (committed) and prints their
+# SHA-256 values.
 #
 # Every log records: UTC start, the exact executed commands, each substantive step's
 # own exit code, and UTC end. A deliberate nonzero probe ("expected-failure") proves
@@ -14,8 +16,9 @@
 # hostname; command output is otherwise unmodified.
 set -u
 cd "$(dirname "$0")/../.." || exit 1
-RAW=reports/local/validation-002
-DEST=validation/evidence/002
+ATTEMPT="${1:-002}"
+RAW="reports/local/validation-$ATTEMPT"
+DEST="validation/evidence/$ATTEMPT"
 # Only the ignored raw directory exists while probes run; $DEST is created during
 # sanitization so the source-identity probe sees a clean working tree.
 mkdir -p "$RAW"
@@ -135,6 +138,40 @@ spec() (
 	return $_rz_steps_failed
 )
 
+shell_contract() (
+	_rz_steps_failed=0
+	step "python3 validation/launcher_shell_contract.py" python3 validation/launcher_shell_contract.py
+	return $_rz_steps_failed
+)
+
+path_stability() (
+	_rz_steps_failed=0
+	step "source tools/env.sh (export selected paths)" source tools/env.sh
+	local node_dir="$RZ_NODE_BIN" local_bin="$HOME/.local/bin"
+	local child_cmd='. tools/env.sh || exit 9; printf "%s\n" "$PATH"; . tools/env.sh || exit 9; printf "%s\n" "$PATH"'
+	local sh out first second n1 n2 m1 m2
+	for sh in bash zsh; do
+		echo "-- $sh: two activations --"
+		out="$("$sh" -c "$child_cmd" 2>&1)"
+		first="$(printf '%s\n' "$out" | sed -n 1p)"
+		second="$(printf '%s\n' "$out" | sed -n 2p)"
+		printf '%s\n' "$sh first : $first"
+		printf '%s\n' "$sh second: $second"
+		n1="$(printf '%s' "$first" | tr ':' '\n' | grep -cxF "$node_dir")"
+		n2="$(printf '%s' "$second" | tr ':' '\n' | grep -cxF "$node_dir")"
+		m1="$(printf '%s' "$first" | tr ':' '\n' | grep -cxF "$local_bin")"
+		m2="$(printf '%s' "$second" | tr ':' '\n' | grep -cxF "$local_bin")"
+		echo "$sh occurrences: node-dir first=$n1 second=$n2 | user-bin first=$m1 second=$m2"
+		if [ "$first" = "$second" ] && [ "$n1" = "1" ] && [ "$n2" = "1" ] && [ "$m1" = "1" ] && [ "$m2" = "1" ]; then
+			echo "$sh: stable (identical PATH, each selected dir exactly once)"
+		else
+			echo "$sh: UNSTABLE or duplicated"
+			_rz_steps_failed=1
+		fi
+	done
+	return $_rz_steps_failed
+)
+
 import_project() (
 	_rz_steps_failed=0
 	step "source tools/env.sh" source tools/env.sh
@@ -202,6 +239,8 @@ run_log terminal terminal
 run_log fresh-terminal fresh_terminal
 run_log controlled controlled
 run_log launcher-contract python3 validation/launcher_contract.py
+run_log shell-contract shell_contract
+run_log path-stability path_stability
 run_log spec spec
 run_log import import_project
 run_log combat combat

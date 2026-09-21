@@ -10,8 +10,10 @@
 #   2. $HOME/.local/bin is the SECOND entry, so `uv` and `godot` resolve to the
 #      selected user-space tools even when competing installations for the same
 #      names appear earlier on the inherited PATH.
-#   3. All other PATH entries are preserved; only exact duplicates of those two
-#      directories are removed and re-inserted. No global shell config is edited.
+#   3. All other PATH entries are preserved; exact duplicates of those two
+#      directories are removed (explicit colon parsing, valid in bash and zsh)
+#      and re-inserted at the front, stable on repeated activation. No global
+#      shell config or shell option is changed.
 # Exports RZ_NODE_BIN, RZ_GODOT, RZ_UV. Silent unless RZ_ENV_VERBOSE=1.
 # Independent regression (validator-owned): python validation/launcher_contract.py
 
@@ -37,18 +39,25 @@ fi
 
 # Deterministic PATH precedence: remove exact duplicates of the selected
 # directories wherever they sit, then pin [selected Node][~/.local/bin][rest].
+# Parsing is an explicit colon-remainder loop: ordinary zsh does not split
+# unquoted scalars, so implicit word splitting is deliberately NOT used. No IFS,
+# glob or word-splitting state is changed outside this function's locals.
 _rz_pin_path_dir() {
-	local target="$1" segment first=1 cleaned=""
-	local old_ifs="$IFS"
-	local restore_noglob=0
-	case "$-" in *f*) ;; *) set -f; restore_noglob=1 ;; esac
-	IFS=':'
-	for segment in $PATH; do
-		if [ "$segment" = "$target" ]; then continue; fi
-		if [ "$first" = "1" ]; then cleaned="$segment"; first=0; else cleaned="$cleaned:$segment"; fi
+	local target="$1" segment cleaned=""
+	local rest=":$PATH:"
+	while [ -n "$rest" ]; do
+		if [ "$rest" = ":" ]; then
+			rest=""
+			break
+		fi
+		rest="${rest#:}"
+		case "$rest" in
+			*:*) segment="${rest%%:*}"; rest=":${rest#*:}" ;;
+			*) segment="$rest"; rest="" ;;
+		esac
+		[ "$segment" = "$target" ] && continue
+		if [ -z "$cleaned" ]; then cleaned="$segment"; else cleaned="$cleaned:$segment"; fi
 	done
-	IFS="$old_ifs"
-	[ "$restore_noglob" = "1" ] && set +f
 	if [ -z "$cleaned" ]; then PATH="$target"; else PATH="$target:$cleaned"; fi
 }
 _rz_pin_path_dir "$HOME/.local/bin"
