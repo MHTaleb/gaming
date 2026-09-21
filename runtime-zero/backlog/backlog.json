@@ -3,7 +3,7 @@
     "schema": 2,
     "project": "Runtime Zero",
     "release": "specification / pre-prototype",
-    "updated": "2026-09-20",
+    "updated": "2026-09-21",
     "summary": "Independent Godot RPG. Only Kanban UI/validator reused from Packet Defense. Installation, runtime, simulation and local AI studio are future implementation tasks.",
     "howToUse": {
       "forAI": "Read AGENTS.md and START_HERE.md. Execute one dependency-ready ticket. Install missing tools by phase. Record actual evidence before marking done.",
@@ -446,7 +446,7 @@
       "epic": "E-GAME",
       "area": "content",
       "type": "task",
-      "status": "blocked",
+      "status": "next",
       "priority": "P1",
       "size": "M",
       "value": 5,
@@ -484,7 +484,6 @@
         "content"
       ],
       "evidence": [],
-      "blockedBy": "RV-001: validator acceptance required for V-001 through V-004. See reviews/RV-001/request.json; run node tools/reviews.js --next.",
       "review_ids": [
         "RV-001"
       ]

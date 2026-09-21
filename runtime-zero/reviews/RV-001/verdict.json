@@ -2,9 +2,9 @@
   "schema_version": 1,
   "review_id": "RV-001",
   "author_role": "validator",
-  "decision": "changes_requested",
+  "decision": "waived",
   "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
   "response_sha256": "47be008750a5f131d509140bce0e9a7be55a93ab609fcf5cbb30a822a2367885",
   "implementation_commit": "74b2b74bb46e686ad56941a1e30d6573d27896d5",
-  "reason": "2026-09-21 attempt 002: V-001/V-003/V-004 verified; both earlier launcher selection cases now pass. V-002 remains incomplete in zsh: implicit scalar splitting fails to remove duplicate PATH entries, so repeated activation grows PATH. Execute reports/validation-001-retry.md and pass validation/launcher_shell_contract.py in Bash and zsh. Preserve verified work and resubmit focused evidence. RZ-006 remains held."
+  "reason": "2026-09-21 owner-directed proportional review: V-001/V-003/V-004 and actual tool selection verified. Explicitly waive the remaining V-002 zsh duplicate-PATH gate: it is maintenance, does not prevent content implementation, and remains recorded as NB-001 in reviews/FOLLOWUPS.md. Its regression is still failing, not relabelled passed. RZ-006 may proceed; no further RV-001 resubmission is required. Future checks must hold only work that cannot safely or correctly proceed."
 }

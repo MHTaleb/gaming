@@ -12,6 +12,8 @@ Scope: this directory and its descendants. You are an implementation agent worki
 
 ## Work discipline
 
+- Owner rule (2026-09-21): do not block work that can safely and correctly proceed. Only a concrete defect or missing prerequisite that prevents the affected ticket's outcome may hold that ticket. Tooling cleanup, documentation polish and redundant proof requests are nonblocking when a verified working route exists. Follow the proportional-review policy in reviews/README.md; do not manufacture a dependency on maintenance.
+
 - Set one ticket to `doing`, record `owner` as the actual agent/session identifier, then implement it. Copilot with DeepSeek selected may be one agent, not two independent workers. Use one writer at a time; separate agents must explicitly hand off ownership.
 - Install missing required tools on the user's actual machine under docs/SETUP.md. A cloud runner cannot certify the laptop. Do not mark setup done based on this repository's CI.
 - Implement the smallest complete outcome. Split large work into dependency-linked children before claiming completion. Keep identifiers stable.
