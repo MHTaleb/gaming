@@ -342,3 +342,32 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `godot --headless --path game --script res://tests/save_tests.gd` | exit 0 — 24 checks |
 | `run_tests.gd` / `content_tests.gd` / `guard_contract.gd` | all exit 0 |
 | `godot --path game --resolution 1024x600 -- --capture validation/evidence/010/narrow-1024x600.png` | exit 0 — narrow desktop capture inspected |
+
+## RZ-011 — replay fixtures and automated game gates (2026-09-21)
+
+- `game/src/application/replay_runner.gd`: canonical replay execution through the same
+  `RZCombatSession` the UI uses; ordered-event digest (seq|turn|type|actor|target|payload,
+  sha256) plus final state hash; rejected commands recorded, never fatal.
+- `tools/make_replay_fixtures.gd`: deterministic generator for `game/tests/fixtures/replay/`
+  — four pinned scenarios (encounter 1 win, guard-only defeat on round 12, boss win on
+  round 9 at 4 HP, unknown-command rejected). Regeneration is deliberate review, not a
+  routine; reruns produce identical sha256 values.
+- `game/tests/replay_tests.gd` (56 checks): fixtures parsed against engine rules version,
+  replayed twice for determinism, every pinned field compared; the real combat scene is
+  driven with the same commands and must land on the same state hash, outcome and HP,
+  and reject the same invalid command with the same reason as the runner.
+- `.github/workflows/runtime-zero-game.yml` (repository root): downloads the pinned Godot
+  4.7.2 zip, verifies its sha512 from `config/toolchain.lock.json`, imports the project,
+  runs all seven suites, the Guard validator contract and `node tools/verify.js`. No GPU,
+  no secrets, no model downloads.
+- Negative test: an unreviewed `BOSS_NORMALS_PER_TELEGRAPH` change fails three boss-fixture
+  checks (`validation/evidence/011/negative-rule-change.log`), then was reverted.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/replay_tests.gd` | exit 0 — **ALL REPLAY TESTS PASSED (56 checks)** |
+| `godot --headless --path game --script $PWD/tools/make_replay_fixtures.gd` (two runs) | identical sha256 for all four fixtures across runs |
+| full battery (import + 7 suites + guard + `verify.js`) | see `validation/evidence/011/battery.log` — all exit 0 |
+| deliberate rule change, unreviewed | replay suite failed 3/56 as designed, reverted (`validation/evidence/011/`) |

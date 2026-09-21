@@ -1,0 +1,66 @@
+{
+  "commands": [
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    },
+    {
+      "action": "guard",
+      "target": ""
+    }
+  ],
+  "encounter_id": "encounter_2",
+  "equipment_id": "",
+  "expected": {
+    "event_count": 59,
+    "event_digest": "9ab76c30c88895835274a59d069b756d657e1fde783a84751b1da0487cea0f23",
+    "final_state_hash": "1ecb1b1fb35dd10f72423a9d356fa43cc304daad5503df2d71341fb34ceeb3c6",
+    "hero_hp": 0,
+    "outcome": 2,
+    "rejected": [],
+    "turns": 12
+  },
+  "format_version": 1,
+  "rules_version": 2,
+  "title": "two leaks vs guard-only play: deterministic defeat on round 12"
+}

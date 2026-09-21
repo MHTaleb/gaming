@@ -1,0 +1,12 @@
+# RZ-011 fixture determinism: the generator run twice must produce identical files
+# date: 2026-09-21; engine: 4.7.2.stable.official.ed1daf0bf
+
+fixture written: res://tests/fixtures/replay/encounter1_win.json  sha256=dd8eea5b5149131319f572d54ea646541282f5983be379154206cfe5d9ac34a4
+fixture written: res://tests/fixtures/replay/encounter2_guard_defeat.json  sha256=6d081f07b2bfbab3c2db3aac2e587a75e9bb53961aa151231fa15a34f563955a
+fixture written: res://tests/fixtures/replay/encounter3_boss_win.json  sha256=344018457e0d12c166069fd230a9977b0d0c477b83a23ea13354fcf44f409590
+fixture written: res://tests/fixtures/replay/encounter1_rejected_command.json  sha256=e340191d559d616636d8ebbb45a06573b1c77a84f644c3a143cdd26c60fcf103
+--- second run ---
+fixture written: res://tests/fixtures/replay/encounter1_win.json  sha256=dd8eea5b5149131319f572d54ea646541282f5983be379154206cfe5d9ac34a4
+fixture written: res://tests/fixtures/replay/encounter2_guard_defeat.json  sha256=6d081f07b2bfbab3c2db3aac2e587a75e9bb53961aa151231fa15a34f563955a
+fixture written: res://tests/fixtures/replay/encounter3_boss_win.json  sha256=344018457e0d12c166069fd230a9977b0d0c477b83a23ea13354fcf44f409590
+fixture written: res://tests/fixtures/replay/encounter1_rejected_command.json  sha256=e340191d559d616636d8ebbb45a06573b1c77a84f644c3a143cdd26c60fcf103

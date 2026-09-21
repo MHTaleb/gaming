@@ -1,0 +1,33 @@
+# RZ-011 local CI-equivalent battery — identical command sequence to .github/workflows/runtime-zero-game.yml
+# date: 2026-09-21; engine: 4.7.2.stable.official.ed1daf0bf
+
+$ godot --headless --path game --editor --quit
+exit=0 :: 
+
+$ godot --headless --path game --script res://tests/run_tests.gd
+exit=0 :: ALL TESTS PASSED (96 checks)
+
+$ godot --headless --path game --script res://tests/content_tests.gd
+exit=0 :: ALL CONTENT TESTS PASSED (54 checks)
+
+$ godot --headless --path game --script res://tests/presentation_tests.gd
+exit=0 :: ALL PRESENTATION TESTS PASSED (111 checks)
+
+$ godot --headless --path game --script res://tests/run_flow_tests.gd
+exit=0 :: ALL RUN FLOW TESTS PASSED (45 checks)
+
+$ godot --headless --path game --script res://tests/save_tests.gd
+exit=0 :: ALL SAVE TESTS PASSED (24 checks)
+
+$ godot --headless --path game --script res://tests/feedback_tests.gd
+exit=0 :: ALL FEEDBACK TESTS PASSED (36 checks)
+
+$ godot --headless --path game --script res://tests/replay_tests.gd
+exit=0 :: ALL REPLAY TESTS PASSED (56 checks)
+
+$ godot --headless --path game --script /home/housseyn/workspace/gaming/runtime-zero/validation/guard_contract.gd
+exit=0 :: GUARD CONTRACT PASSED
+
+$ node tools/verify.js
+exit=0 :: Specification verification passed (32 implementation tickets; game/GPU checks not run).
+

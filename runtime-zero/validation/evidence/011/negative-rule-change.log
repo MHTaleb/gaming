@@ -1,0 +1,10 @@
+# RZ-011 negative test: a deliberate, unreviewed rule change must fail the replay gate.
+# Change: BOSS_NORMALS_PER_TELEGRAPH 3 -> 2 in game/src/domain/rules.gd, then the replay suite.
+# The change was reverted immediately after this capture; see git diff (rules.gd clean).
+# date: 2026-09-21; engine: 4.7.2.stable.official.ed1daf0bf
+
+  FAIL encounter3_boss_win: event count pinned as 30
+  FAIL encounter3_boss_win: ordered-event digest matches
+  FAIL encounter3_boss_win: final state hash matches
+REPLAY TESTS FAILED: 3 of 56 checks failed
+revert check (empty = clean): []

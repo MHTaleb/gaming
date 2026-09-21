@@ -1,0 +1,76 @@
+# Automated game gates for Runtime Zero (RZ-011).
+#
+# Why this exists: every game check (combat, content, presentation, run flow,
+# saves, feedback, replays, the Guard validator contract) was run by hand, by
+# whoever remembered to run it. The checks were never the problem; remembering
+# them was. One workflow runs exactly what `docs/TESTING.md` documents, with the
+# engine pinned to the same version and checksum as config/toolchain.lock.json.
+#
+# Constraints (docs/TESTING.md "CI"): no GPU, no paid APIs, no secrets, no model
+# downloads. The engine download is the only network fetch, and it is verified
+# against the pinned sha512 before it is executed.
+#
+# The sibling runtime-zero-spec.yml stays as it is: it checks the specification
+# package with Node. This workflow checks the game itself with Godot.
+
+name: runtime-zero game
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'runtime-zero/**'
+      - '.github/workflows/runtime-zero-game.yml'
+  pull_request:
+    paths:
+      - 'runtime-zero/**'
+      - '.github/workflows/runtime-zero-game.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GODOT_VERSION: 4.7.2-stable
+      GODOT_ZIP: Godot_v4.7.2-stable_linux.x86_64.zip
+      # sha512 from config/toolchain.lock.json (same as the release's SHA512-SUMS.txt).
+      GODOT_SHA512: 9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Download the pinned engine and verify its checksum
+        run: |
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${GODOT_ZIP}"
+          echo "${GODOT_SHA512}  godot.zip" | sha512sum -c -
+          unzip -q godot.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot-bin
+          chmod +x godot-bin
+          ./godot-bin --version
+      - name: Import the project (parses every scene and script)
+        working-directory: runtime-zero
+        run: ../godot-bin --headless --path game --editor --quit
+      - name: Combat, content, presentation, run-flow, save and feedback suites
+        working-directory: runtime-zero
+        run: |
+          ../godot-bin --headless --path game --script res://tests/run_tests.gd
+          ../godot-bin --headless --path game --script res://tests/content_tests.gd
+          ../godot-bin --headless --path game --script res://tests/presentation_tests.gd
+          ../godot-bin --headless --path game --script res://tests/run_flow_tests.gd
+          ../godot-bin --headless --path game --script res://tests/save_tests.gd
+          ../godot-bin --headless --path game --script res://tests/feedback_tests.gd
+      - name: Replay fixtures (final state and event digests pinned)
+        working-directory: runtime-zero
+        run: ../godot-bin --headless --path game --script res://tests/replay_tests.gd
+      - name: Guard validator contract (deliberately outside the game root)
+        working-directory: runtime-zero
+        run: ../godot-bin --headless --path game --script "$PWD/validation/guard_contract.gd"
+      - name: Specification and board gates
+        working-directory: runtime-zero
+        run: node tools/verify.js

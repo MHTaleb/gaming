@@ -10,11 +10,13 @@ Board smoke: `node tools/serve.js`, open http://127.0.0.1:8090/backlog/, check c
 
 ## Game gates to implement
 
+Status (2026-09-21): the RZ-004/005/006/007/009/010/011 gates below are implemented and run by the root workflow `.github/workflows/runtime-zero-game.yml` on the checksum-verified pinned engine; the RZ-014/015 simulation gates remain future work.
+
 - RZ-004: `godot --headless --path game --editor --quit` imports/parses the project; GUI launch renders the entry scene. This is a smoke test, not combat correctness.
 - RZ-005/RZ-011: implement `godot --headless --path game --script res://tests/run_tests.gd`; nonzero on failures. Cover invalid command without RNG/state change, dead actor cannot act, Guard expiry, skill cost, clamped resources, ordered damage/terminal events, duplicate input and reward prevention.
 - RZ-006: content validation rejects duplicate/missing IDs, malformed stats, invalid links and unsupported schemas.
 - RZ-009: save round-trip, migration fixture, corrupt/truncated data recovery and atomic replacement behavior.
-- RZ-011: fixed replay fixtures match final state/events under pinned engine and rules; tests fail on deliberate rule changes until reviewed.
+- RZ-011: fixed replay fixtures match final state/events under pinned engine and rules; tests fail on deliberate rule changes until reviewed. Implemented as `game/tests/replay_tests.gd` over `game/tests/fixtures/replay/`; fixtures are regenerated only via `tools/make_replay_fixtures.gd` after review. A deliberate `BOSS_NORMALS_PER_TELEGRAPH` change fails three boss-fixture checks (captured in `validation/evidence/011/negative-rule-change.log`), and the suite also proves the real combat scene and the headless runner reach the same final state hash and the same rejection reasons.
 - RZ-014/RZ-015: full simulation data, retained failing seeds, held-out comparisons, independent statistics cross-check and configured per-build gates.
 
 ## Studio gates to implement
@@ -31,4 +33,4 @@ For manual checks, record reviewer, date, build hash, scenario and observed resu
 
 ## CI
 
-A root `.github/workflows/runtime-zero-spec.yml` checks this specification package on relevant changes. In RZ-011 add the pinned Godot/content/fast tests to a root workflow; nested workflow files alone do not register as repository Actions. Normal CI must not need the user's GPU, paid APIs, secrets or model downloads. GPU integration remains explicitly separate. Do not change sibling checks as part of RPG work.
+A root `.github/workflows/runtime-zero-spec.yml` checks this specification package on relevant changes. `.github/workflows/runtime-zero-game.yml` (added in RZ-011) runs the pinned engine download (sha512-verified against `config/toolchain.lock.json`), the project import, the seven headless suites, the Guard validator contract and `node tools/verify.js`; local equivalents are captured in `validation/evidence/011/battery.log`. Normal CI must not need the user's GPU, paid APIs, secrets or model downloads. GPU integration remains explicitly separate. Do not change sibling checks as part of RPG work.

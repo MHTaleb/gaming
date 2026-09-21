@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "action": "dance",
+      "target": "enemy_1"
+    },
+    {
+      "action": "attack",
+      "target": "enemy_1"
+    },
+    {
+      "action": "attack",
+      "target": "enemy_1"
+    },
+    {
+      "action": "attack",
+      "target": "enemy_1"
+    },
+    {
+      "action": "attack",
+      "target": "enemy_1"
+    }
+  ],
+  "encounter_id": "encounter_1",
+  "equipment_id": "",
+  "expected": {
+    "event_count": 12,
+    "event_digest": "9586c5eef2576d0454ddd0e5b16d6992a69dd86d2f075872d08869fc40bfd8e8",
+    "final_state_hash": "51919714212523ffda465d51fe9705621436494aada78caad2a27aeba7f14c28",
+    "hero_hp": 82,
+    "outcome": 1,
+    "rejected": [
+      "unknown_action"
+    ],
+    "turns": 4
+  },
+  "format_version": 1,
+  "rules_version": 2,
+  "title": "unknown action is rejected and changes nothing, then the normal win"
+}

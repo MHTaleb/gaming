@@ -1,0 +1,54 @@
+{
+  "commands": [
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    },
+    {
+      "action": "attack",
+      "target": "boss_1"
+    }
+  ],
+  "encounter_id": "encounter_3",
+  "equipment_id": "",
+  "expected": {
+    "event_count": 29,
+    "event_digest": "c74b3e042a8b5aa3bf2d4f4563b39fce8725426693102280d9a2e1a72f1588a3",
+    "final_state_hash": "d15bea89ca6371b928532ee9c96d871cea5535beafd69647cc1ed1da7c31a2cb",
+    "hero_hp": 4,
+    "outcome": 1,
+    "rejected": [],
+    "turns": 9
+  },
+  "format_version": 1,
+  "rules_version": 2,
+  "title": "boss with the telegraph cycle: nine attacks exactly"
+}

@@ -878,7 +878,7 @@
       "epic": "E-GAME",
       "area": "qa",
       "type": "task",
-      "status": "next",
+      "status": "done",
       "priority": "P1",
       "size": "L",
       "value": 5,
@@ -917,7 +917,38 @@
         "P1",
         "qa"
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/replay_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/replay_tests.gd",
+          "environment": "ALL REPLAY TESTS PASSED (56 checks): 4 fixtures pin outcome/turns/HP/event count/event digest/final state hash, run-twice determinism, scene-vs-runner equality for state hash+outcome+HP and identical rejection reason, a rejected command changes nothing; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script $PWD/tools/make_replay_fixtures.gd (two runs)",
+          "result": "passed",
+          "artifact": "game/tests/fixtures/replay/encounter1_win.json",
+          "environment": "four fixtures regenerated deterministically, identical sha256 across runs (encounter1_win dd8eea5b...34a4); full hash list in validation/evidence/011/replay-fixtures.log; 2026-09-21"
+        },
+        {
+          "command": "local run of the exact workflow command sequence (.github/workflows/runtime-zero-game.yml)",
+          "result": "passed",
+          "artifact": "validation/evidence/011/battery.log",
+          "environment": "import ok; combat 96; content 54; presentation 111; run_flow 45; save 24; feedback 36; replay 56; guard contract passed; verify.js passed (32 tickets) - all exit 0; 2026-09-21"
+        },
+        {
+          "command": "sha256sum .github/workflows/runtime-zero-game.yml + YAML parse (Actions cannot run locally)",
+          "result": "passed",
+          "artifact": "validation/evidence/011/ci-workflow.md",
+          "environment": "root workflow (outside runtime-zero; verify.js confines artifacts to this folder) pins Godot 4.7.2 with the sha512 from config/toolchain.lock.json, runs import+7 suites+guard+verify.js, no GPU/secrets/models, workflow_dispatch enabled; sha256 a52ea040...344a; the Actions run itself becomes observable after push; 2026-09-21"
+        },
+        {
+          "command": "deliberate unreviewed rule change (BOSS_NORMALS_PER_TELEGRAPH 3->2) then replay suite",
+          "result": "passed",
+          "artifact": "validation/evidence/011/negative-rule-change.log",
+          "environment": "gate failed 3 of 56 checks (boss event count/digest/state hash) as designed; change reverted immediately, git diff clean; 2026-09-21"
+        }
+      ]
     },
     {
       "id": "RZ-012",
@@ -925,7 +956,7 @@
       "epic": "E-GAME",
       "area": "design",
       "type": "spike",
-      "status": "later",
+      "status": "next",
       "priority": "P1",
       "size": "M",
       "value": 5,
