@@ -32,8 +32,10 @@ repository (the runner activates the pinned toolchain itself via
   checkbox on the title and combat screens silences everything and is remembered;
   no essential information is audio-only.
 
-**Not playable yet** (later tickets): replay fixtures/CI (RZ-011), real
+**Not playable yet** (later tickets): real
 AI-generated art and music (gated phases RZ-016+, RZ-023+), Android build.
+The combat core, the campaign flow, saves, sound and the replay-verified rule
+set (RZ-011) are all in place; the next gate is **your playtest (RZ-012)**.
 
 ## Run it
 
@@ -45,6 +47,37 @@ tools/demo.sh run combat     # straight into the combat scene
 Quit with Ctrl+C in the terminal. On this laptop the window opens through WSLg;
 if nothing appears, make sure you are in a WSL terminal with `DISPLAY` set
 (`echo $DISPLAY` should print `:0`).
+
+## Playtest checklist (RZ-012 — owner review)
+
+Play the build once end to end, then answer from memory — quick impressions are
+more useful than careful analysis:
+
+1. Start: `source tools/env.sh && tools/demo.sh run`, then press **Enter** (or
+   click **Start**).
+2. Pick one of the three equipment cards; note whether the choice felt
+   meaningful before you knew the fights.
+3. Fight all three encounters (Attack / Guard / Skill, pick targets). Note:
+   - **Combat feel:** is the rhythm (attack → enemy reply → telegraph → your
+     turn) readable? Does Guard/Skill feel worth using?
+   - **Pacing:** too long, too short, or right? Encounter 2 has two enemies;
+     the boss telegraphs a heavy hit every third normal attack.
+   - **Readability:** HP/energy numbers, the combat log, enemy intent text —
+     anything confusing or missing?
+   - **View:** the placeholder key art, character chips (blue hero, orange
+     enemies, violet boss) and layout — what bothers you most?
+4. Finish the run (RUN COMPLETE or defeat), then try **Retry** once.
+5. Toggle **Mute** and **reduced motion** in combat; quit in-game, relaunch
+   with `tools/demo.sh run` again and check the toggles and your last equipment
+   were remembered.
+6. Tell the agent your impressions (or write them in
+   `reports/owner-prototype-review.md`). The agent records them verbatim and
+   files corrective tasks; nothing in the real-art/audio phases starts before
+   this review.
+
+Scope questions answered in this build: it is a **one-run, three-fight slice**
+with placeholder visuals and generated placeholder sounds — real painted art
+and real music are the phases unlocked after this playtest.
 
 ## Captures for the remote reviewer
 
