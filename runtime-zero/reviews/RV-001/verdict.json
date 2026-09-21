@@ -4,7 +4,7 @@
   "author_role": "validator",
   "decision": "changes_requested",
   "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
-  "response_sha256": "d14952fd18d57c159f37946fc9c774196740c61033e72fb97e03fc5f0dda77d8",
-  "implementation_commit": "1aef2d92efb68a368649119cfc4a0df183e12257",
-  "reason": "2026-09-21 follow-up: V-001 Guard and V-004 documentation verified. V-002 still fails two executable-precedence scenarios; V-003 omits invoked helper bodies and inaccurately claims uv/godot were absent before activation. Execute reports/validation-001-followup.md, fix V-002/V-003, preserve satisfied work, and resubmit with replayable laptop evidence. RZ-006 remains held."
+  "response_sha256": "47be008750a5f131d509140bce0e9a7be55a93ab609fcf5cbb30a822a2367885",
+  "implementation_commit": "74b2b74bb46e686ad56941a1e30d6573d27896d5",
+  "reason": "2026-09-21 attempt 002: V-001/V-003/V-004 verified; both earlier launcher selection cases now pass. V-002 remains incomplete in zsh: implicit scalar splitting fails to remove duplicate PATH entries, so repeated activation grows PATH. Execute reports/validation-001-retry.md and pass validation/launcher_shell_contract.py in Bash and zsh. Preserve verified work and resubmit focused evidence. RZ-006 remains held."
 }

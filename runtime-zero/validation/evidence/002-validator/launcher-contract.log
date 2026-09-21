@@ -1,0 +1,13 @@
+checked_at=2026-09-21T01:12:44.583386+00:00
+reviewed_head=621670143e0ed1a2612bb401d8f2a7ff85e4d58c
+implementation_commit=74b2b74bb46e686ad56941a1e30d6573d27896d5
+environment=independent Linux validator; not laptop certification
+command=["python3", "validation/launcher_contract.py"]
+---
+PASS existing user bin must win over competing tools
+expected: ['<FIXTURE>/.local/bin/godot', '<FIXTURE>/.local/bin/uv']
+observed: ['<FIXTURE>/.local/bin/godot', '<FIXTURE>/.local/bin/uv']
+PASS selected Node wins on first and repeated activation
+expected: ['<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node', '<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node']
+observed: ['<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node', '<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node']
+exit_code=0

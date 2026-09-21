@@ -1,0 +1,15 @@
+checked_at=2026-09-21T01:12:44.625658+00:00
+reviewed_head=621670143e0ed1a2612bb401d8f2a7ff85e4d58c
+implementation_commit=74b2b74bb46e686ad56941a1e30d6573d27896d5
+environment=independent Linux validator; not laptop certification
+command=["python3", "validation/launcher_shell_contract.py"]
+---
+PASS bash selected entries occur once; other entries/spaces preserved; repeat stable
+expected each activation: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 1: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 2: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+FAIL zsh selected entries occur once; other entries/spaces preserved; repeat stable
+expected each activation: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 1: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:<FIXTURE>/.local/bin:/usr/bin:<FIXTURE>/.nvm/versions/node/v22.23.2/bin:/bin:<FIXTURE>/.local/bin
+activation 2: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:<FIXTURE>/.local/bin:/usr/bin:<FIXTURE>/.nvm/versions/node/v22.23.2/bin:/bin:<FIXTURE>/.local/bin
+exit_code=1

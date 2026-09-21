@@ -1,0 +1,23 @@
+{
+  "reviewed_head": "621670143e0ed1a2612bb401d8f2a7ff85e4d58c",
+  "implementation_commit": "74b2b74bb46e686ad56941a1e30d6573d27896d5",
+  "checks": [
+    {
+      "artifact": "validation/evidence/002-validator/launcher-contract.log",
+      "sha256": "a85ed701aacd8810b7a52361e3156f15d16d1f2212abbb836263343c00c6624b",
+      "exit_code": 0
+    },
+    {
+      "artifact": "validation/evidence/002-validator/launcher-shell-contract.log",
+      "sha256": "105d51fc7fa9729b5591f41440de93abe3a0f0d6c4905758fecc994524b2bf9d",
+      "exit_code": 1
+    },
+    {
+      "artifact": "validation/evidence/002-validator/spec.log",
+      "sha256": "cd1044aeff89cf42010ddb69fb8c7785b66053231859c8ae2042d58ee27a9782",
+      "exit_code": 0
+    }
+  ],
+  "submitted_manifest_files_verified": 12,
+  "game_and_validator_owned_records_unchanged": true
+}

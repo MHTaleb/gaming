@@ -1,0 +1,36 @@
+checked_at=2026-09-21T01:12:45.367132+00:00
+reviewed_head=621670143e0ed1a2612bb401d8f2a7ff85e4d58c
+implementation_commit=74b2b74bb46e686ad56941a1e30d6573d27896d5
+environment=independent Linux validator; not laptop certification
+command=["node", "tools/verify.js"]
+---
+✔ backlog is valid and ready rows respect dependencies (3.492115ms)
+✔ unmet prerequisites cannot be ready or doing (3.283544ms)
+✔ long and self dependency cycles fail (1.093198ms)
+✔ done needs evidence and doing needs ownership (1.103945ms)
+✔ unknown dependencies and malformed instruction arrays fail (1.326729ms)
+✔ blocked reason and completion dependencies are enforced (0.849513ms)
+✔ duplicate epic/research IDs and failed evidence are rejected (0.767941ms)
+✔ board server reads its own data and rejects writes and non-board paths (47.111796ms)
+✔ open review holds target and descendants, not unrelated work (4.680347ms)
+✔ complete executor submission waits for validator and keeps its gate (2.335491ms)
+✔ matching accepted verdict clears gate; changed response makes acceptance stale (3.049422ms)
+✔ changed implementation commit invalidates acceptance (6.645424ms)
+✔ evidence bytes must match their hash even after acceptance (2.718716ms)
+✔ executor cannot submit accepted status or incomplete ready evidence (1.66099ms)
+✔ request edits require reconciliation; missing records fail closed (1.708742ms)
+✔ artifact path escape and nonzero passed evidence are rejected (2.23449ms)
+✔ backlog readiness includes eligible unheld ticket and excludes held ticket (0.291557ms)
+✔ registered current review is well-formed (3.010073ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 172.106799
+Review records valid; 1 review(s) unresolved (not independent approval).
+doctor Python syntax: passed
+Specification verification passed (30 implementation tickets; game/GPU checks not run).
+exit_code=0
