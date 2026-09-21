@@ -1,0 +1,14 @@
+RZ-037 generation record (2026-09-21T23:52Z)
+
+server: local ComfyUI v0.37.0 @ http://127.0.0.1:8188
+model: sd_xl_turbo_1.0_fp16.safetensors sha256 e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26
+torch: 2.8.0+cu128 (CUDA 12.8, RTX 4050 Laptop)
+sampler: euler_ancestral / normal / 6 steps / cfg 1.0 / denoise 1.0 / 1024x576 / batch 1
+
+seeds + files:
+  intrusion        seed 20260921  -> candidates/intrusion_sdxl.png        f2c1e39b2fa8a34416b9e6e8659b480db5f6e502eb6d3953e0f4be229e855853
+  load_spike       seed 20260922  -> candidates/load_spike_sdxl.png     b41e9005b1dab80a51fc34b5b2f3276964a1bd8e75617c5967c865c0cb95cd80
+  server_cathedral seed 20260923  -> candidates/server_cathedral_sdxl.png 538cbd051dc8f5a5e1abe03aad9454063f2dab89ead085ade0c3479bd939f479
+
+tool: tools/make_ai_backdrops.py (localhost only, no network beyond 127.0.0.1)
+swap: tools/use_ai_backdrops.sh copy|revert

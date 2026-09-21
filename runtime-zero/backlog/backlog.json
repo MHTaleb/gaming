@@ -2341,7 +2341,7 @@
       "epic": "E-GAME",
       "area": "graphics",
       "type": "task",
-      "status": "doing",
+      "status": "done",
       "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
       "priority": "P2",
       "size": "L",
@@ -2392,7 +2392,25 @@
           "command": "uv pip install -r ~/ai/ComfyUI/requirements.txt",
           "result": "passed",
           "artifact": "validation/evidence/037/install-log-excerpt.txt",
-          "environment": "72 packages installed into ~/ai/comfy-venv after the pypi.nvidia.com timeout resume (UV_HTTP_TIMEOUT=600); 2026-09-21"
+          "environment": "72 packages installed into ~/ai/comfy-venv after the pypi.nvidia.com timeout resume (UV_HTTP_TIMEOUT=600); torch later upgraded to 2.8.0+cu128 for ComfyUI v0.37 comfy-kitchen; 2026-09-21"
+        },
+        {
+          "command": "python3 tools/make_ai_backdrops.py (local ComfyUI /prompt API)",
+          "result": "passed",
+          "artifact": "validation/evidence/037/candidates/intrusion_sdxl.png",
+          "environment": "3 of 3 region prompts rendered on the RTX 4050: euler_ancestral, 6 steps, cfg 1.0, 1024x576, batch 1, model sd_xl_turbo_1.0_fp16.safetensors sha256 e869ac7d...; seeds/hashes in validation/evidence/037/generation-log.txt; 2026-09-21"
+        },
+        {
+          "command": "python3 tools/make_ai_backdrops.py (load spike + cathedral)",
+          "result": "passed",
+          "artifact": "validation/evidence/037/candidates/server_cathedral_sdxl.png",
+          "environment": "load_spike_sdxl.png b41e9005..., server_cathedral_sdxl.png 538cbd05...; workflow graph archived in generation-workflow.json; 2026-09-21"
+        },
+        {
+          "command": "tools/use_ai_backdrops.sh copy|revert",
+          "result": "passed",
+          "artifact": "tools/use_ai_backdrops.sh",
+          "environment": "owner-controlled reversible swap; procedural deterministic art stays the shipped default until the RZ-012 style gate approves; revert re-runs tools/make_stage_art.gd (hash-pinned); 2026-09-21"
         }
       ]
     }

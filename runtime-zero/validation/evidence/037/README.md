@@ -10,16 +10,14 @@ enter git)
 
 | Component | Version / location | Note |
 |---|---|---|
-| ComfyUI | `~/ai/ComfyUI` @ `b0f4b7b294ce482a2e071d9d762c133d38c7aa07` | git clone --depth 1 |
+| ComfyUI | v0.37.0, `b0f4b7b294ce482a2e071d9d762c133d38c7aa07` (2026-09-20) at `~/ai/ComfyUI` | git clone --depth 1 |
 | Python venv | `~/ai/comfy-venv` (CPython 3.12.14, uv) | isolated from system Python |
-| PyTorch | `torch==2.6.0+cu124`, `torchvision==0.21.0+cu124` | CUDA 12.4 wheels |
-| CUDA check | `torch.cuda.is_available() == True` | `NVIDIA GeForce RTX 4050 Laptop GPU` |
-| Model | `sd_xl_turbo_1.0_fp16.safetensors` (~6.9 GB) | stabilityai/sdxl-turbo, fp16, in `~/ai/ComfyUI/models/checkpoints/` |
+| PyTorch | `torch==2.8.0+cu128`, `torchvision==0.23.0+cu128`, `torchaudio==2.8.0` | upgraded from 2.6.0+cu124: ComfyUI's `comfy-kitchen` custom ops fail schema inference on torch 2.6 (`stride: list[int]`) |
+| CUDA check | `torch.cuda.is_available() == True`, device RTX 4050 Laptop GPU | host driver 581.86 (CUDA 13.0 capable) |
+| Model | `sd_xl_turbo_1.0_fp16.safetensors`, 6938081905 bytes, sha256 `e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26` | stabilityai/sdxl-turbo fp16, in `~/ai/ComfyUI/models/checkpoints/` |
 
-Install log: `/tmp/rz_install_tools.log` merged from `/tmp/rz_install_tools.sh`
-(clone + venv) and `/tmp/rz_install_resume.sh` (torch + requirements + CUDA check
-+ model download; resumed once after a `pypi.nvidia.com` timeout with
-`UV_HTTP_TIMEOUT=600`).
+Install log: `install-log-excerpt.txt` (merged from the clone/resume scripts;
+one resume after a `pypi.nvidia.com` timeout with `UV_HTTP_TIMEOUT=600`).
 
 First run:
 
@@ -45,10 +43,38 @@ be added if the first launch OOMs.)
 
 | Check | Result |
 |---|---|
-| `torch.cuda.is_available()` | `True` on RTX 4050 Laptop (step 5 of install log) |
-| model file | `sd_xl_turbo_1.0_fp16.safetensors`, size + sha256 recorded in `install-log-excerpt.txt` |
-| first generation | _pending: filled in below once the model finished downloading_ |
-| integration | _pending_ |
+| `torch.cuda.is_available()` | `True` on RTX 4050 Laptop (before and after the 2.8 upgrade) |
+| model file | `sd_xl_turbo_1.0_fp16.safetensors`, 6938081905 bytes, sha256 `e869ac7d…` (`install-log-excerpt.txt`) |
+| server boot | ComfyUI v0.37.0 answers `/system_stats`; 5073 MB VRAM free at idle |
+| generation run | 3 of 3 prompts rendered: candidates below, seeds + hashes in `generation-log.txt`, graph in `generation-workflow.json` |
+| gameplay untouched | procedural default unchanged; swap is a manual, reversible script (`tools/use_ai_backdrops.sh copy|revert`) |
+| swap demo | `copy` → map + combat captured on the AI look (`map-with-ai-backdrop.png`, `combat-with-ai-backdrop.png`); `revert` restores the procedural art byte-for-byte — the map capture hash is `fe0bc419…` before and after |
+| provenance | `docs/SOURCES.md` dated finding + this directory |
 
-_Status: toolchain installed and CUDA verified; first image generations and the
-selection (if any) to ship are recorded here when done._
+## Generated candidates (from the game's own prompts)
+
+All three rendered on the RTX 4050 through the local `/prompt` API — sampler
+`euler_ancestral` / `normal`, **6 steps, cfg 1.0**, 1024×576, batch 1; tool
+`tools/make_ai_backdrops.py`.
+
+| Region | Candidate (`candidates/`) | Look | sha256 prefix |
+|---|---|---|---|
+| Intrusion | `intrusion_sdxl.png` | teal-lit night skyline against an orange dusk — matches the cyan-on-navy palette | `f2c1e39b…` |
+| Load Spike | `load_spike_sdxl.png` | magenta/violet spike field with cyan streaks — high-energy abstract stage | `b41e9005…` |
+| Server Cathedral | `server_cathedral_sdxl.png` | dark data-center nave, cyan trim lines, amber LED racks, central aisle beam | `538cbd05…` |
+
+## How they may reach the game (owner gate)
+
+The **deterministic procedural art stays the shipped, hash-pinned default**
+(RZ-036); the candidates above are review material. The owner can try them
+in-game with the deliberate, reversible opt-in:
+
+```
+tools/use_ai_backdrops.sh copy     # use the AI candidates
+tools/use_ai_backdrops.sh revert   # re-run the deterministic generator
+```
+
+A swap is the owner's call at the RZ-012 style gate; nothing auto-switches.
+
+_Status: toolchain installed, CUDA verified, three candidates generated and
+recorded; awaiting the owner's style-gate decision on swapping._
