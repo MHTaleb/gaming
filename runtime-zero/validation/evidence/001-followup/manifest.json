@@ -1,0 +1,31 @@
+{
+  "reviewed_head": "3713b53fdea9691fd9d2869dedbf71fc534dd318",
+  "environment": "independent Linux validator; not laptop certification",
+  "checks": [
+    {
+      "artifact": "validation/evidence/001-followup/import.log",
+      "exit_code": 0,
+      "sha256": "076fc62e093a7ff38c755172527dfcf763fa4d755087935b82002821404309f2"
+    },
+    {
+      "artifact": "validation/evidence/001-followup/combat.log",
+      "exit_code": 0,
+      "sha256": "b88339a43b00a5d1d6688bedcbcb464e6607adef86e3963eea607515e43d3bf0"
+    },
+    {
+      "artifact": "validation/evidence/001-followup/guard-contract.log",
+      "exit_code": 0,
+      "sha256": "e940b629357d3613ad866b1f0b9300743b72a560d4c0977e4103720220ca32fd"
+    },
+    {
+      "artifact": "validation/evidence/001-followup/spec.log",
+      "exit_code": 0,
+      "sha256": "3b8a9991cb05c4fd23a079b8e9f9e6807f0ee65bad3069f00687c94b44ed349e"
+    },
+    {
+      "artifact": "validation/evidence/001-followup/launcher-contract.log",
+      "exit_code": 1,
+      "sha256": "18ec07fc42058eb214771f7b35aad645e6e811d43d094e97e36243c99bc2aebf"
+    }
+  ]
+}

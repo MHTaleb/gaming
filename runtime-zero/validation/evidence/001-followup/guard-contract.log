@@ -1,0 +1,14 @@
+start=2026-09-20T23:59:31.885845+00:00
+reviewed_head=3713b53fdea9691fd9d2869dedbf71fc534dd318
+implementation_commit=1aef2d92efb68a368649119cfc4a0df183e12257
+environment=independent Linux validator; not the Lenovo laptop
+command=["<VALIDATOR_WORKSPACE>/review-tools/restored/Godot_v4.7.2-stable_linux.x86_64", "--headless", "--path", "game", "--script", "<RPG_ROOT>/validation/guard_contract.gd"]
+---
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GUARD CONTRACT: expected hits=[3, 6], actual=[3, 6]
+GUARD CONTRACT: expected hero_hp=91, actual=91
+INPUT STATE UNCHANGED: true
+GUARD CONTRACT PASSED
+
+exit_code=0

@@ -1,0 +1,12 @@
+start=2026-09-21T00:01:48.527347+00:00
+reviewed_head=3713b53fdea9691fd9d2869dedbf71fc534dd318
+environment=independent Linux validator; isolated PATH fixtures, no installation proof
+command=python validation/launcher_contract.py
+---
+FAIL existing user bin must win over competing tools
+expected: ['<FIXTURE>/.local/bin/godot', '<FIXTURE>/.local/bin/uv']
+observed: ['<FIXTURE>/other/bin/godot', '<FIXTURE>/other/bin/uv']
+FAIL selected Node wins on first and repeated activation
+expected: ['<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node', '<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node']
+observed: ['<FIXTURE>/.local/bin/node', '<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node']
+exit_code=1
