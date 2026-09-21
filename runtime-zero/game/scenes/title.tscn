@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/presentation/title.gd" id="1_title"]
+[ext_resource type="Texture2D" path="res://assets/branding/landing_background.png" id="2_landing"]
 
 [node name="Title" type="Control"]
 layout_mode = 3
@@ -21,6 +22,19 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.06, 0.071, 0.09, 1)
+
+[node name="LandingArt" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+texture = ExtResource("2_landing")
+stretch_mode = 6
 
 [node name="Center" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -53,7 +67,7 @@ horizontal_alignment = 1
 [node name="BuildInfo" type="Label" parent="Center"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "Godot 4.7 GL Compatibility / landscape 1280x720 / artwork: shapes"
+text = "Godot 4.7 GL Compatibility / landscape 1280x720 / artwork: procedural placeholder"
 horizontal_alignment = 1
 
 [node name="NextTicket" type="Label" parent="Center"]
@@ -73,3 +87,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "or press ENTER / click anywhere"
 horizontal_alignment = 1
+
+[node name="QuitButton" type="Button" parent="Center"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+custom_minimum_size = Vector2(140, 40)
+text = "Quit"

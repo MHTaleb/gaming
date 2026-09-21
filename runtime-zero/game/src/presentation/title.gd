@@ -23,7 +23,9 @@ var _started := false
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
+	print("[rz] title ready")
 	%StartButton.pressed.connect(_start_combat)
+	%QuitButton.pressed.connect(_quit)
 	%StartButton.grab_focus()
 	var auto_enter := _arg_value(args, "--auto-enter")
 	var capture_path := RZCapture.requested_path()
@@ -57,7 +59,17 @@ func _start_combat() -> void:
 	if _started:
 		return
 	_started = true
+	print("[rz] start -> combat")
 	get_tree().change_scene_to_file(COMBAT_SCENE)
+
+## Clean in-game quit: the same shutdown path as the window's close button.
+func _quit() -> void:
+	print("[rz] quit requested")
+	get_tree().quit(0)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		print("[rz] window close requested")
 
 func _wait_frames(frames: int) -> void:
 	for frame in maxi(1, frames):

@@ -45,6 +45,7 @@ func _ready() -> void:
 		_show_fatal()
 		return
 	_refresh_all()
+	print("[rz] combat ready: encounter=%s turn=%d" % [encounter_id, session.state.turn_index])
 	%AttackButton.grab_focus()
 	var capture := RZCapture.requested_path()
 	if not capture.is_empty():
@@ -93,6 +94,15 @@ func _on_retry() -> void:
 		set_status("Rematch - the encounter restarted.")
 		_refresh_all()
 
+## Clean in-game quit: the same shutdown path as the window's close button.
+func _quit() -> void:
+	print("[rz] quit requested")
+	get_tree().quit(0)
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		print("[rz] window close requested")
+
 func _select_target(actor_id: String) -> void:
 	selected_target_id = actor_id
 	_update_selection_styles()
@@ -103,6 +113,7 @@ func _connect_ui() -> void:
 	%SkillButton.pressed.connect(submit_action.bind(RZRules.ACTION_SKILL))
 	%RetryButton.pressed.connect(_on_retry)
 	%TitleButton.pressed.connect(func() -> void: get_tree().change_scene_to_file(TITLE_SCENE))
+	%QuitButton.pressed.connect(_quit)
 	%ReducedMotion.toggled.connect(func(pressed: bool) -> void: reduced_motion = pressed)
 	%AttackButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_ATTACK)
 	%GuardButton.tooltip_text = RZCombatText.action_summary(RZRules.ACTION_GUARD)

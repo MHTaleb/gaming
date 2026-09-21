@@ -1780,6 +1780,96 @@
           "environment": "regenerated after the interaction fix (Start button): sha256 0d608d67638ce70b4cf449be1ff06a473149cc24a15541184781e866064e8639; 2026-09-21"
         }
       ]
+    },
+    {
+      "id": "RZ-032",
+      "title": "Owner demo polish: landing key art, in-game quit, session diagnostics",
+      "epic": "E-GAME",
+      "area": "graphics",
+      "type": "task",
+      "status": "done",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
+      "priority": "P1",
+      "size": "S",
+      "value": 4,
+      "risk": 1,
+      "phase": "P1",
+      "summary": "Owner asked for a landing background image and the window kept vanishing on quit; deliver deterministic procedural placeholder key art plus clean Quit buttons and lifecycle diagnostics.",
+      "why": "Owner review 2026-09-21: the title screen looks bare and terminal-kill quits crash during WSLg teardown (signal experiments recorded). The GPU art pipeline (RZ-016+) is gated on RZ-012 and the art bible allows flat layered placeholder shapes now, so an original license-free background and safe quit affordances can ship immediately without new dependencies.",
+      "steps": [
+        "Generate the landing background procedurally (no randomness, no downloads) and commit it with its generator.",
+        "Wire the art into the title scene without breaking click-through input.",
+        "Add Quit buttons (title and combat) that use the clean get_tree().quit() path.",
+        "Print concise lifecycle lines so the next demo run self-documents where it ends."
+      ],
+      "outputs": [
+        "tools/make_landing_art.gd",
+        "game/assets/branding/landing_background.png",
+        "game/scenes/title.tscn",
+        "game/scenes/combat.tscn"
+      ],
+      "checks": [
+        "The generator reproduces the committed PNG byte-for-byte (sha256)",
+        "The title scene shows the art and everything stays clickable",
+        "Quit buttons exit cleanly (window-manager close path, not a terminal kill)"
+      ],
+      "dod": [
+        "Landing page no longer a flat rectangle; art follows the ART_BIBLE palette.",
+        "Housseyn can quit from inside the game without touching the terminal.",
+        "No new dependency and no imaginary claim: this is placeholder art, real generation remains RZ-016+."
+      ],
+      "deps": [
+        "RZ-004"
+      ],
+      "refs": [
+        "docs/ART_BIBLE.md",
+        "docs/ASSET_PIPELINE.md",
+        "docs/DEMO.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "graphics",
+        "art"
+      ],
+      "evidence": [
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script $PWD/tools/make_landing_art.gd (two consecutive runs)",
+          "result": "passed",
+          "artifact": "game/assets/branding/landing_background.png",
+          "environment": "identical sha256 3711b48ccca2e996f23e3eb8e3d2b2dccffd3467ad35f98f7db5f757d9f79217 on both runs (~1s each); 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && godot --headless --path game --script res://tests/presentation_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/presentation_tests.gd",
+          "environment": "ALL PRESENTATION TESTS PASSED (109 checks) including landing art load/size/click-through and quit buttons; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && tools/demo.sh capture validation/demo/20260921-title.png",
+          "result": "passed",
+          "artifact": "validation/demo/20260921-title.png",
+          "environment": "title capture with the new art; sha256 32e91f78beddbc49add704345d3d86ac56c057bda89d48ea28f083e769dba236; exit 0; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-combat-from-title.png",
+          "result": "passed",
+          "artifact": "validation/demo/20260921-combat-from-title.png",
+          "environment": "real ENTER through the input pipeline: title -> combat with quit button, capture written, exit 0; 2026-09-21"
+        },
+        {
+          "command": "signal matrix: WM close / SIGTERM@3s / SIGTERM@10s / SIGINT@10s / XTEST focus+ENTER",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "window close clean 2/2; SIGTERM@3s clean 4/4; SIGTERM@10s crash 4/4 (Mesa swrast teardown); ENTER itself never crashes; Quit buttons use the clean path; 2026-09-21"
+        },
+        {
+          "command": "source tools/env.sh && node tools/verify.js",
+          "result": "passed",
+          "artifact": "reports/prototype-log.md",
+          "environment": "specification verification passes with RZ-032 done; exit 0; 2026-09-21"
+        }
+      ]
     }
   ]
 }

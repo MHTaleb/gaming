@@ -216,3 +216,43 @@ Verification (pinned Godot via `source tools/env.sh`):
 | `tools/demo.sh run -- --auto-enter 60 --capture validation/demo/20260921-combat-from-title.png` | exit 0 — real ENTER injected into the live window, title → combat, capture written, no crash dump; repeated run also clean |
 | `tools/demo.sh run --definitely-not-a-flag` | exit 134 with the new guidance lines (real signalled exit) |
 | `run_tests.gd` / `content_tests.gd` / `guard_contract.gd` / `verify.js` | all green |
+
+## RZ-032 — owner demo polish: landing art, quit affordances, diagnostics (2026-09-21)
+
+Owner ask (2026-09-21): "did you install any graph art tool to draw something to be our background
+image of landing page". Recorded answer: no external art tool is installed; the graphics pipeline
+(RZ-016+) is gated on RZ-012 and needs multi-GB model downloads. The art bible allows flat layered
+placeholder shapes now, so this ticket delivers original procedural key art plus the fixes born
+from the "when I hit enter the game quits" investigation.
+
+- `tools/make_landing_art.gd`: deterministic procedural generator (pure math + integer hashes, no
+  randomness, no downloads) -> `game/assets/branding/landing_background.png` (1280x720 RGBA8).
+  Navy/graphite gradient, cyan horizon glow, perspective floor grid, server-ruin skyline with sparse
+  cyan/amber windows, data motes, vignette and faint scanlines. No UI-like text (ART_BIBLE).
+- `game/scenes/title.tscn`: `LandingArt` TextureRect (click-through, `expand_mode=1`) plus a Quit
+  button; copy updated. `game/scenes/combat.tscn`: Quit button in the header.
+- Lifecycle diagnostics in both scenes: `[rz] title ready / start / combat ready / quit requested /
+  window close requested`, so the next demo run self-documents where it ends.
+
+Signal investigation (explains the owner-visible "exit 134"; also recorded in docs/DEMO.md):
+
+| Scenario | Result |
+|---|---|
+| Window close (WM) while idling or in combat | exit 0, no crash dump — clean (2/2) |
+| SIGTERM ~3 s after launch | exit 143, clean (4/4) |
+| SIGTERM ~10 s after launch | exit 134, crash dump in Mesa `swrast_dri.so` (4/4) |
+| SIGINT ~10 s after launch | crash 3/4 |
+| Real X11 focus + ENTER via XTEST | game stays alive, combat reached — ENTER itself never crashes |
+
+Conclusion: the app does not quit on ENTER; kills from the terminal after a while crash WSLg/Mesa
+shutdown. The new Quit buttons use the clean `get_tree().quit()` path.
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script $PWD/tools/make_landing_art.gd` (twice) | identical sha256 `3711b48c…9217` — byte-reproducible |
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — **109 checks** (art + quit coverage added) |
+| `tools/demo.sh capture validation/demo/20260921-title.png` | exit 0 — title art captured |
+| `tools/demo.sh run -- --auto-enter 60 --capture …combat-from-title.png` | exit 0 — real ENTER, combat reached |
+| `tools/demo.sh smoke validation/demo/20260921-combat` | exit 0 — 3 frames; state_hash `8fcedb79…` unchanged |

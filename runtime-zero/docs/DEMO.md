@@ -7,8 +7,9 @@ repository (the runner activates the pinned toolchain itself via
 
 ## What is playable right now (2026-09-21)
 
-- **Title → combat.** The title screen has a visible **Start - enter combat**
-  button; ENTER/Space or a click anywhere also starts the fight.
+- **Title → combat.** The title screen has procedural placeholder key art, a
+  visible **Start - enter combat** button; ENTER/Space or a click anywhere also
+  starts the fight. Quit with the in-game **Quit** button (clean shutdown).
 - **One encounter** (`encounter_1`, "Intrusion"): you against one Memory Leak.
 - **Placeholder characters**: the hero and each enemy show a colored chip (real
   art arrives in the graphics phase; names and text carry the identity too).
@@ -70,18 +71,23 @@ backlog evidence.
 
 ## If something goes wrong
 
-- **The window crashed / the terminal shows exit code 134 or 139.** This
-  machine's WSLg/Mesa graphics stack occasionally crashes while the window is
-  being torn down, after the game itself worked (the 2026-09-21 session that
-  reported "nothing to click" ended this way). The runner now explains the code.
-  Godot writes a log and crash dump under
-  `~/.local/share/godot/app_userdata/Runtime Zero/logs/`. If it repeats, run
-  `wsl --shutdown` in Windows PowerShell, reopen the terminal and retry. If it
-  ever crashes *while you are playing*, note what you were doing - that would be
-  a game bug, not a teardown crash.
+- **Quit cleanly from inside the game.** The **Quit** buttons on the title and
+  combat screens and the window's X button use the clean shutdown path. Killing
+  the game from the terminal after playing for a while can make WSLg's graphics
+  stack crash *during teardown* (terminal exit code 134) even though gameplay was
+  fine — measured on 2026-09-21: window-close exits 0, `SIGTERM` at ~3 s exits
+  clean, `SIGTERM` at ~10 s crashed 4/4 (Mesa `swrast_dri.so`). Prefer Quit/X.
+- **The window crashed / the terminal shows exit code 134 or 139.** See above:
+  teardown crash of the WSLg/Mesa stack, not game logic. Godot writes a log and
+  crash dump under `~/.local/share/godot/app_userdata/Runtime Zero/logs/`.
+  If it repeats, run `wsl --shutdown` in Windows PowerShell, reopen the terminal
+  and retry. If it ever crashes *while you are playing*, note what you were doing
+  - that would be a game bug, not a teardown crash.
 - **Nothing responds to clicks.** Should not happen anymore: the title
   background passes clicks through and the Start button is a real button. If it
   does, the log above plus the exact click location helps.
+- **Curious what the game did?** Both scenes print `[rz] …` lifecycle lines
+  (title ready / start / combat ready / quit requested).
 
 ## Verifying the runner itself
 

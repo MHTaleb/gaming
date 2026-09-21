@@ -62,6 +62,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Title"
 
+[node name="QuitButton" type="Button" parent="Margin/Column/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quit"
+
 [node name="StatusLabel" type="Label" parent="Margin/Column"]
 unique_name_in_owner = true
 layout_mode = 2

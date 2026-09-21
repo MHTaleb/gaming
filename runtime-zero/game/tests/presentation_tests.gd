@@ -329,6 +329,7 @@ func _test_scene_widgets_and_keyboard() -> void:
 	_expect(shortcuts_ok, "1/2/3 shortcuts are wired to the three actions")
 	_expect(not attack.disabled and not guard.disabled and not skill.disabled,
 		"all three actions start available")
+	_expect(node.get_node("%QuitButton") != null, "combat header has a Quit button")
 	var hero_chip: ColorRect = node.get_node("%HeroChip")
 	_expect(hero_chip.custom_minimum_size.x >= 48.0,
 		"hero chip is a sized placeholder character")
@@ -456,6 +457,16 @@ func _test_title_scene_links_to_combat() -> void:
 ## report: "only got a screen about the game, nothing else").
 func _test_title_input_paths() -> void:
 	var title := await _open_title()
+	var art: TextureRect = title.get_node("%LandingArt")
+	_expect(art.texture != null, "landing art texture is loaded")
+	_expect(art.texture.get_width() == 1280 and art.texture.get_height() == 720,
+		"landing art matches the design resolution")
+	_expect(art.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"landing art does not swallow clicks")
+	var quit_button: Button = title.get_node("%QuitButton")
+	_expect(quit_button.focus_mode == Control.FOCUS_ALL \
+		and quit_button.custom_minimum_size.y >= 40.0,
+		"title has a keyboard-focusable Quit button")
 	_expect(title.mouse_filter == Control.MOUSE_FILTER_IGNORE,
 		"the title root does not swallow clicks")
 	_expect(title.get_node("Background").mouse_filter == Control.MOUSE_FILTER_IGNORE,
