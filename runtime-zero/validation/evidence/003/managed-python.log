@@ -1,0 +1,42 @@
+start=2026-09-21T13:54:10Z
+collector: validation/evidence/collect.zsh (committed)
+probe: managed_python 
+---
+step: source tools/env.sh
+  command: source tools/env.sh 
+  exit_code=0
+
+step: uv python find 3.12
+  command: uv python find 3.12 
+$HOME/.local/share/uv/python/cpython-3.12-linux-x86_64-gnu/bin/python3.12
+  exit_code=0
+
+step: remove stale probe dir
+  command: rm -rf /tmp/rz-rv001-python-probe 
+  exit_code=0
+
+step: uv venv --python 3.12
+  command: uv venv /tmp/rz-rv001-python-probe --python 3.12 
+Using CPython 3.12.14
+Creating virtual environment at: /tmp/rz-rv001-python-probe
+Activate with: source /tmp/rz-rv001-python-probe/bin/activate
+  exit_code=0
+
+step: probe python -V
+  command: /tmp/rz-rv001-python-probe/bin/python -V 
+Python 3.12.14
+  exit_code=0
+
+step: probe trivial import
+  command: /tmp/rz-rv001-python-probe/bin/python -c import\ json,\ sys\;\ print\(\'trivial\ import\ ok:\',\ json.dumps\(\{\'python\':\ sys.version.split\(\)\[0\],\ \'ok\':\ True\}\)\) 
+trivial import ok: {"python": "3.12.14", "ok": true}
+  exit_code=0
+
+step: remove probe venv
+  command: rm -rf /tmp/rz-rv001-python-probe 
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T13:54:10Z

@@ -1,0 +1,30 @@
+{
+  "review": "RV-001",
+  "attempt": "003 — V-002 zsh-safe PATH normalization (2026-09-21)",
+  "implementation_commit": "b68512731c12773f3b2ef14431af66a5b9ad8563",
+  "collected_utc_window": "2026-09-21T13:54:01Z .. 2026-09-21T13:54:10Z",
+  "collector": "validation/evidence/collect.zsh, invocation: zsh validation/evidence/collect.zsh 003 (probes are functions; the function name identifies each log)",
+  "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6, local laptop; launcher v3 via tools/env.sh; bash and zsh both available and exercised; Godot 4.7.2.stable.official.ed1daf0bf; Node v22.23.2; managed CPython 3.12.14",
+  "files": {
+    "client-tool.log": {"sha256": "cdabd98d23bdeac618697cb52eed4d918d99d4a6207bb68afcad7ccb553c5f0d", "exit_code": 0},
+    "combat.log": {"sha256": "131e5db10574587ff0d41f5363bbf6fbfc726c21e57660f1af794be9f2cbdcdc", "exit_code": 0},
+    "controlled.log": {"sha256": "9e5259924f17c95895f6c5643460d8525d14be395c325b5f6c0b565151f13260", "exit_code": 0},
+    "expected-failure.log": {"sha256": "3d367c4528d9e54df71dfbcd14423ecd01b7ebbf9f5f9db39da11938be18e766", "exit_code": 3},
+    "fresh-terminal.log": {"sha256": "bcb83e6faba6755e9688b9667db6c30b62fd8796fa58f693aa242b89af4ec42e", "exit_code": 0},
+    "guard-contract.log": {"sha256": "408bdf3036df4cd16027a3129b34c0fa905af971f560243bbb04dff9219f6434", "exit_code": 0},
+    "import.log": {"sha256": "e7d1bc370241b20a78b7bae192f334c402dbbcea28dc753afc75bf1752ce916e", "exit_code": 0},
+    "launcher-contract.log": {"sha256": "0d14425905788c66ab58eb4958f3b2be812bae9fce5f651034112a72067aafb3", "exit_code": 0},
+    "managed-python.log": {"sha256": "b2bf1ef254b0f1e81fb9b8ba555f88f5a9d2e9591f35ec3a8afb11e0a0a3f353", "exit_code": 0},
+    "path-stability.log": {"sha256": "7c20ca7fd5108d5eb84fc5ba92d1367f707c683fff81495c1883de7ddea0004f", "exit_code": 0},
+    "shell-contract.log": {"sha256": "dfcc8f35fbe9b77a4871fa03bd057dabef05ffc35e67a2a2368c9998c46397e2", "exit_code": 0},
+    "source.log": {"sha256": "010ccf65247d9f63c897ab8401e4c6a40e94e00bb1d3f49e1300dc7076b2a8b1", "exit_code": 0},
+    "spec.log": {"sha256": "82ab0c52fe50d24468366f281f4f4a8ac94593dd962911de837c68cfc670668b", "exit_code": 0},
+    "terminal.log": {"sha256": "f7079b9a07d302191f315107d89171a5fb6f6425d291ab290f6ed765ecee5ef0", "exit_code": 0}
+  },
+  "notes": {
+    "focus": "PATH-only change: launcher v3 explicit colon parsing. Game code, backlog and validator records untouched; V-001/V-003/V-004 evidence carried forward with accurate commit attribution.",
+    "expected_failure": "expected-failure.log is the deliberate exit-3 probe, labelled in its log.",
+    "history": "attempts 001 (validator), 001-response and 002/002-validator retain their artifacts unchanged.",
+    "log_normalization": "Home paths replaced with $HOME; /mnt/c/Users/* replaced with <winuser>; hostname replaced with <host>; command output otherwise unmodified."
+  }
+}

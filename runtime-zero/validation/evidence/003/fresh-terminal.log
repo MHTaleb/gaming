@@ -1,0 +1,57 @@
+start=2026-09-21T13:54:02Z
+collector: validation/evidence/collect.zsh (committed)
+probe: fresh_terminal 
+---
+fresh-terminal equivalence: PATH restored to the value recorded from a newly
+opened VS Code WSL terminal at this session's start: Node 20 first, ~/.local/bin
+and any selected tools absent. Windows-interop PATH entries are elided because
+they contain no node/uv/godot and cannot affect selection.
+before activation:
+step: node before
+  command: sh -c command\ -v\ node\ \|\|\ echo\ \"node:\ not\ found\ on\ PATH\" 
+$HOME/.nvm/versions/node/v20.20.0/bin/node
+  exit_code=0
+
+step: node version before
+  command: node --version 
+v20.20.0
+  exit_code=0
+
+step: uv before
+  command: sh -c command\ -v\ uv\ \|\|\ echo\ \"uv:\ not\ found\ on\ PATH\" 
+uv: not found on PATH
+  exit_code=0
+
+step: godot before
+  command: sh -c command\ -v\ godot\ \|\|\ echo\ \"godot:\ not\ found\ on\ PATH\" 
+godot: not found on PATH
+  exit_code=0
+
+step: source tools/env.sh
+  command: source tools/env.sh 
+  exit_code=0
+
+step: node after
+  command: command -v node 
+$HOME/.nvm/versions/node/v22.23.2/bin/node
+  exit_code=0
+
+step: node version after
+  command: node --version 
+v22.23.2
+  exit_code=0
+
+step: uv after
+  command: command -v uv 
+$HOME/.local/bin/uv
+  exit_code=0
+
+step: godot after
+  command: command -v godot 
+$HOME/.local/bin/godot
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T13:54:02Z

@@ -1,0 +1,10 @@
+start=2026-09-21T13:54:10Z
+collector: validation/evidence/collect.zsh (committed)
+probe: expected_failure 
+---
+deliberate nonzero probe (labelled expected failure): verifies exit codes propagate
+deliberate-check ran
+
+---
+exit_code=3
+end=2026-09-21T13:54:10Z

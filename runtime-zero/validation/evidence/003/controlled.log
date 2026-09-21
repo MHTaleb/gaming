@@ -1,0 +1,73 @@
+start=2026-09-21T13:54:02Z
+collector: validation/evidence/collect.zsh (committed)
+probe: controlled 
+---
+controlled case (explicitly labelled): Node 20 first, user tool directory absent from PATH
+before activation:
+step: node before
+  command: node --version 
+v20.20.0
+  exit_code=0
+
+step: uv before
+  command: sh -c command\ -v\ uv\ \|\|\ echo\ \"uv:\ not\ found\ on\ PATH\" 
+uv: not found on PATH
+  exit_code=0
+
+step: godot before
+  command: sh -c command\ -v\ godot\ \|\|\ echo\ \"godot:\ not\ found\ on\ PATH\" 
+godot: not found on PATH
+  exit_code=0
+
+step: source tools/env.sh (first activation)
+  command: source tools/env.sh 
+  exit_code=0
+
+step: first: command -v node
+  command: command -v node 
+$HOME/.nvm/versions/node/v22.23.2/bin/node
+  exit_code=0
+
+step: first: node --version
+  command: node --version 
+v22.23.2
+  exit_code=0
+
+step: first: command -v uv
+  command: command -v uv 
+$HOME/.local/bin/uv
+  exit_code=0
+
+step: first: command -v godot
+  command: command -v godot 
+$HOME/.local/bin/godot
+  exit_code=0
+
+step: source tools/env.sh (second activation)
+  command: source tools/env.sh 
+  exit_code=0
+
+step: second: command -v node
+  command: command -v node 
+$HOME/.nvm/versions/node/v22.23.2/bin/node
+  exit_code=0
+
+step: second: node --version
+  command: node --version 
+v22.23.2
+  exit_code=0
+
+step: second: command -v uv
+  command: command -v uv 
+$HOME/.local/bin/uv
+  exit_code=0
+
+step: second: command -v godot
+  command: command -v godot 
+$HOME/.local/bin/godot
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T13:54:02Z

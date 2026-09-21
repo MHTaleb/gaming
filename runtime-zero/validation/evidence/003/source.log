@@ -1,0 +1,23 @@
+start=2026-09-21T13:54:01Z
+collector: validation/evidence/collect.zsh (committed)
+probe: source_identity 
+---
+step: branch
+  command: git rev-parse --abbrev-ref HEAD 
+codex/runtime-zero-impl
+  exit_code=0
+
+step: head
+  command: git rev-parse HEAD 
+b68512731c12773f3b2ef14431af66a5b9ad8563
+  exit_code=0
+
+step: git status --short (empty = clean)
+  command: git status --short 
+  exit_code=0
+
+cwd: $HOME/workspace/gaming/runtime-zero
+
+---
+exit_code=0
+end=2026-09-21T13:54:01Z

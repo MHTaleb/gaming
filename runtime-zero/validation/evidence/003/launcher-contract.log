@@ -1,0 +1,14 @@
+start=2026-09-21T13:54:02Z
+collector: validation/evidence/collect.zsh (committed)
+probe: python3 validation/launcher_contract.py 
+---
+PASS existing user bin must win over competing tools
+expected: ['<FIXTURE>/.local/bin/godot', '<FIXTURE>/.local/bin/uv']
+observed: ['<FIXTURE>/.local/bin/godot', '<FIXTURE>/.local/bin/uv']
+PASS selected Node wins on first and repeated activation
+expected: ['<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node', '<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node']
+observed: ['<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node', '<FIXTURE>/.nvm/versions/node/v22.23.2/bin/node']
+
+---
+exit_code=0
+end=2026-09-21T13:54:02Z

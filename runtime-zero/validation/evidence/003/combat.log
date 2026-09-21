@@ -1,0 +1,115 @@
+start=2026-09-21T13:54:09Z
+collector: validation/evidence/collect.zsh (committed)
+probe: combat 
+---
+step: source tools/env.sh
+  command: source tools/env.sh 
+  exit_code=0
+
+step: godot --headless --path game --script res://tests/run_tests.gd
+  command: godot --headless --path game --script res://tests/run_tests.gd 
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  ok  attack accepted
+  ok  accepted command changes state
+  ok  attack damage = max(1, 12-1) = 11
+  ok  accepted command advances the round
+  ok  energy regen is capped at 6
+  ok  hp clamps at zero, never negative
+  ok  all enemies dead -> victory
+  ok  defeated event emitted
+  ok  victory evaluated after the action
+  ok  attack floor keeps minimum 1 damage
+  ok  accepted input state is not mutated
+  ok  skill accepted with 6 energy
+  ok  skill costs 3 then +1 round regen
+  ok  skill damage = max(1, 24-1) = 23
+  ok  skill event records its cost
+  ok  skill without energy is rejected
+  ok  rejection reason is insufficient_energy
+  ok  rejected skill consumes nothing
+  ok  rejected skill emits no events
+  ok  skill at exactly 3 energy is accepted
+  ok  skill at 2 energy is rejected
+  ok  rejected: unknown_action
+  ok  reason: unknown_action
+  ok  no state change for unknown_action
+  ok  no events for unknown_action
+  ok  rejected: stale_turn
+  ok  reason: stale_turn
+  ok  no state change for stale_turn
+  ok  no events for stale_turn
+  ok  rejected: target_missing
+  ok  reason: target_missing
+  ok  no state change for target_missing
+  ok  no events for target_missing
+  ok  rejected: actor_missing
+  ok  reason: actor_missing
+  ok  no state change for actor_missing
+  ok  no events for actor_missing
+  ok  rejected: not_hero
+  ok  reason: not_hero
+  ok  no state change for not_hero
+  ok  no events for not_hero
+  ok  dead actor cannot act
+  ok  dead target is rejected
+  ok  setup command accepted
+  ok  replaying an old turn index is rejected
+  ok  duplicate input is stale, not re-executed
+  ok  guard accepts an empty target
+  ok  6 damage halved to 3 (floor, min 1)
+  ok  guard is consumed by the first incoming hit
+  ok  guard_halved event emitted
+  ok  halving records the before value
+  ok  halving records the after value
+  ok  halving records consumption
+  ok  consumed guard does not reduce the next round
+  ok  re-guard halves exactly one hit again
+  ok  an unused guard expires at the hero's next turn
+  ok  expired guard no longer halves the hit
+  ok  guard floor keeps minimum 1 damage
+  ok  attack with two enemies accepted
+  ok  living enemy_b acts after enemy_a dies
+  ok  defeated enemy_a does not act
+  ok  hero acts before the enemy phase
+  ok  only one enemy attack landed (6 damage)
+  ok  enemies resolve in stable actor-ID order
+  ok  guard halves only the first incoming hit (RV-001 acceptance)
+  ok  two-enemy guard leaves hero at 91 HP
+  ok  victory reached
+  ok  commands after victory are rejected
+  ok  reason is combat_over
+  ok  terminal combat cannot be mutated
+  ok  hero death -> defeat
+  ok  hero hp clamps at zero
+  ok  defeat event emitted
+  ok  telegraph set after three normal attacks
+  ok  telegraph needs exactly three normal attacks
+  ok  3 guarded normal hits: 9 -> 4 each
+  ok  telegraph consumed by the heavy attack
+  ok  heavy attack damage event exists
+  ok  heavy attack is marked heavy
+  ok  heavy damage is doubled attack, guarded with floor
+  ok  heavy hit applied exactly once
+  ok  the heavy hit consumed the active guard
+  ok  default round cap pinned at 50
+  ok  guard 1 accepted before the cap
+  ok  guard 2 accepted before the cap
+  ok  guard 3 accepted before the cap
+  ok  round cap ends the combat explicitly
+  ok  stall is never a win
+  ok  stalled combat rejects further commands
+  ok  scripted action accepted: attack
+  ok  scripted action accepted: skill
+  ok  scripted action accepted: attack
+  ok  scripted sequence wins
+  ok  same inputs -> identical final state
+  ok  same inputs -> identical event stream
+  ok  event sequence numbers strictly increase from 1
+ALL TESTS PASSED (96 checks)
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T13:54:10Z

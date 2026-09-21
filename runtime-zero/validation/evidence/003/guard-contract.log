@@ -1,0 +1,22 @@
+start=2026-09-21T13:54:10Z
+collector: validation/evidence/collect.zsh (committed)
+probe: guard_contract 
+---
+step: source tools/env.sh
+  command: source tools/env.sh 
+  exit_code=0
+
+step: godot --headless --path game --script <validator guard_contract.gd>
+  command: godot --headless --path game --script $HOME/workspace/gaming/runtime-zero/validation/guard_contract.gd 
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+GUARD CONTRACT: expected hits=[3, 6], actual=[3, 6]
+GUARD CONTRACT: expected hero_hp=91, actual=91
+INPUT STATE UNCHANGED: true
+GUARD CONTRACT PASSED
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T13:54:10Z

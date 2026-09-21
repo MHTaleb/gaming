@@ -1,0 +1,22 @@
+start=2026-09-21T13:54:02Z
+collector: validation/evidence/collect.zsh (committed)
+probe: path_stability 
+---
+step: source tools/env.sh (export selected paths)
+  command: source tools/env.sh 
+  exit_code=0
+
+-- bash: two activations --
+bash first : $HOME/.nvm/versions/node/v22.23.2/bin:$HOME/.local/bin:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:$HOME/.vscode-server/bin/7debcd0e2acdea1c52de81bf9ee1620444407dda/bin/remote-cli:$HOME/.sdkman/candidates/java/current/bin:$HOME/.nvm/versions/node/v20.20.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Program Files/Docker/Docker/resources/bin:/mnt/c/Program Files/usbipd-win/:/mnt/c/Users/<winuser>/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/<winuser>/AppData/Local/Programs/Microsoft VS Code/bin
+bash second: $HOME/.nvm/versions/node/v22.23.2/bin:$HOME/.local/bin:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:$HOME/.vscode-server/bin/7debcd0e2acdea1c52de81bf9ee1620444407dda/bin/remote-cli:$HOME/.sdkman/candidates/java/current/bin:$HOME/.nvm/versions/node/v20.20.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Program Files/Docker/Docker/resources/bin:/mnt/c/Program Files/usbipd-win/:/mnt/c/Users/<winuser>/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/<winuser>/AppData/Local/Programs/Microsoft VS Code/bin
+bash occurrences: node-dir first=1 second=1 | user-bin first=1 second=1
+bash: stable (identical PATH, each selected dir exactly once)
+-- zsh: two activations --
+zsh first : $HOME/.nvm/versions/node/v22.23.2/bin:$HOME/.local/bin:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:$HOME/.vscode-server/bin/7debcd0e2acdea1c52de81bf9ee1620444407dda/bin/remote-cli:$HOME/.sdkman/candidates/java/current/bin:$HOME/.nvm/versions/node/v20.20.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Program Files/Docker/Docker/resources/bin:/mnt/c/Program Files/usbipd-win/:/mnt/c/Users/<winuser>/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/<winuser>/AppData/Local/Programs/Microsoft VS Code/bin
+zsh second: $HOME/.nvm/versions/node/v22.23.2/bin:$HOME/.local/bin:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/debugCommand:$HOME/.vscode-server/data/User/globalStorage/github.copilot-chat/copilotCli:$HOME/.vscode-server/bin/7debcd0e2acdea1c52de81bf9ee1620444407dda/bin/remote-cli:$HOME/.sdkman/candidates/java/current/bin:$HOME/.nvm/versions/node/v20.20.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/Program Files (x86)/NVIDIA Corporation/PhysX/Common:/mnt/c/Program Files/Docker/Docker/resources/bin:/mnt/c/Program Files/usbipd-win/:/mnt/c/Users/<winuser>/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/<winuser>/AppData/Local/Programs/Microsoft VS Code/bin
+zsh occurrences: node-dir first=1 second=1 | user-bin first=1 second=1
+zsh: stable (identical PATH, each selected dir exactly once)
+
+---
+exit_code=0
+end=2026-09-21T13:54:02Z

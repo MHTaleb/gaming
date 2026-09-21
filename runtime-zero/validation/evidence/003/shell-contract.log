@@ -1,0 +1,20 @@
+start=2026-09-21T13:54:02Z
+collector: validation/evidence/collect.zsh (committed)
+probe: shell_contract 
+---
+step: python3 validation/launcher_shell_contract.py
+  command: python3 validation/launcher_shell_contract.py 
+PASS bash selected entries occur once; other entries/spaces preserved; repeat stable
+expected each activation: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 1: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 2: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+PASS zsh selected entries occur once; other entries/spaces preserved; repeat stable
+expected each activation: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 1: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+activation 2: <FIXTURE>/.nvm/versions/node/v22.23.2/bin:<FIXTURE>/.local/bin:<FIXTURE>/other directory/bin:/usr/bin:/bin
+  exit_code=0
+
+
+---
+exit_code=0
+end=2026-09-21T13:54:02Z
