@@ -417,4 +417,10 @@ func _test_title_scene_links_to_combat() -> void:
 		text = label.text
 	_expect(text.contains("ENTER"), "start hint names the key")
 	_expect(RZCapture.requested_path() == "", "capture path is empty without the flag")
+	var capture_err: Error = await RZCapture.save_after_frames(root,
+		"user://rz_capture_probe.png")
+	_expect(capture_err == ERR_UNAVAILABLE,
+		"headless capture refuses instead of faking a saved file")
+	_expect(not FileAccess.file_exists("user://rz_capture_probe.png"),
+		"the refused capture writes no file")
 	_close(node)

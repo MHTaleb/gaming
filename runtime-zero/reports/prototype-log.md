@@ -157,3 +157,31 @@ Checks run (pinned Godot via `source tools/env.sh`):
 Capture hashes (sha256, this run; captures are cosmetic snapshots — the deterministic artifact
 is the printed state_hash): `combat-1-attack.png` `f29bf47d…6d89`, `combat-2-guard.png`
 `2d5a6b03…9d32`, `combat-3-skill.png` `4b7b7616…ed70`.
+
+## RZ-031 — owner demo runner (2026-09-21)
+
+- `tools/demo.sh`: `run [title|combat]`, `capture <png> [title|combat]`, `smoke <dir>`; activates
+  `tools/env.sh` itself (pinned Godot 4.7.2), requires a display, adds no gameplay state, network
+  or credentials, and only plays the current build (RZ-012 gate untouched).
+- `docs/DEMO.md`: one-command instructions, the exact playable scope at this milestone, capture
+  workflow and runner guarantees.
+- Committed milestone captures: `validation/demo/20260921-title.png` (sha256 `fb5055c9…162f`) and
+  `validation/demo/20260921-combat/` (attack/guard/skill; combat frames are cosmetic snapshots,
+  the deterministic artifact is `state_hash 8fcedb79…db9`). `validation/demo/MANIFEST.md` ties
+  them to their implementation commit.
+- False-success bug found and fixed while building this: under `--headless` the dummy renderer has
+  no viewport texture, and the capture helper reported success while writing nothing (a `null`
+  result was coerced to `OK`). `capture.gd` now refuses loudly (`ERR_UNAVAILABLE`, exit 1, no
+  file) and `presentation_tests.gd` pins that behavior (suite: 90 → **92 checks**).
+
+Checks run (pinned Godot via `source tools/env.sh`):
+
+| Command | Result |
+|---|---|
+| `tools/demo.sh run --quit-after 300` | exit 0 — title window on WSLg |
+| `tools/demo.sh run combat --quit-after 300` | exit 0 — combat window on WSLg |
+| `tools/demo.sh capture validation/demo/20260921-title.png` | exit 0 — PNG + sha256; byte-identical from a fresh `env -i` shell |
+| `tools/demo.sh smoke validation/demo/20260921-combat` | exit 0 — 3 frames, round=4, hero 85/100, energy 4/6, state_hash `8fcedb79…` |
+| `godot --headless --path game -- --capture /tmp/rz-headless.png` | exit 1 — clear refusal, no file written |
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 92 checks |
+| `node tools/verify.js` | exit 0 — specification verification passes with RZ-031 done |

@@ -23,6 +23,15 @@ node tools/serve.js
 
 Open http://127.0.0.1:8090/backlog/ for the board. It reads JSON and does not write changes back. Edit and commit `backlog/backlog.json` to change tickets.
 
+To try the current build yourself:
+
+```bash
+source tools/env.sh
+tools/demo.sh run            # title screen; ENTER/click starts the combat encounter
+```
+
+Capture modes for the remote reviewer and what is playable at each milestone: [docs/DEMO.md](docs/DEMO.md) and [validation/demo/MANIFEST.md](validation/demo/MANIFEST.md).
+
 ## Specification map
 
 | File | Order to the agent |

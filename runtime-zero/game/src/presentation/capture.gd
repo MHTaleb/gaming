@@ -19,9 +19,14 @@ static func requested_path() -> String:
 	return ""
 
 ## Waits for `frames` rendered frames so the scene composites before the grab,
-## then writes the PNG. Coroutine: call with await.
+## then writes the PNG. Coroutine: call with await. Fails loudly under the
+## headless/dummy renderer (there is no viewport texture there) instead of
+## reporting a saved file that was never written.
 static func save_after_frames(viewport: Viewport, path: String,
 		frames: int = 5) -> Error:
+	if DisplayServer.get_name() == "headless":
+		printerr("capture: headless mode has no framebuffer; run with a display (WSLg)")
+		return ERR_UNAVAILABLE
 	for frame in maxi(1, frames):
 		await viewport.get_tree().process_frame
 	if not (path.begins_with("res://") or path.begins_with("user://")):
@@ -29,4 +34,7 @@ static func save_after_frames(viewport: Viewport, path: String,
 		if not parent.is_empty():
 			DirAccess.make_dir_recursive_absolute(parent)
 	var image: Image = viewport.get_texture().get_image()
+	if image == null:
+		printerr("capture: viewport texture unavailable")
+		return ERR_UNAVAILABLE
 	return image.save_png(path)
