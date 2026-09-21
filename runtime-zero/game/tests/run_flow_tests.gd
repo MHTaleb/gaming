@@ -167,10 +167,16 @@ func _test_loadout_scene_flow() -> void:
 	begin.pressed.emit()
 	await process_frame
 	await process_frame
-	_expect(current_scene != null and current_scene.name == "Combat",
-		"begin switches to the combat scene")
+	_expect(current_scene != null and current_scene.name == "Map",
+		"begin opens the work map")
 	_expect(run.active and run.encounter_id == "encounter_1"
 		and run.equipment_id == "guard_plating", "the run is active with the chosen loadout")
+	current_scene.instant_motion = true
+	current_scene.call("_walk_to_disc", 3)
+	await process_frame
+	await process_frame
+	_expect(current_scene != null and current_scene.name == "Combat",
+		"selecting the ticket stone starts the war")
 	_expect(current_scene.get_node("%HeroHPText").text == "125 / 125",
 		"the chosen guard plating is applied in the fight")
 	# Reopening the loadout preselects the remembered equipment (RZ-009).
@@ -212,6 +218,12 @@ func _test_full_campaign_through_scenes() -> void:
 	current_scene.get_node("%NextButton").pressed.emit()
 	await process_frame
 	await process_frame
+	_expect(current_scene != null and current_scene.name == "Map",
+		"the next fight goes back to the work map")
+	current_scene.instant_motion = true
+	current_scene.call("_walk_to_disc", 3)
+	await process_frame
+	await process_frame
 	_expect(current_scene != null and current_scene.name == "Combat"
 		and current_scene.get_node("%EnemiesBox").get_child_count() == 2,
 		"the next fight is encounter_2 with two enemies")
@@ -224,6 +236,12 @@ func _test_full_campaign_through_scenes() -> void:
 	await process_frame
 	_expect(run.encounter_id == "encounter_3", "encounter_2 clear advances to the boss")
 	current_scene.get_node("%NextButton").pressed.emit()
+	await process_frame
+	await process_frame
+	_expect(current_scene != null and current_scene.name == "Map",
+		"the walk continues to the boss stop")
+	current_scene.instant_motion = true
+	current_scene.call("_walk_to_disc", 3)
 	await process_frame
 	await process_frame
 	_expect(current_scene != null and current_scene.name == "Combat"

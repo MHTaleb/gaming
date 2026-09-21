@@ -392,3 +392,16 @@ Checks run (pinned Godot via `source tools/env.sh`):
 | `tools/demo.sh run` (default, 30 s) | survived on llvmpipe, 0 crashes |
 | mouse flow: Start → card → Begin → 4 attacks → result → next → Quit | `demo-exit=0` |
 | `tools/demo.sh capture` / `smoke` under the new default | work; smoke `state_hash` 8fcedb79… unchanged |
+
+## RZ-034 / RZ-035 — battlefield war + region map with mini map (2026-09-21 night)
+
+- Owner supplied Obsidian Knight references (region stages with stone routes; war scene with fighters, HP pills, banner, action dock).
+- RZ-034 (war presentation): battlefield staging (hero left / hostiles right, HP pills under fighters, mission banner, centered action dock, log panel); procedural fighter sprites via tools/make_combat_art.gd; impact pulse + banner flourish (reduced-motion aware).
+- RZ-035 (work map): one region per screen with a winding stone route (RouteBoard canvas art), HUD chips, dock buttons (CONTRACTS/CHESTS/INVENTORY/ABANDON), region banner + backdrop tint/pan, and a **mini map**; selecting the region ticket stone walks the engineer there and **starts the war immediately**.
+
+| Command | Result |
+|---|---|
+| `godot --headless --path game --script res://tests/map_tests.gd` | exit 0 — 28 checks (minimap shown, select-ticket-stone starts the war, locks, motion modes) |
+| `godot --headless --path game --script res://tests/run_flow_tests.gd` | exit 0 — 48 checks (loadout → map → war ×3, result → map → next war) |
+| `godot --headless --path game --script res://tests/presentation_tests.gd` | exit 0 — 112 checks (battlefield layout incl. backdrop) |
+| captures | `validation/evidence/034/` battlefield ×2 + generator log; `validation/evidence/035/` map ×2 with mini map |

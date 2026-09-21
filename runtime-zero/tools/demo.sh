@@ -9,8 +9,9 @@
 #       Opens the current build on the desktop (WSLg). Ctrl+C/Q to quit.
 #       Verification example: tools/demo.sh run --quit-after 300
 #
-#   tools/demo.sh capture <png-path> [title|combat]
-#       Saves one PNG of the scene, prints its sha256 and exits.
+#   tools/demo.sh capture <png-path> [title|combat|map]
+#       Saves one PNG of the scene, prints its sha256 and exits. The map capture
+#       starts a demo run so the work map has tickets to show.
 #
 #   tools/demo.sh smoke <dir>
 #       Scripted Attack/Guard/Skill run of the combat scene: one PNG per action
@@ -90,13 +91,15 @@ capture)
 	fi
 	PNG="$1"
 	SCENE="title"
-	if [[ $# -gt 1 && ( "$2" == "title" || "$2" == "combat" ) ]]; then
+	if [[ $# -gt 1 && ( "$2" == "title" || "$2" == "combat" || "$2" == "map" ) ]]; then
 		SCENE="$2"
 	fi
 	mkdir -p "$(dirname "$PNG")"
 	ABS="$(cd "$(dirname "$PNG")" && pwd)/$(basename "$PNG")"
 	if [[ "$SCENE" == "combat" ]]; then
 		godot --path game res://scenes/combat.tscn -- --capture "$ABS"
+	elif [[ "$SCENE" == "map" ]]; then
+		godot --path game res://scenes/map.tscn -- --demo-run --capture "$ABS"
 	else
 		godot --path game -- --capture "$ABS"
 	fi

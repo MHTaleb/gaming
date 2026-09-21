@@ -9,6 +9,7 @@ extends Control
 const TITLE_SCENE := "res://scenes/title.tscn"
 const LOADOUT_SCENE := "res://scenes/loadout.tscn"
 const COMBAT_SCENE := "res://scenes/combat.tscn"
+const MAP_SCENE := "res://scenes/map.tscn"
 
 func _ready() -> void:
 	print("[rz] result ready: outcome=%s complete=%s" % [RZRun.last_outcome, str(RZRun.run_complete)])
@@ -53,9 +54,11 @@ func _show_victory() -> void:
 		str(next.get("title", "")), RZRun.encounter_number(), RZRun.encounter_count()]
 	%NextButton.visible = true
 
+## Onward goes back to the work map (RZ-035): the engineer walks to the next
+## client ticket instead of jumping straight into the next fight.
 func _next() -> void:
 	RZAudio.play("ui_click")
-	get_tree().change_scene_to_file(COMBAT_SCENE)
+	get_tree().change_scene_to_file(MAP_SCENE)
 
 func _retry() -> void:
 	RZAudio.play("ui_click")

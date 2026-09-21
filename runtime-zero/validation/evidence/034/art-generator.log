@@ -1,0 +1,10 @@
+# RZ-034 character art generator: two runs must be identical
+# date: 2026-09-21; engine: 4.7.2.stable.official.ed1daf0bf
+
+combat art: res://assets/characters/operator.png sha256=86fa25c7b9deee30705b42f5a5034fb25738eb3b4991823cf0a32e3730a23160
+combat art: res://assets/characters/memory_leak.png sha256=f6c4f093cefd2cf4c19c0e9c1f8a7f047c097b52f7573cc680836fce2b062ae7
+combat art: res://assets/characters/server_cathedral.png sha256=7896ae2a6658913684569e9b571cad42e163a876263e10b3d6a5cd0949fbdc5b
+--- second run ---
+combat art: res://assets/characters/operator.png sha256=86fa25c7b9deee30705b42f5a5034fb25738eb3b4991823cf0a32e3730a23160
+combat art: res://assets/characters/memory_leak.png sha256=f6c4f093cefd2cf4c19c0e9c1f8a7f047c097b52f7573cc680836fce2b062ae7
+combat art: res://assets/characters/server_cathedral.png sha256=7896ae2a6658913684569e9b571cad42e163a876263e10b3d6a5cd0949fbdc5b

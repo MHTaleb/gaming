@@ -330,22 +330,25 @@ func _test_scene_widgets_and_keyboard() -> void:
 	_expect(not attack.disabled and not guard.disabled and not skill.disabled,
 		"all three actions start available")
 	_expect(node.get_node("%QuitButton") != null, "combat header has a Quit button")
-	var hero_chip: ColorRect = node.get_node("%HeroChip")
-	_expect(hero_chip.custom_minimum_size.x >= 48.0,
-		"hero chip is a sized placeholder character")
-	var chip: ColorRect = null
-	for child in row.find_children("Chip", "ColorRect", true, false):
+	var hero_chip: TextureRect = node.get_node("%HeroChip")
+	_expect(hero_chip.texture != null and hero_chip.custom_minimum_size.x >= 48.0,
+		"hero shows a character sprite at a readable size")
+	var chip: TextureRect = null
+	for child in row.find_children("Chip", "TextureRect", true, false):
 		chip = child
-	_expect(chip != null, "enemy rows show a placeholder character chip")
+	_expect(chip != null and chip.texture != null,
+		"enemy rows show a character sprite")
 	var boss_node := await _open_combat()
 	boss_node.session = RZCombatSession.start("encounter_3")
 	boss_node.call("_refresh_all")
 	var boss_row: Node = boss_node.get_node("%EnemiesBox").get_child(0)
-	var boss_chip: ColorRect = null
-	for child in boss_row.find_children("Chip", "ColorRect", true, false):
+	var boss_chip: TextureRect = null
+	for child in boss_row.find_children("Chip", "TextureRect", true, false):
 		boss_chip = child
-	_expect(boss_chip != null and chip != null and boss_chip.color != chip.color,
-		"the boss chip is visually distinct from a normal enemy chip")
+	_expect(boss_chip != null and chip != null and boss_chip.texture != chip.texture,
+		"the boss sprite is distinct from a normal enemy sprite")
+	_expect(node.get_node("Backdrop").texture != null,
+		"the fight is staged on an arena backdrop")
 	_close(boss_node)
 	_close(node)
 

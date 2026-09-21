@@ -7,16 +7,21 @@ repository (the runner activates the pinned toolchain itself via
 
 ## What is playable right now (2026-09-21)
 
-- **The full three-encounter campaign.** Title (with procedural key art) →
-  **equipment loadout** (pick one of three, effect explained) → **encounter 1**
-  ("Intrusion") → reward result → **encounter 2** ("Load Spike", two enemies) →
-  reward result → **encounter 3** ("Server Cathedral" boss) → **RUN COMPLETE**
-  with play-again. Retry and title flows reset cleanly; rewards are granted
-  exactly once per run.
-- **Combat**: Attack, Guard (single-use halving), Skill (3 energy, double
-  attack), target selection, enemy intent, ordered combat log, HP/energy bars
-  with text, win/lose/round-cap states. Placeholder character chips identify
-  hero (blue), enemies (orange) and boss (violet).
+- **The full three-region campaign with a work map.** Title (with procedural key
+  art) → **equipment loadout** (pick one of three, effect explained) → **work
+  map** for region 1 ("Intrusion") — a stage with a winding stone route, a
+  region banner, HUD chips and a **mini map** → **tap the glowing TICKET stone**
+  and the engineer walks there and the war starts → reward result → next
+  region's map ("Load Spike") → "Server Cathedral" boss → **RUN COMPLETE** with
+  play-again. Later stones are locked until their region unlocks; cleared
+  stones stay walkable. Retry and title flows reset cleanly; rewards are
+  granted exactly once per run.
+- **War (combat)**: battlefield staging per the owner's reference — the
+  Operator left and the hostiles right, HP bars under each fighter (green pill
+  for the hero, red pills for enemies), intent text, a mission banner, a
+  centered action dock (Attack / Guard / Skill) and a combat log panel.
+  Attack, Guard (single-use halving), Skill (3 energy, double attack), target
+  selection (tap a hostile), win/lose/round-cap states.
 - **Between encounters** the hero is fully healed and refilled (each fight is a
   fresh session).
 - **Input**: mouse, touch (48 px targets), keyboard (`1`/`2`/`3`, Tab/Enter),
@@ -34,14 +39,16 @@ repository (the runner activates the pinned toolchain itself via
 
 **Not playable yet** (later tickets): real
 AI-generated art and music (gated phases RZ-016+, RZ-023+), Android build.
-The combat core, the campaign flow, saves, sound and the replay-verified rule
-set (RZ-011) are all in place; the next gate is **your playtest (RZ-012)**.
+The work map, the select-to-fight flow, the battlefield combat, saves, sound
+and the replay-verified rule set (RZ-011) are all in place; the next gate is
+**your playtest (RZ-012)**.
 
 ## Run it
 
 ```sh
-tools/demo.sh run            # title screen; press Enter/click to fight
-tools/demo.sh run combat     # straight into the combat scene
+tools/demo.sh run            # title: Enter -> equipment -> work map; tap the glowing
+                             # TICKET stone and the engineer walks there; the war starts
+tools/demo.sh run combat     # straight into the war scene
 ```
 
 Quit with Ctrl+C in the terminal. On this laptop the window opens through WSLg;
@@ -59,19 +66,24 @@ more useful than careful analysis:
    click **Start**).
 2. Pick one of the three equipment cards; note whether the choice felt
    meaningful before you knew the fights.
-3. Fight all three encounters (Attack / Guard / Skill, pick targets). Note:
-   - **Combat feel:** is the rhythm (attack → enemy reply → telegraph → your
+3. On the **work map**: walk the stones (tap one ahead of the engineer). Does
+   the stone route + mini map make the region readable? Tapping the glowing
+   TICKET stone walks the engineer there and **starts the war** — did that feel
+   right, or should there be a confirm step?
+4. Fight the three regions (Attack / Guard / Skill, tap a hostile to target
+   it). Note:
+   - **War feel:** is the rhythm (attack → enemy reply → telegraph → your
      turn) readable? Does Guard/Skill feel worth using?
-   - **Pacing:** too long, too short, or right? Encounter 2 has two enemies;
+   - **Pacing:** too long, too short, or right? Region 2 has two enemies;
      the boss telegraphs a heavy hit every third normal attack.
-   - **Readability:** HP/energy numbers, the combat log, enemy intent text —
-     anything confusing or missing?
-   - **View:** the placeholder key art, character chips (blue hero, orange
-     enemies, violet boss) and layout — what bothers you most?
-4. Finish the run (RUN COMPLETE or defeat), then try **Retry** once.
-5. Toggle **Mute** and **reduced motion** in combat; quit in-game, relaunch
-   with `tools/demo.sh run` again and check the toggles and your last equipment
-   were remembered.
+   - **Readability:** HP pills under the fighters, the combat log, enemy intent
+     text — anything confusing or missing?
+   - **View:** the battlefield layout, the procedural sprites and the banner —
+     what bothers you most?
+5. Finish the run (RUN COMPLETE or defeat), then try **Retry** once.
+6. Toggle **Mute** and **MOTION** (reduced motion: instant walks); quit
+   in-game, relaunch with `tools/demo.sh run` again and check the toggles and
+   your last equipment were remembered.
 6. Tell the agent your impressions (or write them in
    `reports/owner-prototype-review.md`). The agent records them verbatim and
    files corrective tasks; nothing in the real-art/audio phases starts before

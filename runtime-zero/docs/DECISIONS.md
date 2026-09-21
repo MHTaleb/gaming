@@ -15,6 +15,7 @@ Treat status as part of every requirement. Record new decisions with date, autho
 | D-009 | Unresolved | Final combat model, movement/exploration, campaign size, narrative, monetization, final art style and target Android device range. | RZ-012 before content expansion |
 | D-010 | Partially probed, 2026-09-20 | The installed client executed real file/terminal/edit tool calls in the implementation session (evidence: `validation/evidence/001-response/client-tool.log`). Which backend served individual responses is user-stated (DeepSeek V4.1 Flash selected), not independently verifiable from inside a session; ordinary terminal access is not MCP functionality. | RZ-021 for MCP exposure; validator review of the probe evidence |
 | D-011 | Deferred | Multiplayer, backend, ads, purchases, LoRA training, offline local coding model, store release. | Separate owner-authorized scope |
+| D-012 | Owner-directed, 2026-09-21 (implemented RZ-034/RZ-035) | Region **work map**: each region is one screen with a winding stone route and a mini map; tapping the region's TICKET stone walks the engineer there and **starts the war** immediately. **Battlefield combat** presentation: fighters staged hero-left/enemies-right with HP bars, mission banner and a centered action dock (reference: owner-supplied Obsidian Knight screenshots). | Refines D-009 (movement/exploration = point-to-point map travel, not open world) and the D-007 view |
 
 ## Missing context rule
 

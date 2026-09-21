@@ -1,6 +1,41 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/presentation/combat.gd" id="1_combat"]
+[ext_resource type="Texture2D" path="res://assets/characters/operator.png" id="2_hero"]
+[ext_resource type="Texture2D" path="res://assets/branding/landing_background.png" id="3_stage"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_bg"]
+bg_color = Color(0.05, 0.06, 0.1, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.32, 0.82, 0.5, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_energy_fill"]
+bg_color = Color(1, 0.72, 0.3, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_banner"]
+bg_color = Color(0.09, 0.08, 0.06, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.72, 0.3, 0.55)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="Combat" type="Control"]
 layout_mode = 3
@@ -18,237 +53,333 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.06, 0.071, 0.09, 1)
+color = Color(0.05, 0.06, 0.09, 1)
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="Backdrop" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 16
+mouse_filter = 2
+modulate = Color(0.7, 0.75, 0.9, 0.35)
+expand_mode = 1
+stretch_mode = 6
+texture = ExtResource("3_stage")
 
-[node name="Column" type="VBoxContainer" parent="Margin"]
+[node name="Ground" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_top = 0.55
+anchor_right = 1.0
+anchor_bottom = 0.82
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.07, 0.09, 0.14, 0.85)
+
+[node name="Header" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 18
+
+[node name="HeaderBox" type="HBoxContainer" parent="Header"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 
-[node name="Header" type="HBoxContainer" parent="Margin/Column"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="EncounterLabel" type="Label" parent="Margin/Column/Header"]
+[node name="EncounterLabel" type="Label" parent="Header/HeaderBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 text = "Encounter"
 
-[node name="TurnLabel" type="Label" parent="Margin/Column/Header"]
+[node name="TurnLabel" type="Label" parent="Header/HeaderBox"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 4
 text = "Round 1"
 
-[node name="ReducedMotion" type="CheckBox" parent="Margin/Column/Header"]
+[node name="ReducedMotion" type="CheckBox" parent="Header/HeaderBox"]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Disable flashes and floating numbers (accessibility)"
 text = "Reduced motion"
 
-[node name="MuteCheck" type="CheckBox" parent="Margin/Column/Header"]
+[node name="MuteCheck" type="CheckBox" parent="Header/HeaderBox"]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Silence placeholder sound cues"
 text = "Mute"
 
-[node name="TitleButton" type="Button" parent="Margin/Column/Header"]
+[node name="TitleButton" type="Button" parent="Header/HeaderBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Title"
 
-[node name="QuitButton" type="Button" parent="Margin/Column/Header"]
+[node name="QuitButton" type="Button" parent="Header/HeaderBox"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Quit"
 
-[node name="StatusLabel" type="Label" parent="Margin/Column"]
+[node name="StatusLabel" type="Label" parent="."]
 unique_name_in_owner = true
-layout_mode = 2
-autowrap_mode = 3
+layout_mode = 1
+anchor_right = 1.0
+offset_left = 18.0
+offset_top = 48.0
+offset_bottom = 72.0
+grow_horizontal = 2
+mouse_filter = 2
 text = ""
 
-[node name="HeroPanel" type="PanelContainer" parent="Margin/Column"]
-layout_mode = 2
+[node name="Stage" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
-[node name="HeroMargin" type="MarginContainer" parent="Margin/Column/HeroPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 8
-
-[node name="HeroBox" type="VBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin"]
-layout_mode = 2
+[node name="HeroCard" type="VBoxContainer" parent="Stage"]
+layout_mode = 1
+anchor_left = 0.03
+anchor_top = 0.17
+anchor_right = 0.27
+anchor_bottom = 0.80
 theme_override_constants/separation = 6
 
-[node name="HeroTop" type="HBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+[node name="HeroChip" type="TextureRect" parent="Stage/HeroCard"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(128, 128)
 layout_mode = 2
-theme_override_constants/separation = 10
+size_flags_horizontal = 4
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+texture = ExtResource("2_hero")
 
-[node name="HeroChip" type="ColorRect" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HeroTop"]
+[node name="HeroNameLabel" type="Label" parent="Stage/HeroCard"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(56, 56)
-color = Color(0.45, 0.7, 1, 1)
-
-[node name="HeroNameLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HeroTop"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 4
 text = "Operator"
+horizontal_alignment = 1
 
-[node name="HPRow" type="HBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+[node name="HPRow" type="HBoxContainer" parent="Stage/HeroCard"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HPLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HPRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(70, 0)
-text = "HP"
-
-[node name="HeroHPBar" type="ProgressBar" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HPRow"]
+[node name="HeroHPBar" type="ProgressBar" parent="Stage/HeroCard/HPRow"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(260, 22)
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 22)
 show_percentage = false
 max_value = 100.0
 value = 100.0
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
 
-[node name="HeroHPText" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/HPRow"]
+[node name="HeroHPText" type="Label" parent="Stage/HeroCard/HPRow"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 4
 text = "100 / 100"
 
-[node name="EnergyRow" type="HBoxContainer" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+[node name="EnergyRow" type="HBoxContainer" parent="Stage/HeroCard"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="EnergyLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/EnergyRow"]
-layout_mode = 2
-custom_minimum_size = Vector2(70, 0)
-text = "Energy"
-
-[node name="HeroEnergyBar" type="ProgressBar" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/EnergyRow"]
+[node name="HeroEnergyBar" type="ProgressBar" parent="Stage/HeroCard/EnergyRow"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(260, 22)
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 18)
 show_percentage = false
 max_value = 6.0
 value = 6.0
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_energy_fill")
 
-[node name="HeroEnergyText" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox/EnergyRow"]
+[node name="HeroEnergyText" type="Label" parent="Stage/HeroCard/EnergyRow"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 4
 text = "6 / 6"
 
-[node name="HeroGuardLabel" type="Label" parent="Margin/Column/HeroPanel/HeroMargin/HeroBox"]
+[node name="HeroGuardLabel" type="Label" parent="Stage/HeroCard"]
 unique_name_in_owner = true
 layout_mode = 2
 text = ""
+horizontal_alignment = 1
 
-[node name="EnemiesIntro" type="Label" parent="Margin/Column"]
-layout_mode = 2
-text = "Enemies - intent shows the next enemy action; Target chooses who your attack lands on."
+[node name="EnemiesBox" type="HBoxContainer" parent="Stage"]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_left = 0.34
+anchor_top = 0.17
+anchor_right = 0.98
+anchor_bottom = 0.82
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 26
+alignment = 2
 
-[node name="EnemiesBox" type="VBoxContainer" parent="Margin/Column"]
+[node name="Banner" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.28
+anchor_top = 0.795
+anchor_right = 0.72
+anchor_bottom = 0.875
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
+
+[node name="BannerLabel" type="Label" parent="Banner"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_font_sizes/font_size = 22
+text = "Encounter"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="LogTitle" type="Label" parent="Margin/Column"]
+[node name="LogPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchor_top = 0.885
+anchor_right = 0.27
+anchor_bottom = 0.985
+grow_vertical = 2
+
+[node name="LogMargin" type="MarginContainer" parent="LogPanel"]
 layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="LogColumn" type="VBoxContainer" parent="LogPanel/LogMargin"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="LogTitle" type="Label" parent="LogPanel/LogMargin/LogColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
 text = "Combat log"
 
-[node name="LogScroll" type="ScrollContainer" parent="Margin/Column"]
+[node name="LogScroll" type="ScrollContainer" parent="LogPanel/LogMargin/LogColumn"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="LogBox" type="VBoxContainer" parent="Margin/Column/LogScroll"]
+[node name="LogBox" type="VBoxContainer" parent="LogPanel/LogMargin/LogColumn/LogScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="SkillHintLabel" type="Label" parent="Margin/Column"]
+[node name="SkillHintLabel" type="Label" parent="."]
 unique_name_in_owner = true
-layout_mode = 2
+layout_mode = 1
+anchor_left = 0.27
+anchor_top = 0.88
+anchor_right = 0.73
+anchor_bottom = 0.915
+grow_horizontal = 2
+mouse_filter = 2
 autowrap_mode = 3
+horizontal_alignment = 1
 text = ""
 
-[node name="Actions" type="HBoxContainer" parent="Margin/Column"]
-layout_mode = 2
-theme_override_constants/separation = 12
+[node name="Actions" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.27
+anchor_top = 0.92
+anchor_right = 0.73
+anchor_bottom = 0.995
+grow_horizontal = 2
+alignment = 1
+theme_override_constants/separation = 14
 
-[node name="AttackButton" type="Button" parent="Margin/Column/Actions"]
+[node name="AttackButton" type="Button" parent="Actions"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(170, 48)
+custom_minimum_size = Vector2(170, 52)
 focus_mode = 2
 text = "Attack (1)"
 
-[node name="GuardButton" type="Button" parent="Margin/Column/Actions"]
+[node name="GuardButton" type="Button" parent="Actions"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(170, 48)
+custom_minimum_size = Vector2(170, 52)
 focus_mode = 2
 text = "Guard (2)"
 
-[node name="SkillButton" type="Button" parent="Margin/Column/Actions"]
+[node name="SkillButton" type="Button" parent="Actions"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(170, 48)
+custom_minimum_size = Vector2(170, 52)
 focus_mode = 2
 text = "Skill (3)"
 
-[node name="Spacer" type="Control" parent="Margin/Column/Actions"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="ContinueButton" type="Button" parent="Margin/Column/Actions"]
+[node name="ContinueButton" type="Button" parent="Actions"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-custom_minimum_size = Vector2(170, 48)
+custom_minimum_size = Vector2(170, 52)
 focus_mode = 2
 text = "Continue"
 
-[node name="RetryButton" type="Button" parent="Margin/Column/Actions"]
+[node name="RetryButton" type="Button" parent="Actions"]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(170, 48)
+custom_minimum_size = Vector2(170, 52)
 focus_mode = 2
 text = "Retry fight"
 
-[node name="KeysHint" type="Label" parent="Margin/Column"]
-layout_mode = 2
-text = "Keys: 1 Attack / 2 Guard / 3 Skill - Tab moves focus, Enter activates. Touch targets >= 48 px."
+[node name="KeysHint" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.72
+anchor_top = 0.9
+anchor_right = 1.0
+anchor_bottom = 0.985
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Keys: 1 Attack / 2 Guard / 3 Skill - Tab focuses, Enter activates."
+autowrap_mode = 3
+horizontal_alignment = 2
+vertical_alignment = 2
 
-[node name="TerminalTitle" type="Label" parent="Margin/Column"]
+[node name="TerminalTitle" type="Label" parent="."]
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
+layout_mode = 1
+anchor_left = 0.2
+anchor_top = 0.3
+anchor_right = 0.8
+anchor_bottom = 0.4
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 40
 text = "VICTORY"
 horizontal_alignment = 1
 
-[node name="TerminalDetail" type="Label" parent="Margin/Column"]
+[node name="TerminalDetail" type="Label" parent="."]
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
+layout_mode = 1
+anchor_left = 0.2
+anchor_top = 0.4
+anchor_right = 0.8
+anchor_bottom = 0.5
+grow_horizontal = 2
+mouse_filter = 2
 autowrap_mode = 3
 text = "All enemies defeated."
 horizontal_alignment = 1

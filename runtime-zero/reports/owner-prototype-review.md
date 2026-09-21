@@ -42,3 +42,43 @@ Per the checklist in `docs/DEMO.md`: combat feel, pacing, readability, view/art,
 scope; plus persistence checks (mute/reduced motion/last equipment after relaunch).
 Record the owner's answers here, then create corrective tasks and decide whether
 `docs/DECISIONS.md` needs revisions before the art/audio phases unlock.
+
+## Feedback round 2 (2026-09-21, evening, after the RZ-033 fix)
+
+4. Verbatim: *"i the spec is there any mention about the gaming experiance we seek ?
+   I want to build a mmorpg like obsidient knight on playstore, the character is an
+   engeneer that goes from company to company and win chalenges. I see cubes and
+   buttons, where is my expected gaming experience"*
+   - Reference located: "Obsidian Knight — RPG Games" (ActFirst Games, 1M+ installs;
+     Play Store tags: idle RPG, roguelike, single-player, stylized, offline; ads +
+     in-app purchases; reviews describe platform/idle/turn-based mixing, heavy gear
+     and stat progression).
+   - Experience gap acknowledged: the current build is the deliberate engine-first
+     slice (placeholder shapes per docs/GAME_DESIGN.md "Use simple shapes/placeholders
+     initially"). The rich experience targets are exactly the unresolved decisions
+     this review gates: D-009 (combat model, movement, campaign size, narrative,
+     final art style) and D-011 (multiplayer/store release, deferred).
+   - Theme alignment: the stated hero vision (engineer going company to company
+     winning challenges) already matches the provisional D-006 theme and the content
+     (Operator vs Memory Leak / Intrusion / Load Spike / Server Cathedral).
+   - Actions: structured direction questions asked via the review session; answers
+     recorded below as they arrive, then DECISIONS.md and corrective tickets updated.
+
+## Feedback round 3-4 (2026-09-21 night) — map & war direction, implemented
+
+5. Verbatim: *"in the map once you select a spot you start the war as in pictures /
+   I want same experiance we are in map, we have mini map, and once we select a spot
+   we start the war of IT engineer"* — with owner-supplied Obsidian Knight combat
+   screenshots (fighters on a battlefield with HP bars, mission banner, action dock).
+   Earlier reference screenshots (region stages "Grimwood/Ashenfall" with stone
+   routes, HUD chips, dock buttons) drove the region-map redesign.
+   - Implemented (RZ-034/RZ-035): battlefield war staging (Operator left, hostiles
+     right, green/red HP pills, intent, mission banner, centered Attack/Guard/Skill
+     dock, combat log panel); region work map with stone route, HUD chips, dock
+     buttons and a **mini map**; tapping the TICKET stone walks the engineer there
+     and starts the war immediately (no confirm dialog — the CONTRACTS dock button
+     still opens the ticket text).
+   - Evidence: `validation/evidence/034/` (battlefield captures, generator log),
+     `validation/evidence/035/` (map captures with mini map, suite logs).
+   - Direction recorded as D-012 in docs/DECISIONS.md (owner-directed; refines
+     D-009 movement = point-to-point, not open world).

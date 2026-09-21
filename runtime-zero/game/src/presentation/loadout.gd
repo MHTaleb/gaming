@@ -1,15 +1,16 @@
 extends Control
 ## Loadout screen (RZ-008): pick exactly one equipment choice, then begin the
-## three-encounter run. Options and effect text come from the validated content
-## pack; nothing here changes combat rules. Keyboard: Tab moves focus, Enter
-## selects and then begins with the focused Begin button.
+## three-encounter run on the work map (RZ-035). Options and effect text come
+## from the validated content pack; nothing here changes combat rules.
+## Keyboard: Tab moves focus, Enter selects and then begins with the focused
+## Begin button.
 ##
 ## Verification hooks:
 ##   --auto-begin <equipment_id>   select and begin after a short beat
 ##   --capture <path>              save a PNG of this screen and quit
 
 const TITLE_SCENE := "res://scenes/title.tscn"
-const COMBAT_SCENE := "res://scenes/combat.tscn"
+const MAP_SCENE := "res://scenes/map.tscn"
 const AUTO_BEGIN_DELAY := 0.3
 
 var _selected_id := ""
@@ -78,7 +79,7 @@ func _begin() -> void:
 		%SummaryLabel.text = "Could not start: " + ", ".join(result.get("errors", []))
 		return
 	print("[rz] run begin: equipment=%s encounter=%s" % [RZRun.equipment_id, RZRun.encounter_id])
-	get_tree().change_scene_to_file(COMBAT_SCENE)
+	get_tree().change_scene_to_file(MAP_SCENE)
 
 func _back() -> void:
 	get_tree().change_scene_to_file(TITLE_SCENE)

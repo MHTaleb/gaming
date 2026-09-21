@@ -1,0 +1,13 @@
+# RZ-034/RZ-035 local battery — 2026-09-21 night
+# engine: 4.7.2.stable.official.ed1daf0bf
+
+run_tests :: ALL TESTS PASSED (96 checks)
+content_tests :: ALL CONTENT TESTS PASSED (54 checks)
+presentation_tests :: ALL PRESENTATION TESTS PASSED (112 checks)
+run_flow_tests :: ALL RUN FLOW TESTS PASSED (48 checks)
+save_tests :: ALL SAVE TESTS PASSED (24 checks)
+feedback_tests :: ALL FEEDBACK TESTS PASSED (36 checks)
+replay_tests :: ALL REPLAY TESTS PASSED (56 checks)
+map_tests :: ALL MAP TESTS PASSED (28 checks)
+guard :: 1
+verify :: Specification verification passed (35 implementation tickets; game/GPU checks not run).

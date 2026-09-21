@@ -2098,6 +2098,149 @@
           "environment": "opt-out reaches native D3D12 path; crash is intermittent (3 of 4 native runs crashed, this one survived 30 s) - default avoids the path; 2026-09-21"
         }
       ]
+    },
+    {
+      "id": "RZ-034",
+      "title": "War presentation: battlefield staging per owner reference",
+      "epic": "E-GAME",
+      "area": "graphics",
+      "type": "task",
+      "status": "done",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
+      "priority": "P1",
+      "size": "M",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Owner playtest feedback (with Obsidian Knight screenshots): the fight must look like a war. Rebuilt combat presentation as a battlefield: hero left, hostiles right, HP pills under fighters, mission banner, centered action dock and a log panel; procedural fighter sprites.",
+      "why": "Corrective task from RZ-012 feedback round 3: \"I see cubes and buttons\" - the presentation had to read as a game, not placeholders, using the owner-approved procedural art language (no downloads).",
+      "steps": [
+        "Draw deterministic fighter sprites in the landing-art language.",
+        "Restage combat: battlefield layout, HP pills, banner, action dock.",
+        "Add accessible juice (impact pulse, banner flourish) and keep every suite green."
+      ],
+      "outputs": [
+        "tools/make_combat_art.gd",
+        "game/assets/characters/",
+        "game/scenes/combat.tscn",
+        "game/src/presentation/combat.gd"
+      ],
+      "checks": [
+        "Presentation suite green incl. sprites/backdrop; replay state hashes unchanged"
+      ],
+      "dod": [
+        "The fight reads as the reference war scene while every existing accessibility and determinism guarantee holds."
+      ],
+      "deps": [
+        "RZ-010"
+      ],
+      "refs": [
+        "docs/DEMO.md",
+        "reports/owner-prototype-review.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "graphics"
+      ],
+      "evidence": [
+        {
+          "command": "godot --headless --path game --script $PWD/tools/make_combat_art.gd (two runs)",
+          "result": "passed",
+          "artifact": "validation/evidence/034/art-generator.log",
+          "environment": "operator/memory_leak/server_cathedral sprites regenerate byte-identically (identical sha256 across runs); no downloads; 2026-09-21"
+        },
+        {
+          "command": "godot --headless --path game --script res://tests/presentation_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/presentation_tests.gd",
+          "environment": "ALL PRESENTATION TESTS PASSED (112 checks) incl. hero/enemy/boss sprites and battlefield backdrop; exit 0; 2026-09-21"
+        },
+        {
+          "command": "tools/demo.sh capture ... combat / --encounter encounter_3 --capture ...",
+          "result": "passed",
+          "artifact": "validation/evidence/034/combat-encounter1.png",
+          "environment": "battlefield captures for the leak fight and the Server Cathedral boss (validation/evidence/034/combat-boss.png); 2026-09-21"
+        },
+        {
+          "command": "godot --headless --path game --script res://tests/replay_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/replay_tests.gd",
+          "environment": "ALL REPLAY TESTS PASSED (56 checks) - the restaged scene still reports identical state hashes/event digests; exit 0; 2026-09-21"
+        }
+      ]
+    },
+    {
+      "id": "RZ-035",
+      "title": "Region work map with stone route, mini map and select-to-fight",
+      "epic": "E-GAME",
+      "area": "graphics",
+      "type": "task",
+      "status": "done",
+      "owner": "copilot-session-2026-09-21 (DeepSeek V4.1 Flash selected in Copilot)",
+      "priority": "P1",
+      "size": "L",
+      "value": 5,
+      "risk": 2,
+      "phase": "P1",
+      "summary": "Owner-directed (D-012): each region is one map screen with a winding stone route, HUD chips, dock buttons and a mini map; tapping the region TICKET stone walks the engineer there and starts the war immediately.",
+      "why": "Owner feedback rounds 3-4 with reference screenshots: movement on a map, point-to-point, then the fight starts from the selected spot - the provisional no-movement slice was no longer enough for the intended experience.",
+      "steps": [
+        "Build the region map scene: banner, HUD chips, stone route drawing, dock, panels.",
+        "Walk the engineer stone to stone; later stones locked, cleared stones walkable.",
+        "Add the mini map and make selecting the ticket stone start the war directly."
+      ],
+      "outputs": [
+        "game/scenes/map.tscn",
+        "game/src/presentation/map.gd",
+        "game/src/presentation/map_route.gd",
+        "game/src/presentation/minimap.gd"
+      ],
+      "checks": [
+        "Map and flow suites green: locks, walking, motion modes, select-to-fight chain through the real scenes"
+      ],
+      "dod": [
+        "The map experience matches the reference structure (region stage, stone route, mini map) and selecting a spot starts the war; reduced motion and accessibility guarantees hold."
+      ],
+      "deps": [
+        "RZ-008",
+        "RZ-034"
+      ],
+      "refs": [
+        "docs/DEMO.md",
+        "docs/DECISIONS.md"
+      ],
+      "sources": [],
+      "tags": [
+        "P1",
+        "graphics"
+      ],
+      "evidence": [
+        {
+          "command": "godot --headless --path game --script res://tests/map_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/map_tests.gd",
+          "environment": "ALL MAP TESTS PASSED (28 checks): stones locked/ahead/current, walking incl. reduced motion, mini map shown, selecting the ticket stone starts the war; exit 0; 2026-09-21"
+        },
+        {
+          "command": "godot --headless --path game --script res://tests/run_flow_tests.gd",
+          "result": "passed",
+          "artifact": "game/tests/run_flow_tests.gd",
+          "environment": "ALL RUN FLOW TESTS PASSED (48 checks): loadout -> map -> war three times, result -> map -> next war, replay after completion; exit 0; 2026-09-21"
+        },
+        {
+          "command": "tools/demo.sh capture validation/evidence/035/work-map.png map (+ --demo-region 1)",
+          "result": "passed",
+          "artifact": "validation/evidence/035/work-map.png",
+          "environment": "region map with mini map panel rendering route states and engineer dot; region 2 capture (work-map-region2.png) shows banner/chips progression; 2026-09-21"
+        },
+        {
+          "command": "tools/demo.sh (map capture mode)",
+          "result": "passed",
+          "artifact": "tools/demo.sh",
+          "environment": "capture mode accepts title|combat|map; map capture starts a demo run so tickets render; 2026-09-21"
+        }
+      ]
     }
   ]
 }
