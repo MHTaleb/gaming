@@ -4,8 +4,8 @@
   "author_role": "executor",
   "request_sha256": "9200484f508ae39ffbdc6926962c2632535afa23372c3a79853082a030e720ee",
   "state": "ready_for_review",
-  "implementation_commit": "b68512731c12773f3b2ef14431af66a5b9ad8563",
-  "summary": "Resubmission for attempt 003, addressing the remaining V-002 zsh normalization defect. tools/env.sh now uses explicit colon-remainder parsing (no reliance on shell word splitting): duplicate selected entries are removed in bash AND zsh, the order [selected Node][~/.local/bin][rest] is pinned, and both validator regressions pass (launcher_contract.py and the new launcher_shell_contract.py), with a live path-stability probe showing an identical PATH and exactly one occurrence of each selected directory across two activations in both shells. V-001 Guard, V-003 evidence design and V-004 documentation remain verified and are retained; earlier bundles are preserved as history. Deferred MCP/model backends remain honest and uninstalled. RZ-006 remains held pending the validator verdict; no self-approval is claimed.",
+  "implementation_commit": "74b2b74bb46e686ad56941a1e30d6573d27896d5",
+  "summary": "Resubmission addressing the 2026-09-21 follow-up. V-002: tools/env.sh now performs deterministic strip-and-pin PATH surgery and passes the validator-owned two-scenario regression; fresh-terminal and controlled runs through the corrected route are recorded per-step. V-003: evidence rebuilt as attempt validation/evidence/002/ from the committed collector validation/evidence/collect.zsh (every probe body inspectable in Git; per-step exit codes; a labelled expected-failure probe proves propagation); the earlier inaccurate before-activation statement is corrected and the 001 bundles are preserved as history. V-001 Guard and V-004 documentation corrections remain in place as verified. Deferred MCP/model backends are reported honestly and were not installed. RZ-006 remains held pending the validator verdict; no self-approval is claimed.",
   "service_status": [
     {
       "component": "Studio MCP server",
@@ -153,109 +153,92 @@
     {
       "id": "V-002",
       "status": "addressed",
-      "summary": "tools/env.sh normalizes PATH with an explicit colon-remainder loop instead of implicit word splitting, which ordinary zsh does not perform. Exact duplicates of the selected Node directory and ~/.local/bin are removed wherever they sit and the order [selected Node >=22][~/.local/bin][rest] is pinned, identically on first and repeated activation in bash and zsh; unrelated entries and paths containing spaces are preserved and no IFS, glob or shell option and no global config are changed. Verified by: the validator-owned launcher_shell_contract.py (PASS in bash and zsh, identical PATH over two activations, spaced directory preserved); the original launcher_contract.py (both scenarios PASS); a live path-stability probe on the laptop showing node-dir and user-bin exactly once on both activations in both shells; the labelled fresh-terminal and controlled cases; and spec/import/combat/Guard runs through the route. The earlier defect (zsh received the whole PATH as one segment, so duplicates accumulated) is fixed; the system python3.8 venv limitation is unchanged.",
+      "summary": "tools/env.sh now performs deterministic strip-and-pin PATH surgery: exact duplicates of the selected Node directory and ~/.local/bin are removed wherever they sit, then the order [selected Node >=22][~/.local/bin][rest] is pinned, stable on first and repeated activation. This fixes both reviewed defects (a competing earlier entry won because presence-anywhere was mistaken for precedence; first and second activation could select different Nodes). Verified by the live session terminal; a labelled fresh-terminal equivalence reconstruction (Node 20 first, ~/.local/bin absent: before = node v20.20.0 with uv/godot not found, after = node v22.23.2, uv 0.12.17, godot 4.7.2); a labelled controlled case with the same shape checking first and repeated activation; and python validation/launcher_contract.py passing both scenarios (exit 0). Specification, import, combat and Guard checks all run through the corrected route. The system python3.8 venv limitation is unchanged and not needed by this route.",
       "changed_paths": [
         "tools/env.sh",
-        "validation/evidence/collect.zsh",
-        "config/toolchain.lock.json"
+        "config/toolchain.lock.json",
+        "reports/environment.md",
+        "START_HERE.md"
       ],
       "evidence": [
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: shell-contract - validator launcher_shell_contract.py)",
-          "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6 (local laptop); PASS in bash and zsh; identical normalized PATH across two activations; spaced directory preserved",
-          "checked_at": "2026-09-21T13:54:02Z",
+          "command": "zsh validation/evidence/collect.zsh - probe fresh-terminal (committed collector; PATH restored to the session-start fresh-terminal recording: Node 20 first, ~/.local/bin absent)",
+          "environment": "Lenovo 83GS, WSL2 Ubuntu 20.04.6 (local laptop); before: node v20.20.0, uv/godot not found; after: node v22.23.2, uv 0.12.17, godot 4.7.2",
+          "checked_at": "2026-09-21T00:33:43Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/shell-contract.log",
-          "sha256": "dfcc8f35fbe9b77a4871fa03bd057dabef05ffc35e67a2a2368c9998c46397e2"
+          "artifact": "validation/evidence/002/fresh-terminal.log",
+          "sha256": "b2f38fd1b84921445ad988570d4a64ba3058a00b959bbc1f7dbf80d6301cc13d"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: path-stability - two activations in the real bash and zsh on this laptop)",
-          "environment": "identical PATH both activations; node-dir first=1 second=1; user-bin first=1 second=1 in both shells",
-          "checked_at": "2026-09-21T13:54:02Z",
+          "command": "zsh validation/evidence/collect.zsh - probe controlled (Node 20 first, user tool directory absent; first and repeated activation)",
+          "environment": "same host; stable selections across both activations: v22.23.2 node, ~/.local/bin uv and godot",
+          "checked_at": "2026-09-21T00:33:43Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/path-stability.log",
-          "sha256": "7c20ca7fd5108d5eb84fc5ba92d1367f707c683fff81495c1883de7ddea0004f"
+          "artifact": "validation/evidence/002/controlled.log",
+          "sha256": "27017de9d8cd8424664cc4f0e2ac128a5d8aaff3999e7e941542afe3f34c0e32"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: launcher-contract - original two-scenario validator regression)",
+          "command": "python3 validation/launcher_contract.py (validator-owned two-scenario regression; fixture stubs, no HOME or host modification)",
           "environment": "both scenarios PASS: competing earlier tools demoted; selected Node wins on first and repeated activation",
-          "checked_at": "2026-09-21T13:54:02Z",
+          "checked_at": "2026-09-21T00:33:44Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/launcher-contract.log",
-          "sha256": "0d14425905788c66ab58eb4958f3b2be812bae9fce5f651034112a72067aafb3"
+          "artifact": "validation/evidence/002/launcher-contract.log",
+          "sha256": "cdb95edd4a0250c6be247756e65bfbee09a6156eb0f94502aa3092480366778c"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: fresh-terminal - reconstructed fresh-terminal PATH, Node 20 first, user bin absent)",
-          "environment": "before: node v20.20.0, uv/godot not found; after: node v22.23.2, uv 0.12.17, godot 4.7.2",
-          "checked_at": "2026-09-21T13:54:02Z",
+          "command": "zsh validation/evidence/collect.zsh - probe terminal (live session terminal, labelled as potentially session-modified)",
+          "environment": "same host; records inherited NVM_BIN and that the launcher keeps the selected tools in front",
+          "checked_at": "2026-09-21T00:33:43Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/fresh-terminal.log",
-          "sha256": "bcb83e6faba6755e9688b9667db6c30b62fd8796fa58f693aa242b89af4ec42e"
+          "artifact": "validation/evidence/002/terminal.log",
+          "sha256": "98d2b21c480329331d602bb5bd058410b5e00a25862a1dbb1bffa6ce55f48c7b"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: controlled - labelled controlled case, first and repeated activation)",
-          "environment": "stable selections across both activations: v22.23.2 node, ~/.local/bin uv and godot",
-          "checked_at": "2026-09-21T13:54:02Z",
-          "exit_code": 0,
-          "result": "passed",
-          "artifact": "validation/evidence/003/controlled.log",
-          "sha256": "9e5259924f17c95895f6c5643460d8525d14be395c325b5f6c0b565151f13260"
-        },
-        {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: terminal - live session terminal, labelled as potentially session-modified)",
-          "environment": "records inherited NVM_BIN and that the launcher keeps the selected tools in front",
-          "checked_at": "2026-09-21T13:54:02Z",
-          "exit_code": 0,
-          "result": "passed",
-          "artifact": "validation/evidence/003/terminal.log",
-          "sha256": "f7079b9a07d302191f315107d89171a5fb6f6425d291ab290f6ed765ecee5ef0"
-        },
-        {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: spec - source tools/env.sh && node tools/verify.js)",
+          "command": "zsh validation/evidence/collect.zsh - probe spec (source tools/env.sh && node tools/verify.js)",
           "environment": "Node v22.23.2 resolved through the launcher; specification and review-integrity checks pass",
-          "checked_at": "2026-09-21T13:54:03Z",
+          "checked_at": "2026-09-21T00:33:45Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/spec.log",
-          "sha256": "82ab0c52fe50d24468366f281f4f4a8ac94593dd962911de837c68cfc670668b"
+          "artifact": "validation/evidence/002/spec.log",
+          "sha256": "c84bfad940dd924aa1d2249530495918d389da8a65fa7cc53402d7fff66262bf"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: import - godot --headless --path game --editor --quit through the route)",
+          "command": "zsh validation/evidence/collect.zsh - probe import (godot --headless --path game --editor --quit through the route)",
           "environment": "pinned Godot 4.7.2 via launcher; headless import exit 0",
-          "checked_at": "2026-09-21T13:54:09Z",
+          "checked_at": "2026-09-21T00:33:50Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/import.log",
-          "sha256": "e7d1bc370241b20a78b7bae192f334c402dbbcea28dc753afc75bf1752ce916e"
+          "artifact": "validation/evidence/002/import.log",
+          "sha256": "7f3e277924db508edc106c26828d5869afbeb7ae0cd36fa2f3da44cd62b879a0"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: combat - godot --headless --path game --script res://tests/run_tests.gd)",
+          "command": "zsh validation/evidence/collect.zsh - probe combat (godot --headless --path game --script res://tests/run_tests.gd through the route)",
           "environment": "96 checks pass through the corrected route",
-          "checked_at": "2026-09-21T13:54:10Z",
+          "checked_at": "2026-09-21T00:33:50Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/combat.log",
-          "sha256": "131e5db10574587ff0d41f5363bbf6fbfc726c21e57660f1af794be9f2cbdcdc"
+          "artifact": "validation/evidence/002/combat.log",
+          "sha256": "519a4caec98c2425925947b8ee806734befd79a154de7eb4851abf9a29c9b194"
         },
         {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: guard-contract - validator Guard regression through the route, file unmodified)",
+          "command": "zsh validation/evidence/collect.zsh - probe guard-contract (validator Guard regression through the route, file unmodified)",
           "environment": "hits [3,6], hero HP 91, input unchanged; exit 0",
-          "checked_at": "2026-09-21T13:54:10Z",
+          "checked_at": "2026-09-21T00:33:51Z",
           "exit_code": 0,
           "result": "passed",
-          "artifact": "validation/evidence/003/guard-contract.log",
-          "sha256": "408bdf3036df4cd16027a3129b34c0fa905af971f560243bbb04dff9219f6434"
+          "artifact": "validation/evidence/002/guard-contract.log",
+          "sha256": "5404fe3f02981779783fd2c6343f02a7ac27c459c7055d5129b08bc6cd15a5f6"
         }
       ]
     },
     {
       "id": "V-003",
       "status": "addressed",
-      "summary": "Rebuilt as attempt validation/evidence/002/ produced by the committed collector validation/evidence/collect.zsh: every probe body is inspectable in Git, each substantive step records its own command and exit code (a trailing echo cannot hide a failure), and a labelled deliberate nonzero probe records exit_code=3 to prove propagation. The bundle covers source identity (branch, HEAD 74b2b74, clean tree), the fresh-terminal and controlled before/after cases, the validator launcher regression, spec/import/combat/Guard runs through the corrected route, a managed-Python probe (uv python find + disposable venv created, exercised, removed), the expected-failure probe and a fresh client tool probe. This corrects the earlier inaccurate 'uv/godot absent before activation' summary: in the old live-terminal log both were resolvable; the missing-PATH claim is now supported by the labelled fresh-terminal reconstruction and controlled case, and the live-terminal log is explicitly marked as potentially session-modified. The 001 bundles are preserved as history. GPU/GUI evidence stays tied to the original tested commit: RTX 4050 Laptop 6141 MiB (owner-confirmed, not re-asked), executable hash distinct from the archive hash, and the real title PNG. Deferred MCP/model backends are reported in service_status and were not installed. Attempt 003 re-runs this collector for the PATH-only change; its source log below gives current-commit attribution and the documented invocation is `zsh validation/evidence/collect.zsh 003` (probe function names identify each log).",
+      "summary": "Rebuilt as attempt validation/evidence/002/ produced by the committed collector validation/evidence/collect.zsh: every probe body is inspectable in Git, each substantive step records its own command and exit code (a trailing echo cannot hide a failure), and a labelled deliberate nonzero probe records exit_code=3 to prove propagation. The bundle covers source identity (branch, HEAD 74b2b74, clean tree), the fresh-terminal and controlled before/after cases, the validator launcher regression, spec/import/combat/Guard runs through the corrected route, a managed-Python probe (uv python find + disposable venv created, exercised, removed), the expected-failure probe and a fresh client tool probe. This corrects the earlier inaccurate 'uv/godot absent before activation' summary: in the old live-terminal log both were resolvable; the missing-PATH claim is now supported by the labelled fresh-terminal reconstruction and controlled case, and the live-terminal log is explicitly marked as potentially session-modified. The 001 bundles are preserved as history. GPU/GUI evidence stays tied to the original tested commit: RTX 4050 Laptop 6141 MiB (owner-confirmed, not re-asked), executable hash distinct from the archive hash, and the real title PNG. Deferred MCP/model backends are reported in service_status and were not installed.",
       "changed_paths": [
         "validation/evidence/collect.zsh",
         "validation/evidence/002/"
@@ -341,15 +324,6 @@
           "result": "passed",
           "artifact": "validation/evidence/001-response/title-smoke.png",
           "sha256": "1304aa63480204d73240bdb079ffe758e011c2fc4b285a7a6d48bce7f413669e"
-        },
-        {
-          "command": "zsh validation/evidence/collect.zsh 003 (probe: source) - current-commit attribution for the PATH-only change",
-          "environment": "runtime-zero checkout on the local laptop; records HEAD b685127 and a clean tree at capture time",
-          "checked_at": "2026-09-21T13:54:01Z",
-          "exit_code": 0,
-          "result": "passed",
-          "artifact": "validation/evidence/003/source.log",
-          "sha256": "010ccf65247d9f63c897ab8401e4c6a40e94e00bb1d3f49e1300dc7076b2a8b1"
         }
       ]
     },
