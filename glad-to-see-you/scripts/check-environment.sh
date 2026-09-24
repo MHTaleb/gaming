@@ -37,7 +37,7 @@ if [ -x "$EDITOR_ROOT/Unity" ]; then
     ok "editor process starts (may still require license activation)"
   else
     if grep -q "GLIBC_2" /tmp/gts-unity-check-stderr.log /tmp/gts-unity-check.log 2>/dev/null; then
-      warn "editor CANNOT run on this distro (glibc too old — VERIFIED). Use a Windows editor or newer Ubuntu. See Documentation/DEVELOPMENT_SETUP.md §3."
+      warn "editor CANNOT run on this distro (glibc too old — VERIFIED). Upgrade: scripts/upgrade-wsl-distro.sh — or use a Windows editor. See Documentation/DEVELOPMENT_SETUP.md §3."
     else
       warn "editor exited with an error (likely license activation required — see DEVELOPMENT_SETUP.md §3)"
     fi

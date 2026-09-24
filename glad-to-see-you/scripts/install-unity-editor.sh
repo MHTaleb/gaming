@@ -4,8 +4,9 @@
 # Defaults: 6000.3.24f1 / 4e7b9b5b6244 (Unity 6.3 LTS, verified 2026-09-24).
 #
 # NOTE (verified 2026-09-24): the Unity 6.3 LINUX binary requires glibc >= 2.32.
-# On Ubuntu 20.04/WSL (glibc 2.31) the editor will NOT start — use a Windows editor
-# or upgrade the distro. See Documentation/DEVELOPMENT_SETUP.md §3.
+# On Ubuntu 20.04/WSL (glibc 2.31) the editor will NOT start — run
+# scripts/upgrade-wsl-distro.sh (20.04 → 22.04) or use a Windows editor.
+# See Documentation/DEVELOPMENT_SETUP.md §3.
 set -euo pipefail
 
 VERSION="${1:-6000.3.24f1}"
@@ -42,7 +43,7 @@ if [ -x "$TARGET/Editor/Unity" ]; then
   else
     if grep -q "GLIBC_2\." /tmp/gts-unity-run.log 2>/dev/null; then
       log "WARNING: editor cannot start on this distro (glibc too old for Unity 6.3)."
-      log "         Use a Windows editor or Ubuntu 22.04+ — see Documentation/DEVELOPMENT_SETUP.md §3."
+      log "         Run scripts/upgrade-wsl-distro.sh (or use a Windows editor) — see Documentation/DEVELOPMENT_SETUP.md §3."
     else
       log "editor did not start cleanly — most likely license activation is pending:"
       log "  1) $TARGET/Editor/Unity -batchmode -quit -createManualActivationFile -logFile /tmp/act.log"

@@ -25,11 +25,25 @@ this WSL distro is Ubuntu **20.04 / glibc 2.31** → the editor **fails to start
 execution). Unity does not support Ubuntu 20.04 for the Unity 6 Linux editor. The project files are fully
 prepared; **run the editor from one of these instead**:
 
-1. **Windows host (recommended):** install Unity Hub + Unity 6000.3.24f1 + Android modules on Windows,
+1. **Upgrade this WSL distro in place: Ubuntu 20.04 → 22.04** (glibc 2.35; keeps every install).
+   Guided script — **a human runs it; it prompts for your sudo password**:
+   ```bash
+   scripts/upgrade-wsl-distro.sh --check     # read-only pre-flight + plan (PASSED on this machine 2026-09-24)
+   scripts/upgrade-wsl-distro.sh --execute   # the real upgrade (~30–90 min, interactive)
+   # from Windows:  wsl.exe --terminate Ubuntu-20.04     ← restarts the distro
+   scripts/upgrade-wsl-distro.sh --verify    # confirm glibc >= 2.32 after the restart
+   ```
+   Pre-flight facts (verified): `Prompt=never` is set in `/etc/update-manager/release-upgrades` —
+   without flipping it to `Prompt=lts`, `do-release-upgrade` refuses ("no new release found"); no
+   third-party apt sources; 900 GB free; WSLg present (`DISPLAY=:0`). Back up first from Windows
+   (`wsl.exe --export Ubuntu-20.04 <path>\backup.tar`). Notes: the distro *name* stays `Ubuntu-20.04`
+   (label only — harmless); restart Docker Desktop afterwards; advanced users can swap step 5 for
+   `sudo do-release-upgrade -f DistUpgradeViewNonInteractive` (unattended, uses defaults).
+   After `--verify` passes, the installed editor runs in WSLg:
+   `~/Unity/Hub/Editor/6000.3.24f1/Editor/Unity -projectPath /home/housseyn/workspace/gaming/glad-to-see-you`.
+2. **Windows host (fallback):** install Unity Hub + Unity 6000.3.24f1 + Android modules on Windows,
    open the project via `\\wsl.localhost\Ubuntu\home\housseyn\workspace\gaming\glad-to-see-you`
    (first `Library/` build is slow over the 9P mount; acceptable, or clone to a Windows drive for editor work).
-2. **Or upgrade the WSL distro** to Ubuntu 22.04/24.04 (`sudo do-release-upgrade`), then the installed
-   editor becomes runnable in WSLg: `~/Unity/Hub/Editor/6000.3.24f1/Editor/Unity -projectPath ...`.
 
 Everything below marked ✅ was executed and verified on this machine; the editor install steps were
 completed too (files verified) — only *running* the editor is blocked by glibc.
@@ -60,7 +74,8 @@ tar -xJf ~/apps/blender-5.2.2-linux-x64.tar.xz -C ~/apps
 ln -sf ~/apps/blender-5.2.2-linux-x64/blender ~/.local/bin/blender
 ```
 
-Also see `scripts/install-unity-editor.sh`, `scripts/setup-dev-environment.sh`, `scripts/check-environment.sh`.
+Also see `scripts/install-unity-editor.sh`, `scripts/setup-dev-environment.sh`, `scripts/check-environment.sh`,
+and `scripts/upgrade-wsl-distro.sh` (leaves Ubuntu 20.04 → 22.04 for the Unity glibc requirement).
 
 ## 3. Run the editor (verify — USER ACTION REQUIRED)
 
@@ -77,7 +92,8 @@ Also see `scripts/install-unity-editor.sh`, `scripts/setup-dev-environment.sh`, 
    ```bash
    ~/Unity/Hub/Editor/6000.3.24f1/Editor/Unity -projectPath /home/housseyn/workspace/gaming/glad-to-see-you -logFile /tmp/unity-open.log
    ```
-   If the editor refuses to start on Ubuntu 20.04 (glibc), use the Windows route (§5).
+   If the editor refuses to start on Ubuntu 20.04 (glibc), run `scripts/upgrade-wsl-distro.sh`
+   (blocker section above) or use the Windows route (§5).
 
 ## 4. Android build support (scripted — verify)
 
