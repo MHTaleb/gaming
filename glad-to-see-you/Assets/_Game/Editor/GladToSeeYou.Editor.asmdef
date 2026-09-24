@@ -1,0 +1,23 @@
+{
+    "name": "GladToSeeYou.Editor",
+    "rootNamespace": "GladToSeeYou.EditorTools",
+    "references": [
+        "GladToSeeYou.Runtime",
+        "Unity.InputSystem",
+        "Unity.AI.Navigation",
+        "UnityEngine.UI",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
