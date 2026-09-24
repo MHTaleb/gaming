@@ -1,0 +1,20 @@
+{
+    "name": "GladToSeeYou.Runtime",
+    "rootNamespace": "GladToSeeYou",
+    "references": [
+        "Unity.InputSystem",
+        "Unity.AI.Navigation",
+        "UnityEngine.UI",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
