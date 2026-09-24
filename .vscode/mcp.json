@@ -1,0 +1,37 @@
+{
+  "//": "Workspace MCP servers. Secrets use ${input:...} prompts — never commit keys.",
+  "servers": {
+    "unity-mcp": {
+      "type": "stdio",
+      "command": "/home/housseyn/.local/bin/uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/CoplayDev/unity-mcp@v10.2.0#subdirectory=Server",
+        "mcp-for-unity",
+        "--transport",
+        "stdio"
+      ]
+    },
+    "blender-mcp": {
+      "type": "stdio",
+      "command": "/home/housseyn/.local/bin/uvx",
+      "args": ["mcp-for-blender"]
+    },
+    "meshy": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@meshy-ai/meshy-mcp-server"],
+      "env": {
+        "MESHY_API_KEY": "${input:meshy-api-key}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "meshy-api-key",
+      "description": "Meshy API key (msy_...) — stored by VS Code, never written to disk by this repo",
+      "password": true
+    }
+  ]
+}
